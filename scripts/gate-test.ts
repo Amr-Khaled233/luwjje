@@ -7,6 +7,7 @@
  * Exercises the real password check and the real session/cookie signing, then
  * uses a genuinely minted cookie against the running server.
  */
+import './load-env';
 import { checkPassword } from '../src/lib/dashboard-auth';
 import { COOKIE_NAME, createSessionToken, verifySessionToken } from '../src/lib/session-token';
 import { signToken } from '../src/lib/signing';

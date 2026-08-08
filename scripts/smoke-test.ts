@@ -8,6 +8,7 @@
  * stock, sold counts and promo usage all moved correctly. Cleans up after
  * itself, so it is safe to run against a seeded dev database.
  */
+import './load-env';
 import { prisma } from '../src/lib/prisma';
 import { resolveCartLines, validatePromoCode, calculateShipping } from '../src/lib/commerce';
 import { createOrder } from '../src/lib/orders';
