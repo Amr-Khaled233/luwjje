@@ -2,8 +2,11 @@
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
     "slug" TEXT NOT NULL,
-    "description" TEXT,
+    "description" TEXT NOT NULL DEFAULT '',
+    "descriptionAr" TEXT NOT NULL DEFAULT '',
+    "visible" BOOLEAN NOT NULL DEFAULT true,
     "position" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -14,10 +17,14 @@ CREATE TABLE "Category" (
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
     "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
+    "descriptionAr" TEXT NOT NULL DEFAULT '',
     "materialInfo" TEXT NOT NULL DEFAULT '',
+    "materialInfoAr" TEXT NOT NULL DEFAULT '',
     "careInfo" TEXT NOT NULL DEFAULT '',
+    "careInfoAr" TEXT NOT NULL DEFAULT '',
     "price" DOUBLE PRECISION NOT NULL,
     "compareAtPrice" DOUBLE PRECISION,
     "sku" TEXT,
@@ -52,6 +59,7 @@ CREATE TABLE "ProductVariant" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "colorName" TEXT NOT NULL,
+    "colorNameAr" TEXT NOT NULL DEFAULT '',
     "colorHex" TEXT NOT NULL DEFAULT '#0b1c30',
     "size" TEXT,
     "sku" TEXT NOT NULL,
@@ -64,6 +72,31 @@ CREATE TABLE "ProductVariant" (
 );
 
 -- CreateTable
+CREATE TABLE "FilterColor" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
+    "hex" TEXT NOT NULL DEFAULT '#0b1c30',
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "position" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "FilterColor_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PriceRange" (
+    "id" TEXT NOT NULL,
+    "label" TEXT NOT NULL,
+    "labelAr" TEXT NOT NULL DEFAULT '',
+    "min" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "max" DOUBLE PRECISION,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "position" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "PriceRange_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
     "orderNumber" TEXT NOT NULL,
@@ -71,9 +104,9 @@ CREATE TABLE "Order" (
     "fullName" TEXT NOT NULL,
     "phone" TEXT,
     "street" TEXT NOT NULL,
-    "city" TEXT,
-    "region" TEXT NOT NULL,
-    "postalCode" TEXT NOT NULL,
+    "area" TEXT,
+    "governorate" TEXT NOT NULL,
+    "governorateId" TEXT,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "paymentStatus" TEXT NOT NULL DEFAULT 'UNPAID',
     "paymentRef" TEXT,
@@ -96,6 +129,7 @@ CREATE TABLE "OrderItem" (
     "productId" TEXT,
     "variantId" TEXT,
     "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
     "colorName" TEXT NOT NULL DEFAULT '',
     "size" TEXT,
     "imageUrl" TEXT NOT NULL DEFAULT '',
@@ -110,6 +144,7 @@ CREATE TABLE "PromoCode" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
+    "descriptionAr" TEXT NOT NULL DEFAULT '',
     "discountType" TEXT NOT NULL DEFAULT 'PERCENT',
     "discountValue" DOUBLE PRECISION NOT NULL,
     "minOrder" DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -127,6 +162,7 @@ CREATE TABLE "PromoCode" (
 CREATE TABLE "Discount" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
     "discountType" TEXT NOT NULL DEFAULT 'PERCENT',
     "discountValue" DOUBLE PRECISION NOT NULL,
     "scope" TEXT NOT NULL DEFAULT 'PRODUCTS',
@@ -148,17 +184,17 @@ CREATE TABLE "DiscountProduct" (
 );
 
 -- CreateTable
-CREATE TABLE "ShippingZone" (
+CREATE TABLE "Governorate" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "countries" TEXT NOT NULL DEFAULT '',
-    "rate" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "nameAr" TEXT NOT NULL,
+    "shippingCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "freeOver" DOUBLE PRECISION,
-    "estimatedDays" TEXT NOT NULL DEFAULT '3-5 business days',
+    "estimatedDays" TEXT NOT NULL DEFAULT '2-4',
     "active" BOOLEAN NOT NULL DEFAULT true,
     "position" INTEGER NOT NULL DEFAULT 0,
 
-    CONSTRAINT "ShippingZone_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Governorate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -167,23 +203,37 @@ CREATE TABLE "SiteSettings" (
     "dashboardPasswordHash" TEXT,
     "storeName" TEXT NOT NULL DEFAULT 'luwjje',
     "tagline" TEXT NOT NULL DEFAULT 'Considered essentials for a quiet life.',
+    "taglineAr" TEXT NOT NULL DEFAULT '',
     "logoUrl" TEXT NOT NULL DEFAULT '',
     "supportEmail" TEXT NOT NULL DEFAULT 'care@luwjje.com',
     "supportPhone" TEXT NOT NULL DEFAULT '',
-    "currency" TEXT NOT NULL DEFAULT 'USD',
-    "currencySymbol" TEXT NOT NULL DEFAULT '$',
-    "freeShippingOver" DOUBLE PRECISION NOT NULL DEFAULT 100,
-    "defaultShippingRate" DOUBLE PRECISION NOT NULL DEFAULT 12,
+    "defaultLocale" TEXT NOT NULL DEFAULT 'en',
+    "enableArabic" BOOLEAN NOT NULL DEFAULT true,
+    "currencyCode" TEXT NOT NULL DEFAULT 'EGP',
+    "currencySymbol" TEXT NOT NULL DEFAULT 'EGP',
+    "currencySymbolAr" TEXT NOT NULL DEFAULT 'ج.م',
+    "freeShippingOver" DOUBLE PRECISION NOT NULL DEFAULT 2000,
+    "defaultShippingRate" DOUBLE PRECISION NOT NULL DEFAULT 75,
     "lowStockThreshold" INTEGER NOT NULL DEFAULT 5,
+    "showColorFilter" BOOLEAN NOT NULL DEFAULT true,
+    "showCategoryFilter" BOOLEAN NOT NULL DEFAULT true,
+    "showPriceFilter" BOOLEAN NOT NULL DEFAULT true,
+    "showSortFilter" BOOLEAN NOT NULL DEFAULT true,
+    "showSearch" BOOLEAN NOT NULL DEFAULT true,
     "instagramUrl" TEXT NOT NULL DEFAULT '',
     "pinterestUrl" TEXT NOT NULL DEFAULT '',
     "tiktokUrl" TEXT NOT NULL DEFAULT '',
     "facebookUrl" TEXT NOT NULL DEFAULT '',
-    "metaTitle" TEXT NOT NULL DEFAULT 'luwjje — Considered essentials',
-    "metaDescription" TEXT NOT NULL DEFAULT 'Scandinavian minimalism in wool, cashmere and cotton.',
+    "whatsappUrl" TEXT NOT NULL DEFAULT '',
+    "metaTitle" TEXT NOT NULL DEFAULT 'luwjje',
+    "metaTitleAr" TEXT NOT NULL DEFAULT '',
+    "metaDescription" TEXT NOT NULL DEFAULT '',
+    "metaDescriptionAr" TEXT NOT NULL DEFAULT '',
     "ogImageUrl" TEXT NOT NULL DEFAULT '',
     "newsletterHeading" TEXT NOT NULL DEFAULT 'Newsletter',
-    "newsletterBody" TEXT NOT NULL DEFAULT 'Quiet updates. New arrivals, no noise.',
+    "newsletterHeadingAr" TEXT NOT NULL DEFAULT '',
+    "newsletterBody" TEXT NOT NULL DEFAULT '',
+    "newsletterBodyAr" TEXT NOT NULL DEFAULT '',
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "SiteSettings_pkey" PRIMARY KEY ("id")
@@ -194,13 +244,19 @@ CREATE TABLE "Banner" (
     "id" TEXT NOT NULL,
     "slot" TEXT NOT NULL DEFAULT 'HERO',
     "eyebrow" TEXT NOT NULL DEFAULT '',
+    "eyebrowAr" TEXT NOT NULL DEFAULT '',
     "heading" TEXT NOT NULL DEFAULT '',
+    "headingAr" TEXT NOT NULL DEFAULT '',
     "subheading" TEXT NOT NULL DEFAULT '',
+    "subheadingAr" TEXT NOT NULL DEFAULT '',
     "body" TEXT NOT NULL DEFAULT '',
+    "bodyAr" TEXT NOT NULL DEFAULT '',
     "ctaLabel" TEXT NOT NULL DEFAULT 'Shop Now',
+    "ctaLabelAr" TEXT NOT NULL DEFAULT '',
     "ctaHref" TEXT NOT NULL DEFAULT '/shop',
     "imageUrl" TEXT NOT NULL DEFAULT '',
     "badge" TEXT NOT NULL DEFAULT '',
+    "badgeAr" TEXT NOT NULL DEFAULT '',
     "active" BOOLEAN NOT NULL DEFAULT true,
     "startsAt" TIMESTAMP(3),
     "endsAt" TIMESTAMP(3),
@@ -215,6 +271,7 @@ CREATE TABLE "Banner" (
 CREATE TABLE "PaletteSwatch" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "nameAr" TEXT NOT NULL DEFAULT '',
     "hex" TEXT NOT NULL,
     "position" INTEGER NOT NULL DEFAULT 0,
 
@@ -226,8 +283,11 @@ CREATE TABLE "Page" (
     "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "titleAr" TEXT NOT NULL DEFAULT '',
     "excerpt" TEXT NOT NULL DEFAULT '',
+    "excerptAr" TEXT NOT NULL DEFAULT '',
     "body" TEXT NOT NULL DEFAULT '',
+    "bodyAr" TEXT NOT NULL DEFAULT '',
     "heroImage" TEXT NOT NULL DEFAULT '',
     "published" BOOLEAN NOT NULL DEFAULT true,
     "showInFooter" BOOLEAN NOT NULL DEFAULT false,
@@ -289,6 +349,9 @@ CREATE UNIQUE INDEX "ProductVariant_sku_key" ON "ProductVariant"("sku");
 CREATE INDEX "ProductVariant_productId_idx" ON "ProductVariant"("productId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "FilterColor_name_key" ON "FilterColor"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Order_orderNumber_key" ON "Order"("orderNumber");
 
 -- CreateIndex
@@ -308,6 +371,9 @@ CREATE UNIQUE INDEX "PromoCode_code_key" ON "PromoCode"("code");
 
 -- CreateIndex
 CREATE INDEX "PromoCode_active_idx" ON "PromoCode"("active");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Governorate_name_key" ON "Governorate"("name");
 
 -- CreateIndex
 CREATE INDEX "Banner_slot_active_idx" ON "Banner"("slot", "active");

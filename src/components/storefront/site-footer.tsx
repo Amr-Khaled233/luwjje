@@ -1,36 +1,47 @@
 import Link from 'next/link';
 import { NewsletterForm } from './newsletter-form';
+import { LanguageSwitcher } from './language-switcher';
 import { getSettings, getFooterPages } from '@/lib/settings';
+import { getI18n } from '@/i18n/server';
+import { pick } from '@/i18n/config';
 
 export async function SiteFooter() {
-  const [settings, pages] = await Promise.all([getSettings(), getFooterPages()]);
+  const [settings, pages, { locale, t }] = await Promise.all([
+    getSettings(),
+    getFooterPages(),
+    getI18n(),
+  ]);
 
   const socials = [
     { label: 'Instagram', url: settings.instagramUrl },
-    { label: 'Pinterest', url: settings.pinterestUrl },
-    { label: 'TikTok', url: settings.tiktokUrl },
     { label: 'Facebook', url: settings.facebookUrl },
+    { label: 'TikTok', url: settings.tiktokUrl },
+    { label: 'Pinterest', url: settings.pinterestUrl },
+    { label: 'WhatsApp', url: settings.whatsappUrl },
   ].filter((s) => s.url);
 
   return (
     <footer className="mt-stack-lg border-t border-outline-variant bg-surface-low">
       <div className="container-luwjje grid grid-cols-1 gap-10 py-stack-md md:grid-cols-4 md:gap-gutter md:py-stack-lg">
         <div>
-          <Link href="/" className="font-display text-[28px] leading-none">
+          <Link href="/" className="font-latin text-[28px] font-medium leading-none">
             {settings.storeName}
           </Link>
-          <p className="mt-4 max-w-[26ch] text-body-sm text-secondary">{settings.tagline}</p>
-          <p className="mt-8 text-body-sm text-tertiary">
-            © {new Date().getFullYear()} {settings.storeName}. All rights reserved.
+          <p className="mt-4 max-w-[26ch] text-body-sm text-secondary">
+            {pick(locale, settings.tagline, settings.taglineAr)}
           </p>
+          <p className="mt-8 text-body-sm text-tertiary">
+            © {new Date().getFullYear()} {settings.storeName}. {t.footer.rights}
+          </p>
+          {settings.enableArabic && <LanguageSwitcher locale={locale} className="mt-4" />}
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">Customer Care</h3>
+          <h3 className="label-caps mb-5 text-secondary">{t.footer.customerCare}</h3>
           <ul className="flex flex-col gap-3 text-body-sm">
             <li>
               <Link href="/orders" className="link-underline text-secondary hover:text-on-surface">
-                Track an Order
+                {t.footer.trackOrder}
               </Link>
             </li>
             <li>
@@ -38,7 +49,7 @@ export async function SiteFooter() {
                 href={`mailto:${settings.supportEmail}`}
                 className="link-underline text-secondary hover:text-on-surface"
               >
-                Contact
+                {t.footer.contact}
               </a>
             </li>
             {pages.map((p) => (
@@ -47,7 +58,7 @@ export async function SiteFooter() {
                   href={`/pages/${p.slug}`}
                   className="link-underline text-secondary hover:text-on-surface"
                 >
-                  {p.title}
+                  {pick(locale, p.title, p.titleAr)}
                 </Link>
               </li>
             ))}
@@ -55,7 +66,7 @@ export async function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">Social</h3>
+          <h3 className="label-caps mb-5 text-secondary">{t.footer.social}</h3>
           {socials.length ? (
             <ul className="flex flex-col gap-3 text-body-sm">
               {socials.map((s) => (
@@ -72,14 +83,18 @@ export async function SiteFooter() {
               ))}
             </ul>
           ) : (
-            <p className="text-body-sm text-tertiary">Coming soon.</p>
+            <p className="text-body-sm text-tertiary">{t.footer.comingSoon}</p>
           )}
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">{settings.newsletterHeading}</h3>
-          <p className="mb-5 text-body-sm text-secondary">{settings.newsletterBody}</p>
-          <NewsletterForm />
+          <h3 className="label-caps mb-5 text-secondary">
+            {pick(locale, settings.newsletterHeading, settings.newsletterHeadingAr)}
+          </h3>
+          <p className="mb-5 text-body-sm text-secondary">
+            {pick(locale, settings.newsletterBody, settings.newsletterBodyAr)}
+          </p>
+          <NewsletterForm placeholder={t.footer.emailPlaceholder} label={t.footer.subscribe} />
         </div>
       </div>
     </footer>

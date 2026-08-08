@@ -1,11 +1,13 @@
 import { prisma } from './prisma';
 import { getSettings } from './settings';
+import { pick, type Locale } from '@/i18n/config';
 
 export interface ResolvedLine {
   variantId: string;
   productId: string;
   slug: string;
   name: string;
+  nameAr: string;
   colorName: string;
   colorHex: string;
   size: string | null;
@@ -81,11 +83,7 @@ export async function resolveCartLines(
 
   const variants = await prisma.productVariant.findMany({
     where: { id: { in: lines.map((l) => l.variantId) } },
-    include: {
-      product: {
-        include: { images: { orderBy: { position: 'asc' } } },
-      },
-    },
+    include: { product: { include: { images: { orderBy: { position: 'asc' } } } } },
   });
 
   const discounts = await getActiveDiscountMap();
@@ -109,6 +107,7 @@ export async function resolveCartLines(
       productId: v.productId,
       slug: v.product.slug,
       name: v.product.name,
+      nameAr: v.product.nameAr,
       colorName: v.colorName,
       colorHex: v.colorHex,
       size: v.size,
@@ -117,8 +116,7 @@ export async function resolveCartLines(
       imageUrl: primary?.url ?? '',
       quantity,
       maxStock: v.stock,
-      notice:
-        quantity < line.quantity ? `Only ${v.stock} left — quantity adjusted.` : undefined,
+      notice: quantity < line.quantity ? `Only ${v.stock} left — quantity adjusted.` : undefined,
     });
   }
 
@@ -133,29 +131,45 @@ export interface PromoResult {
 }
 
 /** Validates a promo code against the live table and the current subtotal. */
-export async function validatePromoCode(rawCode: string, subtotal: number): Promise<PromoResult> {
+export async function validatePromoCode(
+  rawCode: string,
+  subtotal: number,
+  locale: Locale = 'en',
+): Promise<PromoResult> {
   const code = rawCode.trim().toUpperCase();
-  if (!code) return { ok: false, message: 'Enter a promo code.', discount: 0 };
+  const settings = await getSettings();
+  const symbol = locale === 'ar' ? settings.currencySymbolAr : settings.currencySymbol;
+
+  const msg = (en: string, ar: string) => (locale === 'ar' ? ar : en);
+
+  if (!code) return { ok: false, message: msg('Enter a promo code.', 'أدخل كود الخصم.'), discount: 0 };
 
   const promo = await prisma.promoCode.findUnique({ where: { code } });
   if (!promo || !promo.active) {
-    return { ok: false, message: 'That code is not recognised.', discount: 0 };
+    return { ok: false, message: msg('That code is not recognised.', 'هذا الكود غير معروف.'), discount: 0 };
   }
 
   const now = new Date();
   if (promo.startsAt && promo.startsAt > now) {
-    return { ok: false, message: 'That code is not active yet.', discount: 0 };
+    return { ok: false, message: msg('That code is not active yet.', 'هذا الكود لم يبدأ بعد.'), discount: 0 };
   }
   if (promo.expiresAt && promo.expiresAt < now) {
-    return { ok: false, message: 'That code has expired.', discount: 0 };
+    return { ok: false, message: msg('That code has expired.', 'انتهت صلاحية هذا الكود.'), discount: 0 };
   }
   if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) {
-    return { ok: false, message: 'That code has reached its usage limit.', discount: 0 };
+    return {
+      ok: false,
+      message: msg('That code has reached its usage limit.', 'وصل هذا الكود إلى حد الاستخدام.'),
+      discount: 0,
+    };
   }
   if (subtotal < promo.minOrder) {
     return {
       ok: false,
-      message: `Spend at least $${promo.minOrder.toFixed(2)} to use this code.`,
+      message: msg(
+        `Spend at least ${symbol} ${promo.minOrder.toLocaleString()} to use this code.`,
+        `أضِف ما قيمته ${promo.minOrder.toLocaleString('ar-EG')} ${symbol} على الأقل لاستخدام هذا الكود.`,
+      ),
       discount: 0,
     };
   }
@@ -170,26 +184,26 @@ export async function validatePromoCode(rawCode: string, subtotal: number): Prom
     discount,
     message:
       promo.discountType === 'PERCENT'
-        ? `${promo.discountValue}% off applied.`
-        : `$${promo.discountValue.toFixed(2)} off applied.`,
+        ? msg(`${promo.discountValue}% off applied.`, `تم تطبيق خصم ${promo.discountValue}٪.`)
+        : msg(
+            `${symbol} ${promo.discountValue.toLocaleString()} off applied.`,
+            `تم تطبيق خصم ${promo.discountValue.toLocaleString('ar-EG')} ${symbol}.`,
+          ),
   };
 }
 
-/** Shipping cost for a region, honouring per-zone and global free thresholds. */
-export async function calculateShipping(region: string, subtotal: number) {
+/**
+ * Delivery cost for a governorate. Each governorate carries its own price and
+ * may override the global free-shipping threshold.
+ */
+export async function calculateShipping(governorateName: string, subtotal: number) {
   const settings = await getSettings();
-  const zones = await prisma.shippingZone.findMany({ where: { active: true } });
+  const governorate = await prisma.governorate.findFirst({
+    where: { name: governorateName, active: true },
+  });
 
-  const zone = zones.find((z) =>
-    z.countries
-      .split(',')
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean)
-      .includes(region.trim().toLowerCase()),
-  );
-
-  const rate = zone?.rate ?? settings.defaultShippingRate;
-  const threshold = zone?.freeOver ?? settings.freeShippingOver;
+  const rate = governorate?.shippingCost ?? settings.defaultShippingRate;
+  const threshold = governorate?.freeOver ?? settings.freeShippingOver;
   const free = threshold > 0 && subtotal >= threshold;
 
   return {
@@ -197,18 +211,25 @@ export async function calculateShipping(region: string, subtotal: number) {
     rate,
     threshold,
     free,
-    zoneName: zone?.name ?? 'Standard',
-    estimatedDays: zone?.estimatedDays ?? '5-8 business days',
+    governorateId: governorate?.id ?? null,
+    zoneName: governorate?.name ?? 'Standard',
+    zoneNameAr: governorate?.nameAr ?? '',
+    estimatedDays: governorate?.estimatedDays ?? '3-5',
   };
 }
 
-export async function getShippingRegions() {
-  const zones = await prisma.shippingZone.findMany({
+/** Governorates offered at checkout, in the visitor's language. */
+export async function getGovernorates(locale: Locale = 'en') {
+  const rows = await prisma.governorate.findMany({
     where: { active: true },
     orderBy: { position: 'asc' },
   });
-  return zones.map((z) => ({
-    zone: z.name,
-    countries: z.countries.split(',').map((c) => c.trim()).filter(Boolean),
+
+  return rows.map((g) => ({
+    // The stored value is always the English name so orders stay comparable.
+    value: g.name,
+    label: pick(locale, g.name, g.nameAr),
+    shippingCost: g.shippingCost,
+    estimatedDays: g.estimatedDays,
   }));
 }

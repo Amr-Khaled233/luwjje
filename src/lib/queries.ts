@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { applyDiscount, getActiveDiscountMap } from './commerce';
+import { pick, type Locale } from '@/i18n/config';
 import type { Prisma } from '@prisma/client';
 
 export interface ProductCardData {
@@ -19,7 +20,7 @@ export interface ProductCardData {
 const cardInclude = {
   images: { orderBy: { position: 'asc' } },
   variants: { orderBy: { position: 'asc' } },
-  category: { select: { name: true } },
+  category: { select: { name: true, nameAr: true } },
 } satisfies Prisma.ProductInclude;
 
 type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
@@ -27,6 +28,7 @@ type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof cardInclu
 function toCard(
   p: ProductWithRelations,
   discounts: Awaited<ReturnType<typeof getActiveDiscountMap>>,
+  locale: Locale,
 ): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
   const hover = p.images.find((i) => i.isHover) ?? p.images[1] ?? null;
@@ -35,19 +37,18 @@ function toCard(
   // De-duplicate colourways (a colour may span several sizes).
   const colors: { name: string; hex: string }[] = [];
   for (const v of p.variants) {
-    if (!colors.some((c) => c.name === v.colorName)) {
-      colors.push({ name: v.colorName, hex: v.colorHex });
-    }
+    const name = pick(locale, v.colorName, v.colorNameAr);
+    if (!colors.some((c) => c.name === name)) colors.push({ name, hex: v.colorHex });
   }
 
   return {
     id: p.id,
     slug: p.slug,
-    name: p.name,
+    name: pick(locale, p.name, p.nameAr),
     price,
     listPrice: p.price,
     discounted,
-    categoryName: p.category?.name ?? null,
+    categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
     primaryImage: primary?.url ?? '',
     hoverImage: hover?.url ?? null,
     colors,
@@ -55,7 +56,7 @@ function toCard(
   };
 }
 
-export async function getBestSellers(limit = 4): Promise<ProductCardData[]> {
+export async function getBestSellers(locale: Locale, limit = 4): Promise<ProductCardData[]> {
   const discounts = await getActiveDiscountMap();
   const flagged = await prisma.product.findMany({
     where: { status: 'PUBLISHED', isBestSeller: true },
@@ -64,30 +65,31 @@ export async function getBestSellers(limit = 4): Promise<ProductCardData[]> {
     take: limit,
   });
 
-  // Fall back to actual sales if the admin has not curated the row yet.
-  if (flagged.length >= limit) return flagged.map((p) => toCard(p, discounts));
+  // Fall back to actual sales only when nothing has been curated at all —
+  // a deliberate selection of two should show two, not two plus filler.
+  if (flagged.length > 0) return flagged.map((p) => toCard(p, discounts, locale));
 
   const filler = await prisma.product.findMany({
-    where: { status: 'PUBLISHED', id: { notIn: flagged.map((p) => p.id) } },
+    where: { status: 'PUBLISHED' },
     include: cardInclude,
-    orderBy: { soldCount: 'desc' },
-    take: limit - flagged.length,
+    orderBy: [{ soldCount: 'desc' }, { createdAt: 'desc' }],
+    take: limit,
   });
 
-  return [...flagged, ...filler].map((p) => toCard(p, discounts));
+  return filler.map((p) => toCard(p, discounts, locale));
 }
 
 export interface ShopFilters {
   q?: string;
   color?: string;
   category?: string;
-  price?: string; // "0-100" | "100-250" | "250-500" | "500+"
+  price?: string; // "<min>-<max>" | "<min>-" for open-ended
   sort?: string; // best | price-asc | price-desc | newest
   page?: number;
   perPage?: number;
 }
 
-export async function getShopProducts(filters: ShopFilters) {
+export async function getShopProducts(filters: ShopFilters, locale: Locale) {
   const discounts = await getActiveDiscountMap();
   const perPage = filters.perPage ?? 12;
   const page = Math.max(1, filters.page ?? 1);
@@ -96,22 +98,26 @@ export async function getShopProducts(filters: ShopFilters) {
 
   if (filters.q) {
     where.OR = [
-      { name: { contains: filters.q } },
-      { description: { contains: filters.q } },
-      { category: { name: { contains: filters.q } } },
+      { name: { contains: filters.q, mode: 'insensitive' } },
+      { nameAr: { contains: filters.q } },
+      { description: { contains: filters.q, mode: 'insensitive' } },
+      { descriptionAr: { contains: filters.q } },
+      { category: { name: { contains: filters.q, mode: 'insensitive' } } },
     ];
   }
   if (filters.color) {
+    // Colour is filtered on the canonical (English) name so the URL is stable
+    // across languages.
     where.variants = { some: { colorName: filters.color } };
   }
   if (filters.category) {
-    where.category = { slug: filters.category };
+    where.category = { slug: filters.category, visible: true };
   }
   if (filters.price) {
     const [minRaw, maxRaw] = filters.price.split('-');
     const min = Number(minRaw) || 0;
-    const max = maxRaw && maxRaw !== '+' ? Number(maxRaw) : undefined;
-    where.price = max ? { gte: min, lte: max } : { gte: min };
+    const max = maxRaw ? Number(maxRaw) : undefined;
+    where.price = max && Number.isFinite(max) ? { gte: min, lte: max } : { gte: min };
   }
 
   const orderBy: Prisma.ProductOrderByWithRelationInput =
@@ -135,7 +141,7 @@ export async function getShopProducts(filters: ShopFilters) {
   ]);
 
   return {
-    products: rows.map((p) => toCard(p, discounts)),
+    products: rows.map((p) => toCard(p, discounts, locale)),
     total,
     page,
     perPage,
@@ -143,29 +149,45 @@ export async function getShopProducts(filters: ShopFilters) {
   };
 }
 
-/** Distinct colourways across the published catalogue, for the Shop filter. */
-export async function getFilterOptions() {
-  const [variants, categories] = await Promise.all([
+/**
+ * Filter bar options. Colours and price ranges are curated in the dashboard;
+ * only rows marked visible reach the customer, and colours with nothing in
+ * stock are dropped so the filter never leads to an empty grid.
+ */
+export async function getFilterOptions(locale: Locale) {
+  const [colorRows, categories, priceRanges, liveColors] = await Promise.all([
+    prisma.filterColor.findMany({ where: { visible: true }, orderBy: { position: 'asc' } }),
+    prisma.category.findMany({
+      where: { visible: true, products: { some: { status: 'PUBLISHED' } } },
+      select: { name: true, nameAr: true, slug: true },
+      orderBy: { position: 'asc' },
+    }),
+    prisma.priceRange.findMany({ where: { visible: true }, orderBy: { position: 'asc' } }),
     prisma.productVariant.findMany({
       where: { product: { status: 'PUBLISHED' } },
-      select: { colorName: true, colorHex: true },
+      select: { colorName: true },
       distinct: ['colorName'],
-      orderBy: { colorName: 'asc' },
-    }),
-    prisma.category.findMany({
-      where: { products: { some: { status: 'PUBLISHED' } } },
-      select: { name: true, slug: true },
-      orderBy: { position: 'asc' },
     }),
   ]);
 
+  const inCatalogue = new Set(liveColors.map((v) => v.colorName));
+
   return {
-    colors: variants.map((v) => ({ name: v.colorName, hex: v.colorHex })),
-    categories,
+    colors: colorRows
+      .filter((c) => inCatalogue.has(c.name))
+      .map((c) => ({ value: c.name, label: pick(locale, c.name, c.nameAr), hex: c.hex })),
+    categories: categories.map((c) => ({
+      value: c.slug,
+      label: pick(locale, c.name, c.nameAr),
+    })),
+    priceRanges: priceRanges.map((r) => ({
+      value: `${r.min}-${r.max ?? ''}`,
+      label: pick(locale, r.label, r.labelAr),
+    })),
   };
 }
 
-export async function getProductBySlug(slug: string) {
+export async function getProductBySlug(slug: string, locale: Locale) {
   const product = await prisma.product.findUnique({
     where: { slug },
     include: {
@@ -177,30 +199,53 @@ export async function getProductBySlug(slug: string) {
   if (!product || product.status !== 'PUBLISHED') return null;
 
   const discounts = await getActiveDiscountMap();
-  const { price, discounted, campaignName } = applyDiscount(
+  const { price, discounted } = applyDiscount(
     product.price,
     product.id,
     product.categoryId,
     discounts,
   );
 
-  return { ...product, effectivePrice: price, discounted, campaignName };
+  return {
+    id: product.id,
+    slug: product.slug,
+    categoryId: product.categoryId,
+    name: pick(locale, product.name, product.nameAr),
+    description: pick(locale, product.description, product.descriptionAr),
+    materialInfo: pick(locale, product.materialInfo, product.materialInfoAr),
+    careInfo: pick(locale, product.careInfo, product.careInfoAr),
+    categoryName: product.category ? pick(locale, product.category.name, product.category.nameAr) : null,
+    categorySlug: product.category?.slug ?? null,
+    sku: product.sku,
+    effectivePrice: price,
+    listPrice: product.price,
+    discounted,
+    images: product.images.map((i) => ({ url: i.url, alt: i.alt || product.name })),
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      colorName: pick(locale, v.colorName, v.colorNameAr),
+      colorHex: v.colorHex,
+      size: v.size,
+      stock: v.stock,
+    })),
+  };
 }
 
-export async function getRelatedProducts(productId: string, categoryId: string | null, limit = 4) {
+export async function getRelatedProducts(
+  productId: string,
+  categoryId: string | null,
+  locale: Locale,
+  limit = 4,
+) {
   const discounts = await getActiveDiscountMap();
   const rows = await prisma.product.findMany({
-    where: {
-      status: 'PUBLISHED',
-      id: { not: productId },
-      ...(categoryId ? { categoryId } : {}),
-    },
+    where: { status: 'PUBLISHED', id: { not: productId }, ...(categoryId ? { categoryId } : {}) },
     include: cardInclude,
     orderBy: { soldCount: 'desc' },
     take: limit,
   });
 
-  if (rows.length >= limit) return rows.map((p) => toCard(p, discounts));
+  if (rows.length >= limit) return rows.map((p) => toCard(p, discounts, locale));
 
   const filler = await prisma.product.findMany({
     where: { status: 'PUBLISHED', id: { notIn: [productId, ...rows.map((r) => r.id)] } },
@@ -209,5 +254,5 @@ export async function getRelatedProducts(productId: string, categoryId: string |
     take: limit - rows.length,
   });
 
-  return [...rows, ...filler].map((p) => toCard(p, discounts));
+  return [...rows, ...filler].map((p) => toCard(p, discounts, locale));
 }

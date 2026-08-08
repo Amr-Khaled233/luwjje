@@ -13,7 +13,8 @@
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "smoke": "tsx scripts/smoke-test.ts",
-    "gate": "tsx scripts/gate-test.ts"
+    "gate": "tsx scripts/gate-test.ts",
+    "db:seed:demo": "tsx prisma/seed-demo.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
