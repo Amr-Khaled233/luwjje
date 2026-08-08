@@ -1,0 +1,303 @@
+// luwjje — commerce schema
+//
+// PostgreSQL. Vercel's filesystem is ephemeral and read-only, so SQLite cannot
+// be used in production; Postgres is the single database everywhere, local
+// included. To go back to a local SQLite file, change `provider` to "sqlite"
+// and point DATABASE_URL at file:./dev.db — no model below needs changing.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// There are no customer accounts. Shoppers check out as guests, and the only
+// login in the app is the single dashboard password (SiteSettings below).
+// SQLite has no native enums, so status columns are strings validated by Zod.
+
+// ---------------------------------------------------------------- catalogue
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  products Product[]
+}
+
+model Product {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  description  String  @default("")
+  materialInfo String  @default("")
+  careInfo     String  @default("")
+  price        Float
+  compareAtPrice Float?
+  sku          String? @unique
+  categoryId   String?
+  status       String  @default("PUBLISHED") // DRAFT | PUBLISHED
+  isBestSeller Boolean @default(false)
+  bestSellerOrder Int   @default(0)
+  hasSizes     Boolean @default(false)
+  soldCount    Int     @default(0)
+  viewCount    Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category   Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images     ProductImage[]
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+  discounts  DiscountProduct[]
+
+  @@index([status])
+  @@index([isBestSeller])
+  @@index([categoryId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String  @default("")
+  position  Int     @default(0)
+  isPrimary Boolean @default(false)
+  // second image shown on card hover (lifestyle shot)
+  isHover   Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+/// One purchasable SKU = product + colour (+ optional size).
+model ProductVariant {
+  id           String  @id @default(cuid())
+  productId    String
+  colorName    String
+  colorHex     String  @default("#0b1c30")
+  size         String? // null when product.hasSizes == false
+  sku          String  @unique
+  stock        Int     @default(0)
+  lowStockAt   Int     @default(5)
+  priceOverride Float?
+  position     Int     @default(0)
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------- orders
+
+model Order {
+  id             String   @id @default(cuid())
+  orderNumber    String   @unique
+  email          String
+  fullName       String
+  phone          String?
+  street         String
+  city           String?
+  region         String
+  postalCode     String
+  status         String   @default("PENDING") // PENDING | PAID | SHIPPED | DELIVERED | CANCELLED
+  paymentStatus  String   @default("UNPAID")  // UNPAID | PAID | REFUNDED
+  paymentRef     String?
+  subtotal       Float
+  shippingCost   Float    @default(0)
+  discount       Float    @default(0)
+  total          Float
+  promoCode      String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  variantId String?
+  // denormalised so history survives product edits/deletes
+  name      String
+  colorName String  @default("")
+  size      String?
+  imageUrl  String  @default("")
+  unitPrice Float
+  quantity  Int
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+// ---------------------------------------------------------------- promotions
+
+model PromoCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  description   String    @default("")
+  discountType  String    @default("PERCENT") // PERCENT | FIXED
+  discountValue Float
+  minOrder      Float     @default(0)
+  maxUses       Int? // null = unlimited
+  usedCount     Int       @default(0)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  @@index([active])
+}
+
+/// Automatic (non-code) discount campaign scoped to products or a category.
+model Discount {
+  id            String    @id @default(cuid())
+  name          String
+  discountType  String    @default("PERCENT") // PERCENT | FIXED
+  discountValue Float
+  scope         String    @default("PRODUCTS") // PRODUCTS | CATEGORY | ALL
+  categoryId    String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  products DiscountProduct[]
+}
+
+model DiscountProduct {
+  discountId String
+  productId  String
+
+  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([discountId, productId])
+}
+
+// ---------------------------------------------------------------- shipping
+
+model ShippingZone {
+  id             String  @id @default(cuid())
+  name           String
+  countries      String  @default("") // comma-separated ISO names
+  rate           Float   @default(0)
+  freeOver       Float? // per-zone override of the global free-shipping threshold
+  estimatedDays  String  @default("3-5 business days")
+  active         Boolean @default(true)
+  position       Int     @default(0)
+}
+
+// ---------------------------------------------------------------- CMS / settings
+
+/// Single row (id = "singleton") holding storefront-wide editable content
+/// and the one dashboard credential.
+model SiteSettings {
+  id                 String  @id @default("singleton")
+  /// bcrypt hash of the dashboard password. Null until first set, at which
+  /// point DASHBOARD_PASSWORD from .env is used instead.
+  dashboardPasswordHash String?
+  storeName          String  @default("luwjje")
+  tagline            String  @default("Considered essentials for a quiet life.")
+  logoUrl            String  @default("")
+  supportEmail       String  @default("care@luwjje.com")
+  supportPhone       String  @default("")
+  currency           String  @default("USD")
+  currencySymbol     String  @default("$")
+  freeShippingOver   Float   @default(100)
+  defaultShippingRate Float  @default(12)
+  lowStockThreshold  Int     @default(5)
+
+  instagramUrl String @default("")
+  pinterestUrl String @default("")
+  tiktokUrl    String @default("")
+  facebookUrl  String @default("")
+
+  metaTitle       String @default("luwjje — Considered essentials")
+  metaDescription String @default("Scandinavian minimalism in wool, cashmere and cotton.")
+  ogImageUrl      String @default("")
+
+  newsletterHeading String @default("Newsletter")
+  newsletterBody    String @default("Quiet updates. New arrivals, no noise.")
+
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+/// Hero / promo banners. `slot` selects where it renders.
+model Banner {
+  id          String    @id @default(cuid())
+  slot        String    @default("HERO") // HERO | OFFER
+  eyebrow     String    @default("")
+  heading     String    @default("")
+  subheading  String    @default("")
+  body        String    @default("")
+  ctaLabel    String    @default("Shop Now")
+  ctaHref     String    @default("/shop")
+  imageUrl    String    @default("")
+  badge       String    @default("")
+  active      Boolean   @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slot, active])
+}
+
+/// Swatches for the "Colour Palette" showcase strip on the home page.
+model PaletteSwatch {
+  id       String @id @default(cuid())
+  name     String
+  hex      String
+  position Int    @default(0)
+}
+
+/// Editable content pages: about, journal, privacy-policy, terms…
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String   @default("")
+  body        String   @default("")
+  heroImage   String   @default("")
+  published   Boolean  @default(true)
+  showInFooter Boolean @default(false)
+  position    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+/// Lightweight funnel tracking so Conversion Rate / traffic sources are real.
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String   @default("direct")
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

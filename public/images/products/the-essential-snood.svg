@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200">
+  <rect width="900" height="1200" fill="#f5f1ea"/>
+  <rect x="150" y="140" width="600" height="760" fill="#f0eae1"/>
+  <rect x="150" y="140" width="600" height="760" fill="none" stroke="#cbc6be" stroke-opacity="0.25" stroke-width="1"/>
+  <path d="M150 640 H750" stroke="#bfbab2" stroke-opacity="0.18" stroke-width="1"/>
+  <circle cx="450" cy="420" r="130" fill="#dcd6cd" fill-opacity="0.35"/>
+  <text x="450" y="1010" text-anchor="middle" font-family="Playfair Display, Georgia, 'Times New Roman', serif" font-size="42" fill="#0b1c30">The Essential Snood</text>
+  <text x="450" y="1058" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="20" letter-spacing="2.4" fill="#565e74">OFF-WHITE</text>
+</svg>

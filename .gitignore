@@ -1,0 +1,24 @@
+node_modules
+.next
+out
+build
+.vercel
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-error.log*
+
+# Environment — never commit real secrets
+.env
+.env*.local
+
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Local SQLite artefacts (the project uses Postgres now)
+/prisma/*.db
+/prisma/*.db-journal
+
+# Runtime uploads; production stores these in Vercel Blob
+/public/uploads/*
+!/public/uploads/.gitkeep

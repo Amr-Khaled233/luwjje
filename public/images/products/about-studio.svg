@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dbdde1"/>
+      <stop offset="100%" stop-color="#6e7482"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="#c5c8cf"/>
+  <rect width="1920" height="1080" fill="url(#g)" fill-opacity="0.85"/>
+  <rect x="120" y="120" width="1680" height="840" fill="none" stroke="#f8f9ff" stroke-opacity="0.28" stroke-width="1"/>
+  <circle cx="1420" cy="540" r="300" fill="#f8f9ff" fill-opacity="0.10"/>
+  <circle cx="420" cy="820" r="180" fill="#0b1c30" fill-opacity="0.08"/>
+  <text x="120" y="1010" font-family="Inter, Helvetica, Arial, sans-serif" font-size="22" letter-spacing="4" fill="#0b1c30" fill-opacity="0.55">THE STUDIO</text>
+</svg>
