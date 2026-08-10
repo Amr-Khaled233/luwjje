@@ -35,11 +35,11 @@ interface Pricing {
  */
 export function useCartPricing({
   items,
-  region,
+  governorate,
   promoCode,
 }: {
   items: CartItem[];
-  region?: string;
+  governorate?: string;
   promoCode?: string;
 }): Pricing {
   const reconcile = useCart((s) => s.reconcile);
@@ -57,7 +57,7 @@ export function useCartPricing({
   // Stable dependency key so we only refetch on meaningful change.
   const key = JSON.stringify({
     items: items.map((i) => [i.variantId, i.quantity]),
-    region: region ?? '',
+    governorate: governorate ?? '',
     promoCode: promoCode ?? '',
   });
 
@@ -83,7 +83,7 @@ export function useCartPricing({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
-        region: region || undefined,
+        governorate: governorate || undefined,
         promoCode: promoCode || undefined,
       }),
     })

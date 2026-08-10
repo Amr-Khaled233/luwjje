@@ -20,9 +20,8 @@ interface AdminOrder {
   email: string;
   phone: string | null;
   street: string;
-  city: string | null;
-  region: string;
-  postalCode: string;
+  area: string | null;
+  governorate: string;
   notes: string | null;
   status: string;
   paymentStatus: string;
@@ -245,10 +244,8 @@ export function OrdersManager({
                 <address className="not-italic text-body-sm leading-6 text-secondary">
                   {open.street}
                   <br />
-                  {open.city && `${open.city}, `}
-                  {open.postalCode}
-                  <br />
-                  {open.region}
+                  {open.area && `${open.area}, `}
+                  {open.governorate}
                 </address>
               </div>
             </div>

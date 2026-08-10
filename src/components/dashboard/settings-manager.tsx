@@ -8,11 +8,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Pencil, Trash2, Loader2, ExternalLink, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input, Textarea, Checkbox } from '@/components/ui/field';
+import { Input, Textarea, Select, Checkbox } from '@/components/ui/field';
 import { StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
+import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { settingsSchema, pageSchema, changePasswordSchema } from '@/lib/validations';
 import {
@@ -33,8 +34,11 @@ type Tab = (typeof TABS)[number];
 const EMPTY_PAGE: PageInput = {
   slug: '',
   title: '',
+  titleAr: '',
   excerpt: '',
+  excerptAr: '',
   body: '',
+  bodyAr: '',
   heroImage: '',
   published: true,
   showInFooter: false,
@@ -137,6 +141,14 @@ export function SettingsManager({
                 {...settingsForm.register('tagline')}
               />
               <Input
+                label="Tagline (Arabic)"
+                dir="rtl"
+                containerClassName="md:col-span-2"
+                hint="Blank falls back to the English tagline."
+                error={settingsForm.formState.errors.taglineAr?.message}
+                {...settingsForm.register('taglineAr')}
+              />
+              <Input
                 label="Support email"
                 type="email"
                 required
@@ -165,20 +177,68 @@ export function SettingsManager({
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
+            <h2 className="font-display text-headline-sm">Language</h2>
+            <p className="mt-2 text-body-sm text-secondary">
+              Every product, category and page has an Arabic twin. Where one is left blank the
+              English text is shown instead, so a half-translated catalogue still reads.
+            </p>
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Select
+                label="Default language"
+                hint="What a first-time visitor sees before choosing."
+                error={settingsForm.formState.errors.defaultLocale?.message}
+                {...settingsForm.register('defaultLocale')}
+              >
+                <option value="en">English</option>
+                <option value="ar">العربية</option>
+              </Select>
+              <div className="flex items-end pb-3">
+                <Controller
+                  control={settingsForm.control}
+                  name="enableArabic"
+                  render={({ field }) => (
+                    <Checkbox
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      label="Offer Arabic — shows the language switcher"
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="border border-outline-variant bg-surface-lowest p-6">
             <h2 className="font-display text-headline-sm">Commerce defaults</h2>
             <p className="mt-2 text-body-sm text-secondary">
-              Zones in{' '}
+              Per-governorate prices in{' '}
               <Link href="/dashboard/shipping" className="underline underline-offset-4">
                 Shipping
               </Link>{' '}
-              override these per destination.
+              override the default rate below.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4">
               <Input
                 label="Currency symbol"
                 required
+                hint="Shown in English."
                 error={settingsForm.formState.errors.currencySymbol?.message}
                 {...settingsForm.register('currencySymbol')}
+              />
+              <Input
+                label="Currency symbol (Arabic)"
+                required
+                dir="rtl"
+                hint="e.g. ج.م"
+                error={settingsForm.formState.errors.currencySymbolAr?.message}
+                {...settingsForm.register('currencySymbolAr')}
+              />
+              <Input
+                label="Currency code"
+                required
+                hint="EGP, USD…"
+                error={settingsForm.formState.errors.currencyCode?.message}
+                {...settingsForm.register('currencyCode')}
               />
               <Input
                 label="Free shipping over"
@@ -221,6 +281,7 @@ export function SettingsManager({
               <Input label="Pinterest" placeholder="https://pinterest.com/luwjje" {...settingsForm.register('pinterestUrl')} />
               <Input label="TikTok" placeholder="https://tiktok.com/@luwjje" {...settingsForm.register('tiktokUrl')} />
               <Input label="Facebook" placeholder="https://facebook.com/luwjje" {...settingsForm.register('facebookUrl')} />
+              <Input label="WhatsApp" placeholder="https://wa.me/201000000000" {...settingsForm.register('whatsappUrl')} />
             </div>
           </section>
 
@@ -228,7 +289,9 @@ export function SettingsManager({
             <h2 className="font-display text-headline-sm">Newsletter &amp; SEO</h2>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <Input label="Newsletter heading" {...settingsForm.register('newsletterHeading')} />
+              <Input label="Newsletter heading (Arabic)" dir="rtl" {...settingsForm.register('newsletterHeadingAr')} />
               <Input label="Newsletter body" {...settingsForm.register('newsletterBody')} />
+              <Input label="Newsletter body (Arabic)" dir="rtl" {...settingsForm.register('newsletterBodyAr')} />
               <Input
                 label="Meta title"
                 hint="Used as the browser tab title and in search results."
@@ -468,11 +531,25 @@ export function SettingsManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Input
-              label="Title"
-              required
-              error={pageForm.formState.errors.title?.message}
-              {...pageForm.register('title')}
+            <Controller
+              control={pageForm.control}
+              name="title"
+              render={({ field: en }) => (
+                <Controller
+                  control={pageForm.control}
+                  name="titleAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Title"
+                      required
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                      errorEn={pageForm.formState.errors.title?.message}
+                      errorAr={pageForm.formState.errors.titleAr?.message}
+                    />
+                  )}
+                />
+              )}
             />
             <Input
               label="Slug"
@@ -482,20 +559,48 @@ export function SettingsManager({
               error={pageForm.formState.errors.slug?.message}
               {...pageForm.register('slug')}
             />
-            <Input
-              label="Excerpt"
-              containerClassName="md:col-span-2"
-              error={pageForm.formState.errors.excerpt?.message}
-              {...pageForm.register('excerpt')}
+            <Controller
+              control={pageForm.control}
+              name="excerpt"
+              render={({ field: en }) => (
+                <Controller
+                  control={pageForm.control}
+                  name="excerptAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Excerpt"
+                      className="md:col-span-2"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                      errorEn={pageForm.formState.errors.excerpt?.message}
+                      errorAr={pageForm.formState.errors.excerptAr?.message}
+                    />
+                  )}
+                />
+              )}
             />
           </div>
 
-          <Textarea
-            label="Body"
-            rows={16}
-            className="font-mono text-body-sm"
-            error={pageForm.formState.errors.body?.message}
-            {...pageForm.register('body')}
+          <Controller
+            control={pageForm.control}
+            name="body"
+            render={({ field: en }) => (
+              <Controller
+                control={pageForm.control}
+                name="bodyAr"
+                render={({ field: ar }) => (
+                  <BilingualField
+                    label="Body"
+                    rows={16}
+                    hint="Start a line with “## ” for a subheading; leave a blank line between paragraphs."
+                    english={{ value: en.value, onChange: en.onChange }}
+                    arabic={{ value: ar.value, onChange: ar.onChange }}
+                    errorEn={pageForm.formState.errors.body?.message}
+                    errorAr={pageForm.formState.errors.bodyAr?.message}
+                  />
+                )}
+              />
+            )}
           />
 
           <Controller

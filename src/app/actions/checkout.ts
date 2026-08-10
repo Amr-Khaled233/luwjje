@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { placeOrderSchema } from '@/lib/validations';
 import { createOrder } from '@/lib/orders';
 import { grantOrderAccess } from '@/lib/order-access';
+import { getLocale } from '@/i18n/server';
 
 export interface PlaceOrderResult {
   ok: boolean;
@@ -31,6 +32,7 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
     shipping: parsed.data.shipping,
     items: parsed.data.items,
     promoCode: parsed.data.promoCode,
+    locale: await getLocale(),
   });
 
   if (result.ok && result.orderNumber) {

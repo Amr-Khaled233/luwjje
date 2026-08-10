@@ -1,17 +1,86 @@
 import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+/**
+ * tailwind-merge has to guess whether `text-*` is a font size or a colour.
+ * Its default heuristic treats any unrecognised value as a colour, so
+ * `text-label-md` was landing in the colour group and silently evicting
+ * `text-background` — which is how the navy button ended up with navy text.
+ *
+ * Naming the theme's custom sizes fixes the classification for good.
+ */
+const FONT_SIZES = [
+  'display-lg',
+  'display-md',
+  'display-sm',
+  'headline-lg',
+  'headline-md',
+  'headline-sm',
+  'title-md',
+  'body-lg',
+  'body-md',
+  'body-sm',
+  'label-md',
+  'label-sm',
+  'label-caps',
+];
+
+const COLORS = [
+  'background',
+  'surface',
+  'surface-lowest',
+  'surface-low',
+  'surface-container',
+  'surface-bright',
+  'on-background',
+  'on-surface',
+  'navy',
+  'navy-soft',
+  'secondary',
+  'tertiary',
+  'outline',
+  'outline-soft',
+  'outline-variant',
+  'primary',
+  'error',
+  'inverse-surface',
+];
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      'font-size': [{ text: FONT_SIZES }],
+      'text-color': [{ text: COLORS }],
+      'bg-color': [{ bg: COLORS }],
+      'border-color': [{ border: COLORS }],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(value: number, symbol = '$') {
-  return `${symbol}${value.toFixed(2)}`;
+/**
+ * Prices are stored as plain numbers; the symbol and its side come from
+ * settings so the store can run in EGP, USD or anything else.
+ */
+export function formatPrice(value: number, symbol = 'EGP', locale: 'en' | 'ar' = 'en') {
+  const amount = new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US', {
+    minimumFractionDigits: value % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+  return locale === 'ar' ? `${amount} ${symbol}` : `${symbol} ${amount}`;
 }
 
-export function formatDate(value: Date | string) {
+export function formatDate(value: Date | string, locale: 'en' | 'ar' = 'en') {
   const d = typeof value === 'string' ? new Date(value) : value;
-  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export function slugify(input: string) {

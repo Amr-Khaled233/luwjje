@@ -4,45 +4,45 @@ import * as React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChevronDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Dictionary } from '@/i18n/dictionaries';
 
-const PRICE_RANGES = [
-  { value: '0-100', label: 'Under $100' },
-  { value: '100-250', label: '$100 – $250' },
-  { value: '250-500', label: '$250 – $500' },
-  { value: '500-+', label: '$500 and above' },
-];
+export interface FilterOption {
+  value: string;
+  label: string;
+  hex?: string;
+}
 
-const SORTS = [
-  { value: 'best', label: 'Best Selling' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
-  { value: 'newest', label: 'Newest' },
-];
-
+/**
+ * A select whose blank option is the *placeholder*. The real options must
+ * never repeat it — an earlier version listed "Best Selling" as both the
+ * placeholder and the first sort value, so it appeared twice.
+ */
 function FilterSelect({
-  label,
+  placeholder,
   value,
   options,
   onChange,
+  includeBlank = true,
 }: {
-  label: string;
+  placeholder: string;
   value: string;
-  options: { value: string; label: string }[];
+  options: FilterOption[];
   onChange: (v: string) => void;
+  includeBlank?: boolean;
 }) {
   const id = React.useId();
   return (
     <div className="relative">
       <label htmlFor={id} className="sr-only">
-        {label}
+        {placeholder}
       </label>
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="select-reset h-11 cursor-pointer border border-outline-variant bg-background pl-4 pr-9 text-label-md text-on-surface transition-colors focus:border-navy focus:outline-none"
+        className="select-reset h-11 cursor-pointer border border-outline-variant bg-background text-label-md text-on-surface transition-colors focus:border-navy focus:outline-none ltr:pl-4 ltr:pr-9 rtl:pl-9 rtl:pr-4"
       >
-        <option value="">{label}</option>
+        {includeBlank && <option value="">{placeholder}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -51,19 +51,25 @@ function FilterSelect({
       </select>
       <ChevronDown
         aria-hidden
-        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary"
+        className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-secondary ltr:right-3 rtl:left-3"
       />
     </div>
   );
 }
 
 export function ShopFilterBar({
+  t,
   colors,
   categories,
+  priceRanges,
+  showSort,
   className,
 }: {
-  colors: { name: string; hex: string }[];
-  categories: { name: string; slug: string }[];
+  t: Dictionary;
+  colors: FilterOption[];
+  categories: FilterOption[];
+  priceRanges: FilterOption[];
+  showSort: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -84,6 +90,13 @@ export function ShopFilterBar({
     [pathname, router, searchParams],
   );
 
+  const SORTS: FilterOption[] = [
+    { value: 'best', label: t.shop.sort.best },
+    { value: 'price-asc', label: t.shop.sort.priceAsc },
+    { value: 'price-desc', label: t.shop.sort.priceDesc },
+    { value: 'newest', label: t.shop.sort.newest },
+  ];
+
   const active = {
     color: searchParams.get('color') ?? '',
     category: searchParams.get('category') ?? '',
@@ -93,17 +106,22 @@ export function ShopFilterBar({
   };
 
   const chips = [
-    active.q && { key: 'q', label: `Search: ${active.q}` },
-    active.color && { key: 'color', label: active.color },
+    active.q && { key: 'q', label: `${t.shop.searchLabel}: ${active.q}` },
+    active.color && {
+      key: 'color',
+      label: colors.find((c) => c.value === active.color)?.label ?? active.color,
+    },
     active.category && {
       key: 'category',
-      label: categories.find((c) => c.slug === active.category)?.name ?? active.category,
+      label: categories.find((c) => c.value === active.category)?.label ?? active.category,
     },
     active.price && {
       key: 'price',
-      label: PRICE_RANGES.find((p) => p.value === active.price)?.label ?? active.price,
+      label: priceRanges.find((p) => p.value === active.price)?.label ?? active.price,
     },
   ].filter(Boolean) as { key: string; label: string }[];
+
+  const hasFilters = colors.length > 0 || categories.length > 0 || priceRanges.length > 0;
 
   return (
     <div className={cn('border-y border-outline-variant', className)}>
@@ -113,37 +131,54 @@ export function ShopFilterBar({
           pending && 'opacity-50',
         )}
       >
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="label-caps mr-1 hidden text-secondary md:inline">Filter</span>
-          <FilterSelect
-            label="Colour"
-            value={active.color}
-            options={colors.map((c) => ({ value: c.name, label: c.name }))}
-            onChange={(v) => setParam('color', v)}
-          />
-          <FilterSelect
-            label="Category"
-            value={active.category}
-            options={categories.map((c) => ({ value: c.slug, label: c.name }))}
-            onChange={(v) => setParam('category', v)}
-          />
-          <FilterSelect
-            label="Price"
-            value={active.price}
-            options={PRICE_RANGES}
-            onChange={(v) => setParam('price', v)}
-          />
-        </div>
+        {hasFilters ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="label-caps hidden text-secondary md:inline ltr:mr-1 rtl:ml-1">
+              {t.shop.filter}
+            </span>
+            {colors.length > 0 && (
+              <FilterSelect
+                placeholder={t.shop.colour}
+                value={active.color}
+                options={colors}
+                onChange={(v) => setParam('color', v)}
+              />
+            )}
+            {categories.length > 0 && (
+              <FilterSelect
+                placeholder={t.shop.category}
+                value={active.category}
+                options={categories}
+                onChange={(v) => setParam('category', v)}
+              />
+            )}
+            {priceRanges.length > 0 && (
+              <FilterSelect
+                placeholder={t.shop.price}
+                value={active.price}
+                options={priceRanges}
+                onChange={(v) => setParam('price', v)}
+              />
+            )}
+          </div>
+        ) : (
+          <span />
+        )}
 
-        <div className="flex items-center gap-3">
-          <span className="label-caps hidden text-secondary md:inline">Sort by</span>
-          <FilterSelect
-            label="Best Selling"
-            value={active.sort}
-            options={SORTS}
-            onChange={(v) => setParam('sort', v)}
-          />
-        </div>
+        {showSort && (
+          <div className="flex items-center gap-3">
+            <span className="label-caps hidden text-secondary md:inline">{t.shop.sortBy}</span>
+            {/* No blank option: sorting always has a value, so a placeholder
+                would duplicate whichever sort is the default. */}
+            <FilterSelect
+              placeholder={t.shop.sortBy}
+              value={active.sort}
+              options={SORTS}
+              onChange={(v) => setParam('sort', v)}
+              includeBlank={false}
+            />
+          </div>
+        )}
       </div>
 
       {chips.length > 0 && (
@@ -160,9 +195,9 @@ export function ShopFilterBar({
           ))}
           <button
             onClick={() => startTransition(() => router.push(pathname, { scroll: false }))}
-            className="label-caps ml-2 text-secondary underline-offset-4 hover:underline"
+            className="label-caps text-secondary underline-offset-4 hover:underline ltr:ml-2 rtl:mr-2"
           >
-            Clear all
+            {t.shop.clearAll}
           </button>
         </div>
       )}

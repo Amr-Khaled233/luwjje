@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { ArrowRight } from 'lucide-react';
 
-export function NewsletterForm() {
+export function NewsletterForm({ placeholder, label }: { placeholder: string; label: string }) {
   const [email, setEmail] = React.useState('');
   const [state, setState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = React.useState('');
@@ -44,16 +44,16 @@ export function NewsletterForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Your email"
+          placeholder={placeholder}
           className="h-12 min-w-0 flex-1 bg-transparent px-4 text-body-sm outline-none placeholder:text-tertiary"
         />
         <button
           type="submit"
           disabled={state === 'loading'}
-          aria-label="Subscribe"
+          aria-label={label}
           className="flex h-12 w-12 shrink-0 items-center justify-center border-l border-outline-variant transition-colors hover:bg-navy hover:text-background disabled:opacity-50"
         >
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
         </button>
       </div>
       {state === 'error' && <p className="mt-2 text-body-sm text-error">{message}</p>}

@@ -5,6 +5,14 @@
 @layer base {
   :root {
     --gutter: 32px;
+    /* Latin by default; the Arabic block below swaps both stacks at once. */
+    --font-body: var(--font-inter);
+    --font-heading: var(--font-playfair);
+  }
+
+  html[data-locale='ar'] {
+    --font-body: var(--font-arabic-sans);
+    --font-heading: var(--font-arabic-display);
   }
 
   html {
@@ -14,6 +22,17 @@
 
   body {
     @apply bg-background text-on-background font-sans text-body-md;
+  }
+
+  /* Arabic display type sits lower and needs more line height than Playfair. */
+  html[data-locale='ar'] :is(h1, h2, h3) {
+    line-height: 1.45;
+  }
+
+  /* Latin numerals inside Arabic copy should not flip direction. */
+  html[data-locale='ar'] .tabular-nums,
+  html[data-locale='ar'] [dir='ltr'] {
+    direction: ltr;
   }
 
   ::selection {

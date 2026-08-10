@@ -50,8 +50,11 @@ const config: Config = {
         'inverse-surface': '#213145',
       },
       fontFamily: {
-        display: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
-        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        // --font-heading / --font-body are swapped per locale in globals.css,
+        // so every existing `font-display` / `font-sans` follows the language.
+        display: ['var(--font-heading)', 'var(--font-playfair)', 'Georgia', 'serif'],
+        sans: ['var(--font-body)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        latin: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display-lg': ['64px', { lineHeight: '72px', letterSpacing: '-0.02em' }],
@@ -75,6 +78,10 @@ const config: Config = {
         'stack-sm': '16px',
         'stack-md': '40px',
         'stack-lg': '80px',
+      },
+      gridTemplateColumns: {
+        // The product editor's colourway row needs one more column than 12.
+        14: 'repeat(14, minmax(0, 1fr))',
       },
       maxWidth: {
         container: '1440px',

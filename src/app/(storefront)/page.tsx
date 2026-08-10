@@ -5,17 +5,22 @@ import { ButtonLink } from '@/components/ui/button';
 import { SectionHeading } from '@/components/ui/primitives';
 import { ProductGrid } from '@/components/storefront/product-card';
 import { getBestSellers } from '@/lib/queries';
-import { getActiveBanners, getPaletteSwatches, getSettings } from '@/lib/settings';
+import { getActiveBanners, getPaletteSwatches, getSettings, getCurrencySymbol } from '@/lib/settings';
+import { getI18n } from '@/i18n/server';
+import { pick } from '@/i18n/config';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [heroes, offers, bestSellers, swatches, settings] = await Promise.all([
-    getActiveBanners('HERO'),
-    getActiveBanners('OFFER'),
-    getBestSellers(4),
+  const { locale, t } = await getI18n();
+
+  const [heroes, offers, bestSellers, swatches, settings, symbol] = await Promise.all([
+    getActiveBanners('HERO', locale),
+    getActiveBanners('OFFER', locale),
+    getBestSellers(locale, 4),
     getPaletteSwatches(),
     getSettings(),
+    getCurrencySymbol(locale),
   ]);
 
   const hero = heroes[0];
@@ -48,7 +53,7 @@ export default async function HomePage() {
                 <p className="mt-6 max-w-[46ch] text-body-lg text-secondary">{hero.body}</p>
               )}
               <ButtonLink href={hero.ctaHref || '/shop'} size="lg" className="mt-8">
-                {hero.ctaLabel || 'Shop Now'}
+                {hero.ctaLabel}
               </ButtonLink>
             </div>
           </div>
@@ -58,25 +63,28 @@ export default async function HomePage() {
       {/* ------------------------------------------------------ best sellers */}
       <section className="container-luwjje pt-stack-lg">
         <SectionHeading
-          eyebrow="Most wanted"
-          title="Best Sellers"
+          eyebrow={t.home.bestSellersEyebrow}
+          title={t.home.bestSellers}
           action={
-            <Link
-              href="/shop?sort=best"
-              className="label-caps group flex items-center gap-2 text-secondary transition-colors hover:text-on-surface"
-            >
-              View All
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 ease-scandi group-hover:translate-x-1" />
-            </Link>
+            bestSellers.length > 0 ? (
+              <Link
+                href="/shop?sort=best"
+                className="label-caps group flex items-center gap-2 text-secondary transition-colors hover:text-on-surface"
+              >
+                {t.home.viewAll}
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 ease-scandi group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+              </Link>
+            ) : null
           }
         />
         <div className="mt-stack-md">
           {bestSellers.length ? (
-            <ProductGrid products={bestSellers} />
+            <ProductGrid products={bestSellers} currencySymbol={symbol} locale={locale} t={t} />
           ) : (
-            <p className="text-body-md text-secondary">
-              No products published yet. Add them from the admin dashboard.
-            </p>
+            <div className="border border-dashed border-outline-variant px-6 py-16 text-center">
+              <p className="font-display text-headline-sm">{t.home.emptyCatalogue}</p>
+              <p className="mt-2 text-body-md text-secondary">{t.home.emptyCatalogueHint}</p>
+            </div>
           )}
         </div>
       </section>
@@ -109,8 +117,8 @@ export default async function HomePage() {
               )}
               {offer.endsAt && (
                 <p className="mt-4 text-body-sm text-tertiary">
-                  Ends{' '}
-                  {offer.endsAt.toLocaleDateString('en-US', {
+                  {t.home.endsOn}{' '}
+                  {offer.endsAt.toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
@@ -118,7 +126,7 @@ export default async function HomePage() {
                 </p>
               )}
               <ButtonLink href={offer.ctaHref || '/shop'} size="lg" className="mt-8 w-fit">
-                {offer.ctaLabel || 'Explore'}
+                {offer.ctaLabel}
               </ButtonLink>
             </div>
           </div>
@@ -128,7 +136,7 @@ export default async function HomePage() {
       {/* ---------------------------------------------------------- palette */}
       {swatches.length > 0 && (
         <section className="container-luwjje pt-stack-lg">
-          <SectionHeading eyebrow="The collection" title="Colour Palette" />
+          <SectionHeading eyebrow={t.home.paletteEyebrow} title={t.home.palette} />
           <div className="mt-stack-md grid grid-cols-2 gap-x-gutter gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
             {swatches.map((s) => (
               <div key={s.id}>
@@ -136,8 +144,10 @@ export default async function HomePage() {
                   className="aspect-square w-full border border-outline-variant"
                   style={{ backgroundColor: s.hex }}
                 />
-                <p className="mt-3 text-body-sm">{s.name}</p>
-                <p className="mt-0.5 text-body-sm uppercase text-tertiary">{s.hex}</p>
+                <p className="mt-3 text-body-sm">{pick(locale, s.name, s.nameAr)}</p>
+                <p className="mt-0.5 text-body-sm uppercase text-tertiary" dir="ltr">
+                  {s.hex}
+                </p>
               </div>
             ))}
           </div>

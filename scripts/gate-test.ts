@@ -11,7 +11,7 @@ import './load-env';
 import { checkPassword } from '../src/lib/dashboard-auth';
 import { COOKIE_NAME, createSessionToken, verifySessionToken } from '../src/lib/session-token';
 import { signToken } from '../src/lib/signing';
-import { findOrderForCustomer } from '../src/lib/order-lookup';
+import { findOrdersForEmail } from '../src/lib/order-lookup';
 import { prisma } from '../src/lib/prisma';
 
 const BASE = process.env.GATE_BASE ?? 'http://localhost:3010';
@@ -63,41 +63,32 @@ async function main() {
   );
 
   console.log('\n▸ Guest order lookup');
-  const sample = await prisma.order.findFirstOrThrow({
-    select: { orderNumber: true, email: true },
-  });
+  const sample = await prisma.order.findFirst({ select: { email: true } });
 
-  const match = await findOrderForCustomer({
-    orderNumber: sample.orderNumber,
-    email: sample.email,
-  });
-  check('order number + matching email succeeds', match.ok && match.orderNumber === sample.orderNumber, match);
+  if (!sample) {
+    console.log('  … skipped: no orders in the database yet.');
+  } else {
+    const match = await findOrdersForEmail({ email: sample.email });
+    check('a known email returns its orders', match.ok && match.orders.length > 0, match);
 
-  const lowercase = await findOrderForCustomer({
-    orderNumber: sample.orderNumber.toLowerCase(),
-    email: sample.email.toUpperCase(),
-  });
-  check('lookup is case-insensitive', lowercase.ok, lowercase);
+    const upper = await findOrdersForEmail({ email: sample.email.toUpperCase() });
+    check('lookup is case-insensitive', upper.ok, upper);
 
-  const wrongEmail = await findOrderForCustomer({
-    orderNumber: sample.orderNumber,
-    email: 'someone-else@example.com',
-  });
-  check('right order number + wrong email fails', !wrongEmail.ok);
-  check(
-    'the failure message does not confirm the order exists',
-    !wrongEmail.ok && wrongEmail.error === 'We could not find an order with those details.',
-    wrongEmail,
-  );
+    if (match.ok) {
+      const total = await prisma.order.count({ where: { email: sample.email } });
+      check(
+        'every order for that email comes back',
+        match.orders.length === Math.min(total, 50),
+        { returned: match.orders.length, total },
+      );
+    }
+  }
 
-  const missing = await findOrderForCustomer({ orderNumber: 'LW-NOPE99', email: sample.email });
-  check(
-    'unknown order number fails identically',
-    !missing.ok && !wrongEmail.ok && missing.error === wrongEmail.error,
-  );
+  const unknown = await findOrdersForEmail({ email: 'nobody-at-all@example.com' });
+  check('an unknown email returns nothing', !unknown.ok);
 
-  const junk = await findOrderForCustomer({ orderNumber: '', email: 'not-an-email' });
-  check('malformed input is rejected', !junk.ok);
+  const junk = await findOrdersForEmail({ email: 'not-an-email' });
+  check('a malformed email is rejected', !junk.ok);
 
   console.log('\n▸ HTTP gate (dev server must be running)');
   let reachable = true;

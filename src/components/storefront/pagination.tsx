@@ -8,10 +8,14 @@ import { cn } from '@/lib/utils';
 export function Pagination({
   page,
   pageCount,
+  previousLabel,
+  nextLabel,
   className,
 }: {
   page: number;
   pageCount: number;
+  previousLabel: string;
+  nextLabel: string;
   className?: string;
 }) {
   const pathname = usePathname();
@@ -39,9 +43,9 @@ export function Pagination({
           'flex h-11 w-11 items-center justify-center border border-outline-variant transition-colors hover:border-navy',
           page <= 1 && 'pointer-events-none opacity-30',
         )}
-        aria-label="Previous page"
+        aria-label={previousLabel}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
       </Link>
 
       {pages.map((p, i) => (
@@ -72,9 +76,9 @@ export function Pagination({
           'flex h-11 w-11 items-center justify-center border border-outline-variant transition-colors hover:border-navy',
           page >= pageCount && 'pointer-events-none opacity-30',
         )}
-        aria-label="Next page"
+        aria-label={nextLabel}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4 rtl:rotate-180" />
       </Link>
     </nav>
   );

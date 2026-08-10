@@ -7,7 +7,11 @@ import { slugify } from '@/lib/utils';
 import {
   productSchema,
   promoSchema,
-  shippingZoneSchema,
+  governorateSchema,
+  governorateRatesSchema,
+  filterColorSchema,
+  priceRangeSchema,
+  filterVisibilitySchema,
   bannerSchema,
   discountSchema,
   settingsSchema,
@@ -104,10 +108,14 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
 
     const base = {
       name: data.name,
+      nameAr: data.nameAr,
       slug,
       description: data.description,
+      descriptionAr: data.descriptionAr,
       materialInfo: data.materialInfo,
+      materialInfoAr: data.materialInfoAr,
       careInfo: data.careInfo,
+      careInfoAr: data.careInfoAr,
       price: data.price,
       compareAtPrice: data.compareAtPrice || null,
       sku: data.sku || null,
@@ -140,6 +148,7 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
           const v = data.variants[i];
           const payload = {
             colorName: v.colorName,
+            colorNameAr: v.colorNameAr,
             colorHex: v.colorHex,
             size: v.size || null,
             sku: v.sku.trim(),
@@ -163,6 +172,7 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
           variants: {
             create: data.variants.map((v, i) => ({
               colorName: v.colorName,
+              colorNameAr: v.colorNameAr,
               colorHex: v.colorHex,
               size: v.size || null,
               sku: v.sku.trim(),
@@ -266,7 +276,7 @@ export async function saveCategory(input: unknown): Promise<ActionResult> {
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return zodErrors(parsed.error);
 
-    const { id, name, description } = parsed.data;
+    const { id, name, nameAr, description, descriptionAr, visible } = parsed.data;
     const slug = slugify(name);
 
     const clash = await prisma.category.findFirst({
@@ -275,10 +285,15 @@ export async function saveCategory(input: unknown): Promise<ActionResult> {
     if (clash) return { ok: false, error: 'A category with that name already exists.' };
 
     if (id) {
-      await prisma.category.update({ where: { id }, data: { name, slug, description } });
+      await prisma.category.update({
+        where: { id },
+        data: { name, nameAr, slug, description, descriptionAr, visible },
+      });
     } else {
       const count = await prisma.category.count();
-      await prisma.category.create({ data: { name, slug, description, position: count } });
+      await prisma.category.create({
+        data: { name, nameAr, slug, description, descriptionAr, visible, position: count },
+      });
     }
 
     revalidateStorefront();
@@ -411,6 +426,7 @@ export async function savePromoCode(input: unknown): Promise<ActionResult> {
     const payload = {
       code: d.code,
       description: d.description,
+      descriptionAr: d.descriptionAr,
       discountType: d.discountType,
       discountValue: d.discountValue,
       minOrder: d.minOrder,
@@ -448,25 +464,30 @@ export async function togglePromoCode(id: string): Promise<ActionResult> {
 
 // ================================================================ shipping
 
-export async function saveShippingZone(input: unknown): Promise<ActionResult> {
+export async function saveGovernorate(input: unknown): Promise<ActionResult> {
   return guard(async () => {
-    const parsed = shippingZoneSchema.safeParse(input);
+    const parsed = governorateSchema.safeParse(input);
     if (!parsed.success) return zodErrors(parsed.error);
 
     const d = parsed.data;
+    const clash = await prisma.governorate.findFirst({
+      where: { name: d.name, ...(d.id ? { NOT: { id: d.id } } : {}) },
+    });
+    if (clash) return { ok: false, error: 'A governorate with that name already exists.' };
+
     const payload = {
       name: d.name,
-      countries: d.countries,
-      rate: d.rate,
+      nameAr: d.nameAr,
+      shippingCost: d.shippingCost,
       freeOver: d.freeOver ?? null,
       estimatedDays: d.estimatedDays,
       active: d.active,
     };
 
-    if (d.id) await prisma.shippingZone.update({ where: { id: d.id }, data: payload });
+    if (d.id) await prisma.governorate.update({ where: { id: d.id }, data: payload });
     else {
-      const count = await prisma.shippingZone.count();
-      await prisma.shippingZone.create({ data: { ...payload, position: count } });
+      const count = await prisma.governorate.count();
+      await prisma.governorate.create({ data: { ...payload, position: count } });
     }
 
     revalidateStorefront();
@@ -475,11 +496,195 @@ export async function saveShippingZone(input: unknown): Promise<ActionResult> {
   }) as Promise<ActionResult>;
 }
 
-export async function deleteShippingZone(id: string): Promise<ActionResult> {
+/** Bulk save from the shipping table — one round trip for the whole grid. */
+export async function saveGovernorateRates(input: unknown): Promise<ActionResult> {
   return guard(async () => {
-    await prisma.shippingZone.delete({ where: { id } });
+    const parsed = governorateRatesSchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    await prisma.$transaction(
+      parsed.data.rates.map((r) =>
+        prisma.governorate.update({
+          where: { id: r.id },
+          data: { shippingCost: r.shippingCost, active: r.active },
+        }),
+      ),
+    );
+
     revalidateStorefront();
     revalidatePath('/dashboard/shipping');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function deleteGovernorate(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    await prisma.governorate.delete({ where: { id } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/shipping');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+// ================================================================ shop filters
+
+/**
+ * Rebuilds the filter colour list from the colourways actually in the
+ * catalogue, preserving the visibility and Arabic name already chosen.
+ */
+export async function syncFilterColors(): Promise<ActionResult> {
+  return guard(async () => {
+    const [variants, existing] = await Promise.all([
+      prisma.productVariant.findMany({
+        select: { colorName: true, colorNameAr: true, colorHex: true },
+        distinct: ['colorName'],
+        orderBy: { colorName: 'asc' },
+      }),
+      prisma.filterColor.findMany(),
+    ]);
+
+    const known = new Map(existing.map((c) => [c.name, c]));
+    let position = existing.length;
+
+    for (const v of variants) {
+      const row = known.get(v.colorName);
+      if (row) {
+        // Keep whatever the admin chose; only refresh the swatch.
+        await prisma.filterColor.update({
+          where: { id: row.id },
+          data: { hex: v.colorHex, nameAr: row.nameAr || v.colorNameAr },
+        });
+      } else {
+        await prisma.filterColor.create({
+          data: {
+            name: v.colorName,
+            nameAr: v.colorNameAr,
+            hex: v.colorHex,
+            visible: true,
+            position: position++,
+          },
+        });
+      }
+    }
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function saveFilterColor(input: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = filterColorSchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    const { id, ...data } = parsed.data;
+    if (id) await prisma.filterColor.update({ where: { id }, data });
+    else {
+      const count = await prisma.filterColor.count();
+      await prisma.filterColor.create({ data: { ...data, position: count } });
+    }
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function toggleFilterColor(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    const row = await prisma.filterColor.findUnique({ where: { id }, select: { visible: true } });
+    if (!row) return { ok: false, error: 'Colour not found.' };
+    await prisma.filterColor.update({ where: { id }, data: { visible: !row.visible } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function deleteFilterColor(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    await prisma.filterColor.delete({ where: { id } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function savePriceRange(input: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = priceRangeSchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    const { id, max, ...rest } = parsed.data;
+    const data = { ...rest, max: max ?? null };
+
+    if (id) await prisma.priceRange.update({ where: { id }, data });
+    else {
+      const count = await prisma.priceRange.count();
+      await prisma.priceRange.create({ data: { ...data, position: count } });
+    }
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function deletePriceRange(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    await prisma.priceRange.delete({ where: { id } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function saveFilterVisibility(input: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = filterVisibilitySchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    await prisma.siteSettings.upsert({
+      where: { id: 'singleton' },
+      update: parsed.data,
+      create: { id: 'singleton', ...parsed.data },
+    });
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function toggleCategoryVisible(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    const row = await prisma.category.findUnique({ where: { id }, select: { visible: true } });
+    if (!row) return { ok: false, error: 'Category not found.' };
+    await prisma.category.update({ where: { id }, data: { visible: !row.visible } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/categories');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function reorderCategory(id: string, direction: 'up' | 'down'): Promise<ActionResult> {
+  return guard(async () => {
+    const list = await prisma.category.findMany({
+      orderBy: { position: 'asc' },
+      select: { id: true },
+    });
+    const index = list.findIndex((c) => c.id === id);
+    const swapWith = direction === 'up' ? index - 1 : index + 1;
+    if (index === -1 || swapWith < 0 || swapWith >= list.length) return { ok: true };
+
+    [list[index], list[swapWith]] = [list[swapWith], list[index]];
+    await prisma.$transaction(
+      list.map((c, i) => prisma.category.update({ where: { id: c.id }, data: { position: i } })),
+    );
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/categories');
     return { ok: true };
   }) as Promise<ActionResult>;
 }
@@ -495,13 +700,19 @@ export async function saveBanner(input: unknown): Promise<ActionResult> {
     const payload = {
       slot: d.slot,
       eyebrow: d.eyebrow,
+      eyebrowAr: d.eyebrowAr,
       heading: d.heading,
+      headingAr: d.headingAr,
       subheading: d.subheading,
+      subheadingAr: d.subheadingAr,
       body: d.body,
+      bodyAr: d.bodyAr,
       ctaLabel: d.ctaLabel,
+      ctaLabelAr: d.ctaLabelAr,
       ctaHref: d.ctaHref,
       imageUrl: d.imageUrl,
       badge: d.badge,
+      badgeAr: d.badgeAr,
       active: d.active,
       startsAt: parseDate(d.startsAt),
       endsAt: parseDate(d.endsAt),
@@ -543,6 +754,7 @@ export async function saveDiscount(input: unknown): Promise<ActionResult> {
 
     const payload = {
       name: d.name,
+      nameAr: d.nameAr,
       discountType: d.discountType,
       discountValue: d.discountValue,
       scope: d.scope,
@@ -587,6 +799,7 @@ const swatchSchema = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1).max(60),
+        nameAr: z.string().trim().max(60).optional(),
         hex: z
           .string()
           .trim()
@@ -605,7 +818,12 @@ export async function savePaletteSwatches(input: unknown): Promise<ActionResult>
       await tx.paletteSwatch.deleteMany();
       if (parsed.data.swatches.length) {
         await tx.paletteSwatch.createMany({
-          data: parsed.data.swatches.map((s, i) => ({ name: s.name, hex: s.hex, position: i })),
+          data: parsed.data.swatches.map((s, i) => ({
+            name: s.name,
+            nameAr: s.nameAr ?? '',
+            hex: s.hex,
+            position: i,
+          })),
         });
       }
     });
@@ -653,8 +871,11 @@ export async function savePage(input: unknown): Promise<ActionResult> {
     const payload = {
       slug: d.slug,
       title: d.title,
+      titleAr: d.titleAr,
       excerpt: d.excerpt,
+      excerptAr: d.excerptAr,
       body: d.body,
+      bodyAr: d.bodyAr,
       heroImage: d.heroImage,
       published: d.published,
       showInFooter: d.showInFooter,

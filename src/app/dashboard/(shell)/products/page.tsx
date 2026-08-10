@@ -30,10 +30,14 @@ export default async function AdminProductsPage() {
         products={products.map((p) => ({
           id: p.id,
           name: p.name,
+          nameAr: p.nameAr,
           slug: p.slug,
           description: p.description,
+          descriptionAr: p.descriptionAr,
           materialInfo: p.materialInfo,
+          materialInfoAr: p.materialInfoAr,
           careInfo: p.careInfo,
+          careInfoAr: p.careInfoAr,
           price: p.price,
           compareAtPrice: p.compareAtPrice,
           sku: p.sku,
@@ -47,6 +51,7 @@ export default async function AdminProductsPage() {
           variants: p.variants.map((v) => ({
             id: v.id,
             colorName: v.colorName,
+            colorNameAr: v.colorNameAr,
             colorHex: v.colorHex,
             size: v.size,
             sku: v.sku,

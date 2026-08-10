@@ -56,27 +56,49 @@ async function main() {
   const unknown = await validatePromoCode('DEFINITELY-NOT-A-CODE', 200);
   check('unknown code rejected', !unknown.ok);
 
-  const belowMin = await validatePromoCode('SNOOD25', 50);
-  check('minimum spend enforced', !belowMin.ok, belowMin.message);
+  // Own fixtures rather than seed data: a code that merely does not exist
+  // also returns !ok, so these checks would pass for the wrong reason.
+  await prisma.promoCode.deleteMany({ where: { code: { in: ['SMOKEFIXED', 'SMOKEOFF'] } } });
+  await prisma.promoCode.createMany({
+    data: [
+      {
+        code: 'SMOKEFIXED',
+        discountType: 'FIXED',
+        discountValue: 25,
+        minOrder: 100,
+        active: true,
+      },
+      { code: 'SMOKEOFF', discountType: 'PERCENT', discountValue: 50, active: false },
+    ],
+  });
 
-  const aboveMin = await validatePromoCode('SNOOD25', 250);
+  const belowMin = await validatePromoCode('SMOKEFIXED', 50);
+  check(
+    'minimum spend enforced',
+    !belowMin.ok && /at least/i.test(belowMin.message),
+    belowMin.message,
+  );
+
+  const aboveMin = await validatePromoCode('SMOKEFIXED', 250);
   check('fixed discount applies above minimum', aboveMin.ok && aboveMin.discount === 25, aboveMin);
 
-  const disabled = await validatePromoCode('ARCHIVE15', 500);
-  check('disabled code rejected', !disabled.ok);
+  const disabled = await validatePromoCode('SMOKEOFF', 500);
+  check('an existing but disabled code is rejected', !disabled.ok, disabled);
+
+  await prisma.promoCode.deleteMany({ where: { code: { in: ['SMOKEFIXED', 'SMOKEOFF'] } } });
 
   console.log('\n▸ Shipping');
-  const eg = await calculateShipping('Egypt', 50);
-  check('zone rate applied', eg.cost === 5 && eg.zoneName === 'Egypt', eg);
+  const eg = await calculateShipping('Cairo', 50);
+  check('governorate rate applied', eg.cost > 0 && eg.zoneName === 'Cairo', eg);
 
-  const egFree = await calculateShipping('Egypt', 120);
-  check('zone free-shipping threshold applied', egFree.free && egFree.cost === 0, egFree);
+  const egFree = await calculateShipping('Cairo', 500000);
+  check('free-shipping threshold applied', egFree.free && egFree.cost === 0, egFree);
 
-  const us = await calculateShipping('United States', 100);
-  check('different zone, different rate', us.cost === 22, us);
+  const aswan = await calculateShipping('Aswan', 100);
+  check('a distant governorate costs more than Cairo', aswan.cost > eg.cost, { aswan, cairo: eg.cost });
 
-  const unknownRegion = await calculateShipping('Atlantis', 10);
-  check('unknown region falls back to the global rate', unknownRegion.zoneName === 'Standard', unknownRegion);
+  const unknownGov = await calculateShipping('Atlantis', 10);
+  check('unknown governorate falls back to the global rate', unknownGov.zoneName === 'Standard', unknownGov);
 
   console.log('\n▸ Order transaction');
   const before = {
@@ -92,9 +114,8 @@ async function main() {
       email: 'smoke-test@luwjje.local',
       phone: '+20 100 000 0000',
       street: '1 Test Lane',
-      city: 'Cairo',
-      region: 'Egypt',
-      postalCode: '11511',
+      area: 'Zamalek',
+      governorate: 'Cairo',
       notes: '',
     },
     items: [{ variantId: variant.id, quantity: 2 }],
@@ -110,8 +131,17 @@ async function main() {
   });
 
   const price = variant.product.price;
+  const settings = await prisma.siteSettings.findUniqueOrThrow({ where: { id: 'singleton' } });
+  const freeExpected = order.subtotal >= settings.freeShippingOver;
+
   check('subtotal recomputed server-side', order.subtotal === price * 2, order.subtotal);
-  check('free shipping applied (Egypt, >$80)', order.shippingCost === 0, order.shippingCost);
+  check(
+    freeExpected
+      ? 'free shipping applied above the threshold'
+      : 'governorate delivery price charged',
+    order.shippingCost === (freeExpected ? 0 : eg.cost),
+    { charged: order.shippingCost, cairo: eg.cost, threshold: settings.freeShippingOver },
+  );
   check('promo discount applied', order.discount === Math.round(price * 2 * 0.1 * 100) / 100, order.discount);
   check('total = subtotal + shipping − discount', order.total === order.subtotal + order.shippingCost - order.discount, order.total);
   check('line item snapshot stored', order.items[0]?.name === variant.product.name);
@@ -132,9 +162,8 @@ async function main() {
       email: 'smoke-test@luwjje.local',
       phone: '+20 100 000 0000',
       street: '1 Test Lane',
-      city: 'Cairo',
-      region: 'Egypt',
-      postalCode: '11511',
+      area: 'Zamalek',
+      governorate: 'Cairo',
       notes: '',
     },
     items: [{ variantId: variant.id, quantity: afterVariant.stock + 50 }],

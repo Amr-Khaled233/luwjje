@@ -8,6 +8,9 @@ import { ColorDot } from '@/components/ui/primitives';
 import { useCart } from '@/lib/cart-store';
 import { useToast } from '@/components/ui/toast';
 import { formatPrice, cn } from '@/lib/utils';
+import { fmt } from '@/i18n/dictionaries';
+import type { Locale } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
 
 interface Variant {
   id: string;
@@ -59,7 +62,17 @@ function Accordion({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-export function ProductDetail({ product }: { product: DetailProduct }) {
+export function ProductDetail({
+  product,
+  currencySymbol,
+  locale,
+  t,
+}: {
+  product: DetailProduct;
+  currencySymbol: string;
+  locale: Locale;
+  t: Dictionary;
+}) {
   const { toast } = useToast();
   const addItem = useCart((s) => s.addItem);
   const openCart = useCart((s) => s.openCart);
@@ -131,7 +144,7 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
     openCart();
-    toast(`${product.name} added to your bag.`);
+    toast(fmt(t.product.addedToast, { name: product.name }));
   }
 
   return (
@@ -180,11 +193,11 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
         <div className="mt-4 flex items-baseline gap-3">
           {product.discounted && (
             <span className="text-body-lg text-tertiary line-through">
-              {formatPrice(product.listPrice)}
+              {formatPrice(product.listPrice, currencySymbol, locale)}
             </span>
           )}
           <span className={cn('text-body-lg', product.discounted && 'text-error')}>
-            {formatPrice(product.price)}
+            {formatPrice(product.price, currencySymbol, locale)}
           </span>
         </div>
 
@@ -197,7 +210,7 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
         {/* colour */}
         <div className="mt-stack-sm pt-4">
           <p className="label-caps mb-4 text-secondary">
-            Colour — <span className="text-on-surface">{color}</span>
+            {t.product.colour} — <span className="text-on-surface">{color}</span>
           </p>
           <div className="flex flex-wrap items-center gap-3">
             {colors.map((c) => {
@@ -224,7 +237,7 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
         {sizesForColor.length > 0 && (
           <div className="mt-8">
             <p className="label-caps mb-4 text-secondary">
-              Size — <span className="text-on-surface">{size}</span>
+              {t.product.size} — <span className="text-on-surface">{size}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {sizesForColor.map((v) => (
@@ -250,10 +263,10 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
 
         {/* stock notice */}
         {selected && maxStock > 0 && maxStock <= 5 && (
-          <p className="mt-6 text-body-sm text-error">Only {maxStock} left in this colourway.</p>
+          <p className="mt-6 text-body-sm text-error">{fmt(t.product.onlyLeft, { n: maxStock })}</p>
         )}
         {selected && maxStock === 0 && (
-          <p className="mt-6 text-body-sm text-error">This combination is sold out.</p>
+          <p className="mt-6 text-body-sm text-error">{t.product.combinationSoldOut}</p>
         )}
 
         {/* quantity + add */}
@@ -263,7 +276,7 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               disabled={quantity <= 1}
               className="flex h-full w-12 items-center justify-center transition-colors hover:bg-surface-low disabled:opacity-30"
-              aria-label="Decrease quantity"
+              aria-label={t.product.decreaseQty}
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -274,7 +287,7 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
               onClick={() => setQuantity((q) => Math.min(maxStock || 1, q + 1))}
               disabled={quantity >= maxStock}
               className="flex h-full w-12 items-center justify-center transition-colors hover:bg-surface-low disabled:opacity-30"
-              aria-label="Increase quantity"
+              aria-label={t.product.increaseQty}
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -283,14 +296,14 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
           <Button size="lg" onClick={handleAdd} disabled={!canAdd} className="flex-1">
             {added ? (
               <>
-                <Check className="h-4 w-4" /> Added
+                <Check className="h-4 w-4" /> {t.product.added}
               </>
             ) : canAdd ? (
               <>
-                <PlusIcon className="h-4 w-4" /> Add to Bag — {formatPrice(product.price * quantity)}
+                <PlusIcon className="h-4 w-4" /> {t.product.addToBag} — {formatPrice(product.price * quantity, currencySymbol, locale)}
               </>
             ) : (
-              'Sold out'
+              t.product.soldOut
             )}
           </Button>
         </div>
@@ -298,16 +311,16 @@ export function ProductDetail({ product }: { product: DetailProduct }) {
         {/* accordions */}
         <div className="mt-stack-md border-t border-outline-variant">
           {product.materialInfo && (
-            <Accordion title="Material & Dimensions">
+            <Accordion title={t.product.material}>
               <p className="whitespace-pre-line">{product.materialInfo}</p>
             </Accordion>
           )}
           {product.careInfo && (
-            <Accordion title="Care">
+            <Accordion title={t.product.care}>
               <p className="whitespace-pre-line">{product.careInfo}</p>
             </Accordion>
           )}
-          <Accordion title="Shipping & Returns">
+          <Accordion title={t.product.shippingReturns}>
             <p>
               Dispatched within two working days. Shipping is calculated at checkout by destination
               and is complimentary above the threshold shown in your bag. Return anything unworn

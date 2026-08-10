@@ -15,26 +15,34 @@ import { useCartPricing, CHECKOUT_STORAGE_KEY } from '@/lib/use-cart-pricing';
 import { shippingSchema, type ShippingInput } from '@/lib/validations';
 import { placeOrder } from '@/app/actions/checkout';
 import { formatPrice, cn } from '@/lib/utils';
-
-const STEPS = ['Review', 'Shipping', 'Payment'] as const;
-type Step = (typeof STEPS)[number];
+import { fmt } from '@/i18n/dictionaries';
+import type { Locale } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
+import type { GovernorateOption } from './cart-view';
 
 export function CheckoutView({
-  regions,
+  governorates,
   currencySymbol,
+  locale,
+  t,
   stripeEnabled,
 }: {
-  regions: { zone: string; countries: string[] }[];
+  governorates: GovernorateOption[];
   currencySymbol: string;
+  locale: Locale;
+  t: Dictionary;
   stripeEnabled: boolean;
 }) {
   const router = useRouter();
   const { items, clear, hydrated } = useCart();
-  const [step, setStep] = React.useState<Step>('Review');
+
+  const STEPS = [t.checkout.steps.review, t.checkout.steps.shipping, t.checkout.steps.payment];
+  const [stepIndex, setStepIndex] = React.useState(0);
+
   const [promoCode, setPromoCode] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = React.useState<'card' | 'cod'>('card');
+  const [paymentMethod, setPaymentMethod] = React.useState<'card' | 'cod'>('cod');
 
   const form = useForm<ShippingInput>({
     resolver: zodResolver(shippingSchema),
@@ -43,9 +51,8 @@ export function CheckoutView({
       email: '',
       phone: '',
       street: '',
-      city: '',
-      region: '',
-      postalCode: '',
+      area: '',
+      governorate: '',
       notes: '',
     },
   });
@@ -64,13 +71,13 @@ export function CheckoutView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const region = form.watch('region');
-  const pricing = useCartPricing({ items, region, promoCode });
+  const governorate = form.watch('governorate');
+  const pricing = useCartPricing({ items, governorate, promoCode });
 
   async function submit() {
     const valid = await form.trigger();
     if (!valid) {
-      setStep('Shipping');
+      setStepIndex(1);
       return;
     }
 
@@ -106,33 +113,30 @@ export function CheckoutView({
   if (items.length === 0) {
     return (
       <div className="container-luwjje py-stack-md md:py-stack-lg">
-        <h1 className="mb-stack-md font-display text-display-sm">Checkout</h1>
+        <h1 className="mb-stack-md font-display text-display-sm">{t.checkout.title}</h1>
         <EmptyState
-          title="There is nothing to check out."
-          body="Your bag is empty."
-          action={<ButtonLink href="/shop">Browse the collection</ButtonLink>}
+          title={t.checkout.nothingToCheckout}
+          body={t.checkout.bagEmpty}
+          action={<ButtonLink href="/shop">{t.cart.browse}</ButtonLink>}
         />
       </div>
     );
   }
 
-  const stepIndex = STEPS.indexOf(step);
-
   return (
     <div className="container-luwjje py-stack-md md:py-stack-lg">
-      <h1 className="font-display text-display-sm">Checkout</h1>
+      <h1 className="font-display text-display-sm">{t.checkout.title}</h1>
 
       {/* steps */}
       <ol className="mt-8 flex items-center gap-0 border-y border-outline-variant">
-        {STEPS.map((s, i) => (
-          <li key={s} className="flex flex-1 items-center">
+        {STEPS.map((label, i) => (
+          <li key={label} className="flex flex-1 items-center">
             <button
-              onClick={() => i <= stepIndex && setStep(s)}
+              onClick={() => i <= stepIndex && setStepIndex(i)}
               disabled={i > stepIndex}
               className={cn(
-                'flex w-full items-center gap-3 py-5 text-left transition-colors',
-                i <= stepIndex ? 'text-on-surface' : 'text-tertiary',
-                i > stepIndex && 'cursor-not-allowed',
+                'flex w-full items-center gap-3 py-5 text-start transition-colors',
+                i <= stepIndex ? 'text-on-surface' : 'cursor-not-allowed text-tertiary',
               )}
             >
               <span
@@ -147,7 +151,7 @@ export function CheckoutView({
               >
                 {i < stepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
               </span>
-              <span className="label-caps">{s}</span>
+              <span className="label-caps">{label}</span>
             </button>
             {i < STEPS.length - 1 && <span className="h-px w-6 shrink-0 bg-outline-variant" />}
           </li>
@@ -157,169 +161,166 @@ export function CheckoutView({
       <div className="mt-stack-md grid grid-cols-1 gap-stack-md lg:grid-cols-12 lg:gap-gutter">
         <div className="lg:col-span-8">
           {/* ---------------------------------------------------- review */}
-          {step === 'Review' && (
+          {stepIndex === 0 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">Review your order</h2>
+              <h2 className="font-display text-headline-sm">{t.checkout.reviewTitle}</h2>
               <div className="mt-6 border-t border-outline-variant">
                 {pricing.lines.map((line) => (
-                  <div key={line.variantId} className="flex gap-4 border-b border-outline-variant py-5">
+                  <div
+                    key={line.variantId}
+                    className="flex gap-4 border-b border-outline-variant py-5"
+                  >
                     <div className="relative h-24 w-[72px] shrink-0 overflow-hidden bg-surface-low">
-                      <Image src={line.imageUrl} alt={line.name} fill sizes="72px" className="object-cover" />
+                      {line.imageUrl && (
+                        <Image
+                          src={line.imageUrl}
+                          alt={line.name}
+                          fill
+                          sizes="72px"
+                          className="object-cover"
+                        />
+                      )}
                     </div>
                     <div className="flex flex-1 flex-wrap items-start justify-between gap-2">
                       <div>
                         <p className="font-display text-body-lg">{line.name}</p>
                         <p className="mt-1 text-body-sm text-secondary">
                           {line.colorName}
-                          {line.size && ` · Size ${line.size}`} · Qty {line.quantity}
+                          {line.size && ` · ${t.product.size} ${line.size}`} · ×{line.quantity}
                         </p>
                       </div>
                       <span className="text-body-md">
-                        {formatPrice(line.unitPrice * line.quantity, currencySymbol)}
+                        {formatPrice(line.unitPrice * line.quantity, currencySymbol, locale)}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 flex gap-3">
-                <Button size="lg" onClick={() => setStep('Shipping')}>
-                  Continue to shipping
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button size="lg" onClick={() => setStepIndex(1)}>
+                  {t.checkout.continueToShipping}
                 </Button>
                 <ButtonLink href="/cart" variant="secondary" size="lg">
-                  Edit bag
+                  {t.checkout.editBag}
                 </ButtonLink>
               </div>
             </section>
           )}
 
           {/* -------------------------------------------------- shipping */}
-          {step === 'Shipping' && (
+          {stepIndex === 1 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">Shipping details</h2>
+              <h2 className="font-display text-headline-sm">{t.checkout.shippingTitle}</h2>
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Input
-                  label="Full Name"
+                  label={t.fields.fullName}
                   required
                   autoComplete="name"
                   error={form.formState.errors.fullName?.message}
                   {...form.register('fullName')}
                 />
                 <Input
-                  label="Email"
+                  label={t.fields.email}
                   type="email"
                   required
                   autoComplete="email"
+                  dir="ltr"
                   error={form.formState.errors.email?.message}
                   {...form.register('email')}
                 />
                 <Input
-                  label="Phone"
+                  label={t.fields.phone}
                   type="tel"
                   required
                   autoComplete="tel"
+                  dir="ltr"
                   error={form.formState.errors.phone?.message}
                   {...form.register('phone')}
                 />
-                <Input
-                  label="Postal Code"
+                <Select
+                  label={t.fields.governorate}
                   required
-                  autoComplete="postal-code"
-                  error={form.formState.errors.postalCode?.message}
-                  {...form.register('postalCode')}
+                  error={form.formState.errors.governorate?.message}
+                  {...form.register('governorate')}
+                >
+                  <option value="">{t.cart.selectGovernorate}</option>
+                  {governorates.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label={t.fields.area}
+                  autoComplete="address-level2"
+                  error={form.formState.errors.area?.message}
+                  {...form.register('area')}
                 />
                 <Input
-                  label="Street Address"
+                  label={t.fields.street}
                   required
                   autoComplete="street-address"
-                  containerClassName="md:col-span-2"
                   error={form.formState.errors.street?.message}
                   {...form.register('street')}
                 />
-                <Input
-                  label="City"
-                  autoComplete="address-level2"
-                  error={form.formState.errors.city?.message}
-                  {...form.register('city')}
-                />
-                <Select
-                  label="Region / Country"
-                  required
-                  error={form.formState.errors.region?.message}
-                  {...form.register('region')}
-                >
-                  <option value="">Select a destination</option>
-                  {regions.map((r) => (
-                    <optgroup key={r.zone} label={r.zone}>
-                      {r.countries.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </Select>
                 <Textarea
-                  label="Delivery notes"
+                  label={t.fields.notes}
                   containerClassName="md:col-span-2"
-                  placeholder="Buzzer code, preferred time, anything useful."
+                  placeholder={t.fields.notesPlaceholder}
                   error={form.formState.errors.notes?.message}
                   {...form.register('notes')}
                 />
               </div>
 
-              {pricing.shipping && region && (
+              {pricing.shipping && governorate && (
                 <p className="mt-6 text-body-sm text-secondary">
-                  {pricing.shipping.zoneName} · {pricing.shipping.estimatedDays} ·{' '}
+                  {governorates.find((g) => g.value === governorate)?.label} ·{' '}
+                  {pricing.shipping.estimatedDays} ·{' '}
                   {pricing.shipping.free
-                    ? 'Free shipping applied'
-                    : formatPrice(pricing.shipping.cost, currencySymbol)}
+                    ? t.cart.free
+                    : formatPrice(pricing.shipping.cost, currencySymbol, locale)}
                 </p>
               )}
 
-              <div className="mt-8 flex gap-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Button
                   size="lg"
                   onClick={async () => {
-                    if (await form.trigger()) setStep('Payment');
+                    if (await form.trigger()) setStepIndex(2);
                   }}
                 >
-                  Continue to payment
+                  {t.checkout.continueToPayment}
                 </Button>
-                <Button size="lg" variant="secondary" onClick={() => setStep('Review')}>
-                  Back
+                <Button size="lg" variant="secondary" onClick={() => setStepIndex(0)}>
+                  {t.checkout.back}
                 </Button>
               </div>
             </section>
           )}
 
           {/* --------------------------------------------------- payment */}
-          {step === 'Payment' && (
+          {stepIndex === 2 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">Payment</h2>
+              <h2 className="font-display text-headline-sm">{t.checkout.paymentTitle}</h2>
 
               {!stripeEnabled && (
                 <div className="mt-6 border border-outline-variant bg-surface-low p-4">
-                  <p className="text-body-sm text-secondary">
-                    Running in test mode — no card is charged and no card details are collected.
-                    Add <code className="text-on-surface">STRIPE_SECRET_KEY</code> and{' '}
-                    <code className="text-on-surface">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to
-                    switch on live payments.
-                  </p>
+                  <p className="text-body-sm text-secondary">{t.checkout.testMode}</p>
                 </div>
               )}
 
               <div className="mt-6 flex flex-col gap-3">
                 {(
                   [
-                    { id: 'card', label: 'Card', hint: 'Visa, Mastercard, Amex', icon: CreditCard },
-                    { id: 'cod', label: 'Cash on delivery', hint: 'Pay the courier', icon: Package },
+                    { id: 'cod', label: t.checkout.cod, hint: t.checkout.codHint, icon: Package },
+                    { id: 'card', label: t.checkout.card, hint: t.checkout.cardHint, icon: CreditCard },
                   ] as const
                 ).map((option) => (
                   <button
                     key={option.id}
                     onClick={() => setPaymentMethod(option.id)}
                     className={cn(
-                      'flex items-center gap-4 border p-5 text-left transition-colors',
+                      'flex items-center gap-4 border p-5 text-start transition-colors',
                       paymentMethod === option.id
                         ? 'border-navy bg-surface-lowest'
                         : 'border-outline-variant hover:border-outline',
@@ -347,14 +348,15 @@ export function CheckoutView({
               {paymentMethod === 'card' && (
                 <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <Input
-                    label="Card Number"
+                    label={t.checkout.cardNumber}
                     placeholder="4242 4242 4242 4242"
                     containerClassName="md:col-span-2"
+                    dir="ltr"
                     disabled={!stripeEnabled}
-                    hint={stripeEnabled ? undefined : 'Disabled in test mode.'}
+                    hint={stripeEnabled ? undefined : t.checkout.disabledInTest}
                   />
-                  <Input label="Expiry" placeholder="12 / 29" disabled={!stripeEnabled} />
-                  <Input label="CVC" placeholder="123" disabled={!stripeEnabled} />
+                  <Input label={t.checkout.expiry} placeholder="12 / 29" dir="ltr" disabled={!stripeEnabled} />
+                  <Input label={t.checkout.cvc} placeholder="123" dir="ltr" disabled={!stripeEnabled} />
                 </div>
               )}
 
@@ -364,23 +366,25 @@ export function CheckoutView({
                 </div>
               )}
 
-              <div className="mt-8 flex gap-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Button size="lg" onClick={submit} disabled={submitting || pricing.loading}>
                   {submitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Placing order…
+                      <Loader2 className="h-4 w-4 animate-spin" /> {t.checkout.placing}
                     </>
                   ) : (
-                    `Pay ${formatPrice(pricing.total, currencySymbol)}`
+                    fmt(t.checkout.pay, {
+                      amount: formatPrice(pricing.total, currencySymbol, locale),
+                    })
                   )}
                 </Button>
                 <Button
                   size="lg"
                   variant="secondary"
-                  onClick={() => setStep('Shipping')}
+                  onClick={() => setStepIndex(1)}
                   disabled={submitting}
                 >
-                  Back
+                  {t.checkout.back}
                 </Button>
               </div>
             </section>
@@ -390,42 +394,44 @@ export function CheckoutView({
         {/* ---------------------------------------------------- summary */}
         <aside className="lg:col-span-4">
           <div className="sticky top-6 border border-outline-variant bg-surface-lowest p-6 md:p-8">
-            <h2 className="font-display text-headline-sm">Summary</h2>
+            <h2 className="font-display text-headline-sm">{t.checkout.summary}</h2>
             <dl className="mt-6 flex flex-col gap-3 text-body-md">
               <div className="flex justify-between">
-                <dt className="text-secondary">Subtotal</dt>
-                <dd>{formatPrice(pricing.subtotal, currencySymbol)}</dd>
+                <dt className="text-secondary">{t.cart.subtotal}</dt>
+                <dd>{formatPrice(pricing.subtotal, currencySymbol, locale)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-secondary">Shipping</dt>
+                <dt className="text-secondary">{t.cart.shipping}</dt>
                 <dd>
-                  {!region ? (
+                  {!governorate ? (
                     <span className="text-secondary">—</span>
                   ) : pricing.shipping?.free ? (
-                    <span className="uppercase tracking-wider">Free</span>
+                    <span className="uppercase tracking-wider">{t.cart.free}</span>
                   ) : (
-                    formatPrice(pricing.shipping?.cost ?? 0, currencySymbol)
+                    formatPrice(pricing.shipping?.cost ?? 0, currencySymbol, locale)
                   )}
                 </dd>
               </div>
               {pricing.promo?.ok && (
                 <div className="flex justify-between text-error">
-                  <dt>Discount ({pricing.promo.code})</dt>
-                  <dd>−{formatPrice(pricing.promo.discount, currencySymbol)}</dd>
+                  <dt>
+                    {t.cart.discount} ({pricing.promo.code})
+                  </dt>
+                  <dd>−{formatPrice(pricing.promo.discount, currencySymbol, locale)}</dd>
                 </div>
               )}
             </dl>
             <Divider className="my-5" />
             <div className="flex items-baseline justify-between">
-              <span className="label-caps text-secondary">Total</span>
+              <span className="label-caps text-secondary">{t.cart.total}</span>
               <span className="font-display text-headline-md">
-                {formatPrice(pricing.total, currencySymbol)}
+                {formatPrice(pricing.total, currencySymbol, locale)}
               </span>
             </div>
             <p className="mt-6 text-body-sm text-tertiary">
-              By placing this order you agree to our{' '}
+              {t.checkout.agree}{' '}
               <Link href="/pages/terms" className="underline underline-offset-4">
-                terms
+                {t.checkout.terms}
               </Link>
               .
             </p>

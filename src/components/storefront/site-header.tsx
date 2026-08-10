@@ -7,18 +7,27 @@ import { Search, ShoppingBag, Menu, X, PackageSearch } from 'lucide-react';
 import { useCart } from '@/lib/cart-store';
 import { cn } from '@/lib/utils';
 import { CartDrawer } from './cart-drawer';
-
-const NAV = [
-  { href: '/shop', label: 'Shop' },
-  { href: '/about', label: 'About' },
-  { href: '/journal', label: 'Journal' },
-];
+import { LanguageSwitcher } from './language-switcher';
+import type { Locale } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
 
 /**
  * There are no customer accounts — shoppers check out as guests, so the
  * account icon is replaced by order lookup.
  */
-export function SiteHeader({ storeName }: { storeName: string }) {
+export function SiteHeader({
+  storeName,
+  locale,
+  t,
+  showSearch,
+  showLanguageSwitcher,
+}: {
+  storeName: string;
+  locale: Locale;
+  t: Dictionary;
+  showSearch: boolean;
+  showLanguageSwitcher: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -32,6 +41,12 @@ export function SiteHeader({ storeName }: { storeName: string }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   const count = mounted ? items.reduce((n, i) => n + i.quantity, 0) : 0;
+
+  const NAV = [
+    { href: '/shop', label: t.nav.shop },
+    { href: '/about', label: t.nav.about },
+    { href: '/journal', label: t.nav.journal },
+  ];
 
   React.useEffect(() => {
     setMobileOpen(false);
@@ -52,11 +67,12 @@ export function SiteHeader({ storeName }: { storeName: string }) {
       <header className="sticky top-0 z-40 border-b border-outline-variant bg-background/95 backdrop-blur-sm">
         <div className="container-luwjje flex h-[72px] items-center justify-between gap-6">
           <div className="flex items-center gap-10">
-            <button className="md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+            <button className="md:hidden" onClick={() => setMobileOpen(true)} aria-label={t.nav.menu}>
               <Menu className="h-5 w-5" />
             </button>
 
-            <Link href="/" className="font-display text-[26px] leading-none tracking-tight">
+            {/* The wordmark is a Latin logotype in both languages. */}
+            <Link href="/" className="font-latin text-[26px] font-medium leading-none tracking-tight">
               {storeName}
             </Link>
 
@@ -77,18 +93,24 @@ export function SiteHeader({ storeName }: { storeName: string }) {
           </div>
 
           <div className="flex items-center gap-5">
-            <button onClick={() => setSearchOpen((v) => !v)} aria-label="Search">
-              <Search className="h-5 w-5 transition-opacity hover:opacity-60" />
-            </button>
+            {showLanguageSwitcher && (
+              <LanguageSwitcher locale={locale} className="hidden sm:flex" />
+            )}
 
-            <Link href="/orders" aria-label="Track an order" title="Track an order">
+            {showSearch && (
+              <button onClick={() => setSearchOpen((v) => !v)} aria-label={t.nav.search}>
+                <Search className="h-5 w-5 transition-opacity hover:opacity-60" />
+              </button>
+            )}
+
+            <Link href="/orders" aria-label={t.nav.trackOrder} title={t.nav.trackOrder}>
               <PackageSearch className="h-5 w-5 transition-opacity hover:opacity-60" />
             </Link>
 
-            <button onClick={openCart} className="relative" aria-label={`Cart, ${count} items`}>
+            <button onClick={openCart} className="relative" aria-label={`${t.nav.bag} (${count})`}>
               <ShoppingBag className="h-5 w-5 transition-opacity hover:opacity-60" />
               {count > 0 && (
-                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center bg-navy px-1 text-[10px] font-semibold leading-none text-background">
+                <span className="absolute -top-1.5 flex h-4 min-w-4 items-center justify-center bg-navy px-1 text-[10px] font-semibold leading-none text-background ltr:-right-2 rtl:-left-2">
                   {count}
                 </span>
               )}
@@ -104,10 +126,10 @@ export function SiteHeader({ storeName }: { storeName: string }) {
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search the collection…"
+                placeholder={t.nav.searchPlaceholder}
                 className="h-8 flex-1 bg-transparent text-body-lg outline-none placeholder:text-tertiary"
               />
-              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search">
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label={t.nav.close}>
                 <X className="h-5 w-5 text-secondary" />
               </button>
             </form>
@@ -118,10 +140,10 @@ export function SiteHeader({ storeName }: { storeName: string }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="scrim absolute inset-0" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-[82vw] max-w-sm animate-fade-in border-r border-outline-variant bg-background p-margin-mobile">
+          <div className="absolute inset-y-0 w-[82vw] max-w-sm animate-fade-in border-outline-variant bg-background p-margin-mobile ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l">
             <div className="mb-10 flex items-center justify-between">
-              <span className="font-display text-[26px]">{storeName}</span>
-              <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
+              <span className="font-latin text-[26px] font-medium">{storeName}</span>
+              <button onClick={() => setMobileOpen(false)} aria-label={t.nav.close}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -139,14 +161,19 @@ export function SiteHeader({ storeName }: { storeName: string }) {
                 href="/orders"
                 className="border-b border-outline-variant py-4 font-display text-headline-sm"
               >
-                Track an order
+                {t.nav.trackOrder}
               </Link>
             </nav>
+            {showLanguageSwitcher && (
+              <div className="mt-8">
+                <LanguageSwitcher locale={locale} />
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <CartDrawer />
+      <CartDrawer locale={locale} t={t} />
     </>
   );
 }

@@ -1,22 +1,29 @@
 import type { Metadata } from 'next';
 import { CheckoutView } from '@/components/storefront/checkout-view';
-import { getShippingRegions } from '@/lib/commerce';
-import { getSettings } from '@/lib/settings';
+import { getGovernorates } from '@/lib/commerce';
+import { getCurrencySymbol } from '@/lib/settings';
+import { getI18n } from '@/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Checkout',
-  robots: { index: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.checkout.title, robots: { index: false } };
+}
 
 export default async function CheckoutPage() {
-  const [settings, regions] = await Promise.all([getSettings(), getShippingRegions()]);
+  const { locale, t } = await getI18n();
+  const [governorates, symbol] = await Promise.all([
+    getGovernorates(locale),
+    getCurrencySymbol(locale),
+  ]);
 
   return (
     <CheckoutView
-      regions={regions}
-      currencySymbol={settings.currencySymbol}
+      governorates={governorates}
+      currencySymbol={symbol}
+      locale={locale}
+      t={t}
       stripeEnabled={Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)}
     />
   );
