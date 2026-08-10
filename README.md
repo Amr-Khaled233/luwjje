@@ -52,6 +52,7 @@ and the `.env` value stops mattering.
 npm run smoke        # 33 checks: pricing, promos, shipping, the order transaction, oversell
 npm run gate         # 50 checks: password gate, session signing, order privacy, route access
 npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
+npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
 ```
 
 `npm run features` needs a running server (`npm run build && npm start`), and briefly
@@ -103,7 +104,7 @@ read any order.
 | Route | What it controls |
 | --- | --- |
 | `/dashboard/login` | The password screen |
-| `/dashboard` | Sales, active orders, inventory level, conversion; revenue chart, low stock, top performers, CSV export |
+| `/dashboard` | Redirects to Orders — there is no separate Overview page |
 | `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering. Every text field has an EN/ع toggle |
 | `/dashboard/categories` | Rename, reorder, translate, and show or hide each category in the Shop filter |
 | `/dashboard/stock` | Every SKU, inline quantity edit, per-SKU low-stock alert level |
@@ -112,7 +113,7 @@ read any order.
 | `/dashboard/shipping` | A delivery price per governorate (all 27), editable as one grid, plus per-governorate free-shipping thresholds |
 | `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
-| `/dashboard/analytics` | Revenue over time, top products, top categories, traffic sources, status breakdown |
+| `/dashboard/analytics` | Revenue over time, top products, top categories, status breakdown, and the Excel export |
 | `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages, **password** |
 
 ---

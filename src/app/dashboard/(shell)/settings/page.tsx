@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { SettingsManager } from '@/components/dashboard/settings-manager';
 import { prisma } from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
@@ -13,10 +13,7 @@ export default async function DashboardSettingsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Settings"
-        description="Store identity, shipping defaults, social links, content pages and the dashboard password."
-      />
+      <PageTitle section="settings" />
 
       <SettingsManager
         settings={{

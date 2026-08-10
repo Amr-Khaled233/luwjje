@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const controlBase =
@@ -149,25 +149,39 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 );
 Select.displayName = 'Select';
 
+/**
+ * The tick is a real element rather than a background-image data URI: an
+ * arbitrary Tailwind value cannot contain spaces, so the inline SVG produced
+ * no CSS at all and the box stayed blank when checked.
+ */
 export function Checkbox({
   label,
   className,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) {
-  const id = React.useId();
+  const generated = React.useId();
+  const id = props.id ?? generated;
+
   return (
-    <label htmlFor={props.id ?? id} className="flex cursor-pointer items-center gap-3 select-none">
-      <input
-        type="checkbox"
-        id={props.id ?? id}
-        className={cn(
-          'h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-sm border border-outline-variant bg-background transition-colors',
-          'checked:border-navy checked:bg-navy',
-          "checked:bg-[url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f8f9ff' stroke-width='2'><path d='M3 8.5 6.5 12 13 5'/></svg>\")] checked:bg-center checked:bg-no-repeat",
-          className,
-        )}
-        {...props}
-      />
+    <label htmlFor={id} className="flex cursor-pointer select-none items-center gap-3">
+      <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+        <input
+          type="checkbox"
+          id={id}
+          className={cn(
+            'peer h-[18px] w-[18px] cursor-pointer appearance-none rounded-sm border border-outline transition-colors',
+            'bg-background checked:border-navy checked:bg-navy',
+            'disabled:cursor-not-allowed disabled:border-outline-variant disabled:bg-surface-low',
+            className,
+          )}
+          {...props}
+        />
+        <Check
+          aria-hidden
+          strokeWidth={3}
+          className="pointer-events-none absolute h-3 w-3 text-background opacity-0 transition-opacity peer-checked:opacity-100"
+        />
+      </span>
       {label && <span className="text-body-sm text-secondary">{label}</span>}
     </label>
   );

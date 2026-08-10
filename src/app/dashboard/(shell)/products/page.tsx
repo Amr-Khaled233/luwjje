@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { ProductsManager } from '@/components/dashboard/products-manager';
 import { prisma } from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
@@ -21,10 +21,7 @@ export default async function AdminProductsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Products"
-        description="Everything here drives the storefront directly — the Best Sellers row, the Shop grid and every product page read from this table."
-      />
+      <PageTitle section="products" />
 
       <ProductsManager
         products={products.map((p) => ({

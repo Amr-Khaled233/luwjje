@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { PromoManager } from '@/components/dashboard/promo-manager';
 import { prisma } from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
@@ -15,10 +15,7 @@ export default async function AdminPromoCodesPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Promo Codes"
-        description="Codes customers type in the cart. Every code entered at checkout is validated against this table — value, minimum spend, window and usage limit."
-      />
+      <PageTitle section="promo" />
 
       <PromoManager
         codes={codes.map((c) => ({

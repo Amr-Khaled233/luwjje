@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
+import { DashboardI18nProvider } from '@/components/dashboard/dashboard-i18n';
 import { isDashboardUser } from '@/lib/dashboard-auth';
 import { getSettings } from '@/lib/settings';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,14 +18,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Server-side gate. The middleware is a convenience; this is the real one.
   if (!(await isDashboardUser())) redirect('/dashboard/login');
 
-  const settings = await getSettings();
+  const [settings, locale] = await Promise.all([getSettings(), getLocale()]);
+  const dictionary = getDashboardDictionary(locale);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar storeName={settings.storeName} />
-      <div className="min-w-0 flex-1 md:pl-[280px]">
-        <div className="px-margin-mobile py-8 md:px-10 md:py-10">{children}</div>
+    <DashboardI18nProvider locale={locale} dictionary={dictionary}>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar
+          storeName={settings.storeName}
+          locale={locale}
+          showLanguageSwitcher={settings.enableArabic}
+        />
+        <div className="min-w-0 flex-1 md:ps-[280px]">
+          <div className="px-margin-mobile py-8 md:px-10 md:py-10">{children}</div>
+        </div>
       </div>
-    </div>
+    </DashboardI18nProvider>
   );
 }

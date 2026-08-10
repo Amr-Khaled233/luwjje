@@ -1,4 +1,5 @@
-import { PageHeader, StatCard } from '@/components/dashboard/admin-ui';
+import { StatCard } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { StockManager } from '@/components/dashboard/stock-manager';
 import { prisma } from '@/lib/prisma';
 
@@ -43,10 +44,7 @@ export default async function AdminStockPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Stock"
-        description="Every purchasable SKU. Edit a quantity inline — the storefront respects it on the next add-to-bag."
-      />
+      <PageTitle section="stock" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total SKUs" value={String(rows.length)} />

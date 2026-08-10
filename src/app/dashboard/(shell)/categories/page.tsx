@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { CategoriesManager } from '@/components/dashboard/categories-manager';
 import { prisma } from '@/lib/prisma';
 
@@ -12,10 +12,7 @@ export default async function DashboardCategoriesPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Categories"
-        description="What appears in the Shop category filter, in what order, and in both languages. Hiding a category keeps its products on sale — it only drops out of the filter."
-      />
+      <PageTitle section="categories" />
 
       <CategoriesManager
         categories={categories.map((c) => ({

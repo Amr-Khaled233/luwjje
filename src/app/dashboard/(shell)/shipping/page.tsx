@@ -1,4 +1,5 @@
-import { PageHeader, StatCard } from '@/components/dashboard/admin-ui';
+import { StatCard } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { ShippingManager } from '@/components/dashboard/shipping-manager';
 import { prisma } from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
@@ -18,10 +19,7 @@ export default async function DashboardShippingPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Shipping"
-        description="One delivery price per governorate. The cart and checkout charge exactly what you set here."
-      />
+      <PageTitle section="shipping" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Governorates" value={String(governorates.length)} />

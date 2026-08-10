@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { FiltersManager } from '@/components/dashboard/filters-manager';
 import { prisma } from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
@@ -21,10 +21,7 @@ export default async function DashboardFiltersPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Shop Filters"
-        description="Exactly what the customer can filter by: which controls appear at all, which colours are offered, and the price buckets."
-      />
+      <PageTitle section="filters" />
 
       <FiltersManager
         colors={colors.map((c) => ({

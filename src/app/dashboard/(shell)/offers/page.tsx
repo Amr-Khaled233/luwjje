@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/dashboard/admin-ui';
+import { PageTitle } from '@/components/dashboard/page-title';
 import { OffersManager } from '@/components/dashboard/offers-manager';
 import { prisma } from '@/lib/prisma';
 
@@ -23,10 +23,7 @@ export default async function AdminOffersPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Offers"
-        description="The hero banner, the promotional block and any running discount campaign — all rendered straight onto the home page."
-      />
+      <PageTitle section="offers" />
 
       <OffersManager
         banners={banners.map((b) => ({

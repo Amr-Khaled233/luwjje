@@ -97,11 +97,29 @@ export function TableWrap({ children, className }: { children: React.ReactNode; 
   );
 }
 
-export function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
+/**
+ * Full grid rules. Every cell carries a bottom and an end border; the last
+ * column drops its end border so the table's own outline is not doubled.
+ * Logical properties (`-e-`) keep the lines on the correct side in RTL.
+ */
+const cellRules = 'border-b border-e border-outline-variant last:border-e-0';
+
+export function Th({
+  children,
+  className,
+  align = 'start',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  align?: 'start' | 'end' | 'center';
+}) {
   return (
     <th
+      scope="col"
       className={cn(
-        'label-caps border-b border-outline-variant px-4 py-3 text-secondary first:pl-6 last:pr-6',
+        'label-caps whitespace-nowrap bg-surface-low px-4 py-3 text-secondary',
+        cellRules,
+        align === 'end' ? 'text-end' : align === 'center' ? 'text-center' : 'text-start',
         className,
       )}
     >
@@ -114,16 +132,20 @@ export function Td({
   children,
   className,
   colSpan,
+  align = 'start',
 }: {
   children?: React.ReactNode;
   className?: string;
   colSpan?: number;
+  align?: 'start' | 'end' | 'center';
 }) {
   return (
     <td
       colSpan={colSpan}
       className={cn(
-        'border-b border-outline-variant px-4 py-4 text-body-md align-middle first:pl-6 last:pr-6',
+        'px-4 py-4 align-middle text-body-md',
+        cellRules,
+        align === 'end' ? 'text-end' : align === 'center' ? 'text-center' : 'text-start',
         className,
       )}
     >
