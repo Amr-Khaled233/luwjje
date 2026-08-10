@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Textarea, Select, Checkbox, FieldLabel, FieldError } from '@/components/ui/field';
 import { Modal } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
+import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { productSchema, type ProductInput } from '@/lib/validations';
 import { saveProduct } from '@/app/actions/dashboard';
@@ -18,10 +19,14 @@ import type { AdminCategory } from './products-manager';
 export interface EditableProduct {
   id?: string;
   name: string;
+  nameAr: string;
   slug: string;
   description: string;
+  descriptionAr: string;
   materialInfo: string;
+  materialInfoAr: string;
   careInfo: string;
+  careInfoAr: string;
   price: number;
   compareAtPrice: number | null;
   sku: string | null;
@@ -35,6 +40,7 @@ export interface EditableProduct {
   variants: {
     id?: string;
     colorName: string;
+    colorNameAr: string;
     colorHex: string;
     size: string | null;
     sku: string;
@@ -45,10 +51,14 @@ export interface EditableProduct {
 
 const EMPTY: ProductInput = {
   name: '',
+  nameAr: '',
   slug: '',
   description: '',
+  descriptionAr: '',
   materialInfo: '',
+  materialInfoAr: '',
   careInfo: '',
+  careInfoAr: '',
   price: 0,
   compareAtPrice: null,
   sku: '',
@@ -58,7 +68,7 @@ const EMPTY: ProductInput = {
   bestSellerOrder: 0,
   images: [],
   variants: [
-    { colorName: '', colorHex: '#0b1c30', size: '', sku: '', stock: 0, lowStockAt: 5 },
+    { colorName: '', colorNameAr: '', colorHex: '#0b1c30', size: '', sku: '', stock: 0, lowStockAt: 5 },
   ],
 };
 
@@ -95,10 +105,14 @@ export function ProductEditor({
       form.reset({
         id: product.id,
         name: product.name,
+        nameAr: product.nameAr,
         slug: product.slug,
         description: product.description,
+        descriptionAr: product.descriptionAr,
         materialInfo: product.materialInfo,
+        materialInfoAr: product.materialInfoAr,
         careInfo: product.careInfo,
+        careInfoAr: product.careInfoAr,
         price: product.price,
         compareAtPrice: product.compareAtPrice,
         sku: product.sku ?? '',
@@ -184,12 +198,28 @@ export function ProductEditor({
 
         {/* ------------------------------------------------------- basics */}
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <Input
-            label="Product Name"
-            required
-            containerClassName="md:col-span-2"
-            error={form.formState.errors.name?.message}
-            {...form.register('name')}
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field: en }) => (
+              <Controller
+                control={form.control}
+                name="nameAr"
+                render={({ field: ar }) => (
+                  <BilingualField
+                    label="Product Name"
+                    required
+                    className="md:col-span-2"
+                    placeholder="The Classic Snood"
+                    placeholderAr="سنود كلاسيك"
+                    english={{ value: en.value, onChange: en.onChange }}
+                    arabic={{ value: ar.value, onChange: ar.onChange }}
+                    errorEn={form.formState.errors.name?.message}
+                    errorAr={form.formState.errors.nameAr?.message}
+                  />
+                )}
+              />
+            )}
           />
           <Input
             label="URL Slug"
@@ -230,26 +260,68 @@ export function ProductEditor({
             {...form.register('compareAtPrice')}
           />
 
-          <Textarea
-            label="Description"
-            rows={5}
-            containerClassName="md:col-span-2"
-            error={form.formState.errors.description?.message}
-            {...form.register('description')}
+          <Controller
+            control={form.control}
+            name="description"
+            render={({ field: en }) => (
+              <Controller
+                control={form.control}
+                name="descriptionAr"
+                render={({ field: ar }) => (
+                  <BilingualField
+                    label="Description"
+                    rows={5}
+                    className="md:col-span-2"
+                    english={{ value: en.value, onChange: en.onChange }}
+                    arabic={{ value: ar.value, onChange: ar.onChange }}
+                    errorEn={form.formState.errors.description?.message}
+                    errorAr={form.formState.errors.descriptionAr?.message}
+                  />
+                )}
+              />
+            )}
           />
-          <Textarea
-            label="Material & Dimensions"
-            rows={3}
-            hint="Shown in the product page accordion."
-            error={form.formState.errors.materialInfo?.message}
-            {...form.register('materialInfo')}
+          <Controller
+            control={form.control}
+            name="materialInfo"
+            render={({ field: en }) => (
+              <Controller
+                control={form.control}
+                name="materialInfoAr"
+                render={({ field: ar }) => (
+                  <BilingualField
+                    label="Material & Dimensions"
+                    rows={3}
+                    hint="Shown in the product page accordion."
+                    english={{ value: en.value, onChange: en.onChange }}
+                    arabic={{ value: ar.value, onChange: ar.onChange }}
+                    errorEn={form.formState.errors.materialInfo?.message}
+                    errorAr={form.formState.errors.materialInfoAr?.message}
+                  />
+                )}
+              />
+            )}
           />
-          <Textarea
-            label="Care"
-            rows={3}
-            hint="Shown in the product page accordion."
-            error={form.formState.errors.careInfo?.message}
-            {...form.register('careInfo')}
+          <Controller
+            control={form.control}
+            name="careInfo"
+            render={({ field: en }) => (
+              <Controller
+                control={form.control}
+                name="careInfoAr"
+                render={({ field: ar }) => (
+                  <BilingualField
+                    label="Care"
+                    rows={3}
+                    hint="Shown in the product page accordion."
+                    english={{ value: en.value, onChange: en.onChange }}
+                    arabic={{ value: ar.value, onChange: ar.onChange }}
+                    errorEn={form.formState.errors.careInfo?.message}
+                    errorAr={form.formState.errors.careInfoAr?.message}
+                  />
+                )}
+              />
+            )}
           />
         </section>
 
@@ -285,6 +357,7 @@ export function ProductEditor({
               onClick={() =>
                 variants.append({
                   colorName: '',
+                  colorNameAr: '',
                   colorHex: '#0b1c30',
                   size: '',
                   sku: '',
@@ -304,7 +377,7 @@ export function ProductEditor({
             {variants.fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-2 gap-3 border border-outline-variant p-4 md:grid-cols-12"
+                className="grid grid-cols-2 gap-3 border border-outline-variant p-4 md:grid-cols-14"
               >
                 <div className="col-span-2 md:col-span-3">
                   <Input
@@ -312,6 +385,16 @@ export function ProductEditor({
                     placeholder="Dark Charcoal Grey"
                     error={form.formState.errors.variants?.[index]?.colorName?.message}
                     {...form.register(`variants.${index}.colorName`)}
+                  />
+                </div>
+
+                <div className="col-span-2 md:col-span-2">
+                  <Input
+                    label="بالعربي"
+                    placeholder="رمادي فحمي"
+                    dir="rtl"
+                    error={form.formState.errors.variants?.[index]?.colorNameAr?.message}
+                    {...form.register(`variants.${index}.colorNameAr`)}
                   />
                 </div>
 

@@ -6,7 +6,9 @@ import { ProductDetail } from '@/components/storefront/product-detail';
 import { ProductGrid } from '@/components/storefront/product-card';
 import { SectionHeading } from '@/components/ui/primitives';
 import { getProductBySlug, getRelatedProducts } from '@/lib/queries';
-import { getSettings } from '@/lib/settings';
+import { getSettings, getCurrencySymbol } from '@/lib/settings';
+import { getI18n } from '@/i18n/server';
+import { getLocale } from '@/i18n/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -16,11 +18,12 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const product = await getProductBySlug(params.slug);
+  const locale = await getLocale();
+  const product = await getProductBySlug(params.slug, locale);
   if (!product) return { title: 'Not found' };
 
-  const image = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url;
   const settings = await getSettings();
+  const image = product.images[0]?.url;
 
   return {
     title: product.name,
@@ -35,10 +38,14 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProductBySlug(params.slug);
+  const { locale, t } = await getI18n();
+  const product = await getProductBySlug(params.slug, locale);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product.id, product.categoryId, 4);
+  const [related, symbol] = await Promise.all([
+    getRelatedProducts(product.id, product.categoryId, locale, 4),
+    getCurrencySymbol(locale),
+  ]);
 
   // Fire-and-forget: powers the Analytics view counts.
   prisma.product
@@ -55,7 +62,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     offers: {
       '@type': 'Offer',
       price: product.effectivePrice.toFixed(2),
-      priceCurrency: 'USD',
+      priceCurrency: 'EGP',
       availability: product.variants.some((v) => v.stock > 0)
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
@@ -69,23 +76,26 @@ export default async function ProductPage({ params }: { params: { slug: string }
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-body-sm text-secondary">
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-8 flex items-center gap-2 text-body-sm text-secondary"
+      >
         <Link href="/" className="hover:text-on-surface">
-          Home
+          {t.product.home}
         </Link>
-        <ChevronRight className="h-3.5 w-3.5" />
+        <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
         <Link href="/shop" className="hover:text-on-surface">
-          Shop
+          {t.nav.shop}
         </Link>
-        {product.category && (
+        {product.categoryName && product.categorySlug && (
           <>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <Link href={`/shop?category=${product.category.slug}`} className="hover:text-on-surface">
-              {product.category.name}
+            <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
+            <Link href={`/shop?category=${product.categorySlug}`} className="hover:text-on-surface">
+              {product.categoryName}
             </Link>
           </>
         )}
-        <ChevronRight className="h-3.5 w-3.5" />
+        <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
         <span className="text-on-surface">{product.name}</span>
       </nav>
 
@@ -98,25 +108,22 @@ export default async function ProductPage({ params }: { params: { slug: string }
           materialInfo: product.materialInfo,
           careInfo: product.careInfo,
           price: product.effectivePrice,
-          listPrice: product.price,
+          listPrice: product.listPrice,
           discounted: product.discounted,
-          categoryName: product.category?.name ?? null,
-          images: product.images.map((i) => ({ url: i.url, alt: i.alt })),
-          variants: product.variants.map((v) => ({
-            id: v.id,
-            colorName: v.colorName,
-            colorHex: v.colorHex,
-            size: v.size,
-            stock: v.stock,
-          })),
+          categoryName: product.categoryName,
+          images: product.images,
+          variants: product.variants,
         }}
+        currencySymbol={symbol}
+        locale={locale}
+        t={t}
       />
 
       {related.length > 0 && (
         <section className="mt-stack-lg">
-          <SectionHeading eyebrow="Considered together" title="You may also like" />
+          <SectionHeading eyebrow={t.product.relatedEyebrow} title={t.product.related} />
           <div className="mt-stack-md">
-            <ProductGrid products={related} />
+            <ProductGrid products={related} currencySymbol={symbol} locale={locale} t={t} />
           </div>
         </section>
       )}

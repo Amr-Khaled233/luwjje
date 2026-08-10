@@ -25,6 +25,7 @@ export default async function AdminPromoCodesPage() {
           id: c.id,
           code: c.code,
           description: c.description,
+          descriptionAr: c.descriptionAr,
           discountType: c.discountType as 'PERCENT' | 'FIXED',
           discountValue: c.discountValue,
           minOrder: c.minOrder,

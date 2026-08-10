@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "smoke": "tsx scripts/smoke-test.ts",
     "gate": "tsx scripts/gate-test.ts",
-    "db:seed:demo": "tsx prisma/seed-demo.ts"
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "features": "node scripts/feature-check.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -79,6 +79,10 @@ const config: Config = {
         'stack-md': '40px',
         'stack-lg': '80px',
       },
+      gridTemplateColumns: {
+        // The product editor's colourway row needs one more column than 12.
+        14: 'repeat(14, minmax(0, 1fr))',
+      },
       maxWidth: {
         container: '1440px',
       },

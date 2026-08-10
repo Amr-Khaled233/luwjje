@@ -24,6 +24,7 @@ interface PromoRow extends PromoInput {
 const EMPTY: PromoInput = {
   code: '',
   description: '',
+  descriptionAr: '',
   discountType: 'PERCENT',
   discountValue: 10,
   minOrder: 0,

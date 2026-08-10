@@ -1,25 +1,29 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { findOrderForCustomer } from '@/lib/order-lookup';
+import { findOrdersForEmail, type LookupOrderSummary } from '@/lib/order-lookup';
 import { grantOrderAccess } from '@/lib/order-access';
 
 export interface LookupState {
   error?: string;
+  email?: string;
+  orders?: LookupOrderSummary[];
 }
 
 /**
- * Thin wrapper: `findOrderForCustomer` does the matching, this adds the
- * access cookie and the redirect.
+ * Thin wrapper: `findOrdersForEmail` does the matching, this grants the
+ * browser read access to every order it returned and hands the list back for
+ * the customer to choose from.
  */
-export async function lookupOrder(_prev: LookupState, formData: FormData): Promise<LookupState> {
-  const result = await findOrderForCustomer({
-    orderNumber: formData.get('orderNumber'),
-    email: formData.get('email'),
-  });
+export async function lookupOrders(_prev: LookupState, formData: FormData): Promise<LookupState> {
+  const email = String(formData.get('email') ?? '');
+  const result = await findOrdersForEmail({ email });
 
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: result.error, email };
 
-  await grantOrderAccess(result.orderNumber);
-  redirect(`/order/${result.orderNumber}`);
+  // Knowing the email is the proof of ownership; unlock exactly these orders.
+  for (const order of result.orders) {
+    await grantOrderAccess(order.orderNumber);
+  }
+
+  return { email, orders: result.orders };
 }

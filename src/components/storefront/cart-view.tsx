@@ -7,23 +7,36 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Minus, Plus, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/field';
 import { EmptyState, Divider } from '@/components/ui/primitives';
-import { ButtonLink } from '@/components/ui/button';
 import { useCart } from '@/lib/cart-store';
 import { shippingSchema, type ShippingInput } from '@/lib/validations';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCartPricing, CHECKOUT_STORAGE_KEY } from '@/lib/use-cart-pricing';
+import { fmt } from '@/i18n/dictionaries';
+import type { Locale } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
+
+export interface GovernorateOption {
+  value: string;
+  label: string;
+  shippingCost: number;
+  estimatedDays: string;
+}
 
 export function CartView({
-  regions,
+  governorates,
   freeShippingOver,
   currencySymbol,
+  locale,
+  t,
 }: {
-  regions: { zone: string; countries: string[] }[];
+  governorates: GovernorateOption[];
   freeShippingOver: number;
   currencySymbol: string;
+  locale: Locale;
+  t: Dictionary;
 }) {
   const router = useRouter();
   const { items, setQuantity, removeItem, hydrated } = useCart();
@@ -35,18 +48,17 @@ export function CartView({
       email: '',
       phone: '',
       street: '',
-      city: '',
-      region: '',
-      postalCode: '',
+      area: '',
+      governorate: '',
       notes: '',
     },
   });
 
-  const region = form.watch('region');
+  const governorate = form.watch('governorate');
   const [promoInput, setPromoInput] = React.useState('');
   const [appliedCode, setAppliedCode] = React.useState('');
 
-  const pricing = useCartPricing({ items, region, promoCode: appliedCode });
+  const pricing = useCartPricing({ items, governorate, promoCode: appliedCode });
 
   function applyPromo(e: React.FormEvent) {
     e.preventDefault();
@@ -73,11 +85,11 @@ export function CartView({
   if (items.length === 0) {
     return (
       <div className="container-luwjje py-stack-md md:py-stack-lg">
-        <h1 className="mb-stack-md font-display text-display-sm">Your Bag</h1>
+        <h1 className="mb-stack-md font-display text-display-sm">{t.cart.title}</h1>
         <EmptyState
-          title="Your bag is empty."
-          body="When you find something worth keeping, it will appear here."
-          action={<ButtonLink href="/shop">Browse the collection</ButtonLink>}
+          title={t.cart.empty}
+          body={t.cart.emptyHint}
+          action={<ButtonLink href="/shop">{t.cart.browse}</ButtonLink>}
         />
       </div>
     );
@@ -87,7 +99,7 @@ export function CartView({
 
   return (
     <div className="container-luwjje py-stack-md md:py-stack-lg">
-      <h1 className="mb-stack-md font-display text-display-sm">Your Bag</h1>
+      <h1 className="mb-stack-md font-display text-display-sm">{t.cart.title}</h1>
 
       <form onSubmit={form.handleSubmit(proceed)} noValidate>
         <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-12 lg:gap-gutter">
@@ -108,13 +120,15 @@ export function CartView({
                       href={`/product/${item.slug}`}
                       className="relative h-[132px] w-24 shrink-0 overflow-hidden bg-surface-low"
                     >
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.name}
-                        fill
-                        sizes="96px"
-                        className="object-cover"
-                      />
+                      {item.imageUrl && (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.name}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      )}
                     </Link>
 
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -128,20 +142,18 @@ export function CartView({
                           </Link>
                           <p className="mt-1 text-body-sm text-secondary">
                             {item.colorName}
-                            {item.size && ` · Size ${item.size}`}
+                            {item.size && ` · ${t.product.size} ${item.size}`}
                           </p>
                           <p className="mt-1 text-body-sm text-tertiary">
-                            {formatPrice(unitPrice, currencySymbol)} each
+                            {formatPrice(unitPrice, currencySymbol, locale)} {t.cart.each}
                           </p>
                         </div>
                         <span className="text-body-lg">
-                          {formatPrice(unitPrice * item.quantity, currencySymbol)}
+                          {formatPrice(unitPrice * item.quantity, currencySymbol, locale)}
                         </span>
                       </div>
 
-                      {line?.notice && (
-                        <p className="mt-2 text-body-sm text-error">{line.notice}</p>
-                      )}
+                      {line?.notice && <p className="mt-2 text-body-sm text-error">{line.notice}</p>}
 
                       <div className="mt-auto flex items-center gap-6 pt-4">
                         <div className="flex items-center border border-outline-variant">
@@ -149,7 +161,7 @@ export function CartView({
                             type="button"
                             onClick={() => setQuantity(item.variantId, item.quantity - 1)}
                             className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-surface-low"
-                            aria-label={`Decrease quantity of ${item.name}`}
+                            aria-label={t.product.decreaseQty}
                           >
                             <Minus className="h-3.5 w-3.5" />
                           </button>
@@ -159,7 +171,7 @@ export function CartView({
                             onClick={() => setQuantity(item.variantId, item.quantity + 1)}
                             disabled={item.quantity >= maxStock}
                             className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-surface-low disabled:opacity-30"
-                            aria-label={`Increase quantity of ${item.name}`}
+                            aria-label={t.product.increaseQty}
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
@@ -170,7 +182,7 @@ export function CartView({
                           onClick={() => removeItem(item.variantId)}
                           className="text-body-sm text-secondary underline-offset-4 transition-colors hover:text-error hover:underline"
                         >
-                          Remove
+                          {t.cart.remove}
                         </button>
                       </div>
                     </div>
@@ -179,105 +191,95 @@ export function CartView({
               })}
             </div>
 
-            {/* shipping details */}
+            {/* delivery details */}
             <section className="mt-stack-md">
-              <h2 className="font-display text-headline-sm">Shipping Details</h2>
-              <p className="mt-2 text-body-sm text-secondary">
-                Where should this go? You can review everything before paying.
-              </p>
+              <h2 className="font-display text-headline-sm">{t.cart.shippingDetails}</h2>
+              <p className="mt-2 text-body-sm text-secondary">{t.cart.shippingDetailsHint}</p>
 
               <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Input
-                  label="Full Name"
+                  label={t.fields.fullName}
                   required
                   autoComplete="name"
                   error={form.formState.errors.fullName?.message}
                   {...form.register('fullName')}
                 />
                 <Input
-                  label="Email"
+                  label={t.fields.email}
                   type="email"
                   required
                   autoComplete="email"
+                  dir="ltr"
                   error={form.formState.errors.email?.message}
                   {...form.register('email')}
                 />
                 <Input
-                  label="Phone"
+                  label={t.fields.phone}
                   type="tel"
                   required
                   autoComplete="tel"
+                  dir="ltr"
                   error={form.formState.errors.phone?.message}
                   {...form.register('phone')}
                 />
-                <Input
-                  label="Postal Code"
+                <Select
+                  label={t.fields.governorate}
                   required
-                  autoComplete="postal-code"
-                  error={form.formState.errors.postalCode?.message}
-                  {...form.register('postalCode')}
+                  error={form.formState.errors.governorate?.message}
+                  {...form.register('governorate')}
+                >
+                  <option value="">{t.cart.selectGovernorate}</option>
+                  {governorates.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label={t.fields.area}
+                  autoComplete="address-level2"
+                  error={form.formState.errors.area?.message}
+                  {...form.register('area')}
                 />
                 <Input
-                  label="Street Address"
+                  label={t.fields.street}
                   required
                   autoComplete="street-address"
-                  containerClassName="md:col-span-2"
                   error={form.formState.errors.street?.message}
                   {...form.register('street')}
                 />
-                <Input
-                  label="City"
-                  autoComplete="address-level2"
-                  error={form.formState.errors.city?.message}
-                  {...form.register('city')}
-                />
-                <Select
-                  label="Region / Country"
-                  required
-                  error={form.formState.errors.region?.message}
-                  {...form.register('region')}
-                >
-                  <option value="">Select a destination</option>
-                  {regions.map((r) => (
-                    <optgroup key={r.zone} label={r.zone}>
-                      {r.countries.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </Select>
               </div>
             </section>
           </div>
 
           {/* --------------------------------------------------- summary */}
           <aside className="lg:col-span-4">
-            <div className="sticky top-[92px] border border-outline-variant bg-surface-lowest p-6 md:p-8">
-              <h2 className="font-display text-headline-sm">Order Summary</h2>
+            <div className="sticky top-6 border border-outline-variant bg-surface-lowest p-6 md:p-8">
+              <h2 className="font-display text-headline-sm">{t.cart.summary}</h2>
 
               <dl className="mt-6 flex flex-col gap-3 text-body-md">
                 <div className="flex justify-between">
-                  <dt className="text-secondary">Subtotal</dt>
-                  <dd>{formatPrice(pricing.subtotal, currencySymbol)}</dd>
+                  <dt className="text-secondary">{t.cart.subtotal}</dt>
+                  <dd>{formatPrice(pricing.subtotal, currencySymbol, locale)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-secondary">Shipping</dt>
+                  <dt className="text-secondary">{t.cart.shipping}</dt>
                   <dd>
-                    {!region ? (
-                      <span className="text-secondary">Select a region</span>
+                    {!governorate ? (
+                      <span className="text-secondary">{t.cart.selectGovernorate}</span>
                     ) : pricing.shipping?.free ? (
-                      <span className="uppercase tracking-wider">Free</span>
+                      <span className="uppercase tracking-wider">{t.cart.free}</span>
                     ) : (
-                      formatPrice(pricing.shipping?.cost ?? 0, currencySymbol)
+                      formatPrice(pricing.shipping?.cost ?? 0, currencySymbol, locale)
                     )}
                   </dd>
                 </div>
                 {pricing.promo?.ok && (
                   <div className="flex justify-between text-error">
-                    <dt>Discount ({pricing.promo.code})</dt>
-                    <dd>−{formatPrice(pricing.promo.discount, currencySymbol)}</dd>
+                    <dt>
+                      {t.cart.discount} ({pricing.promo.code})
+                    </dt>
+                    <dd>−{formatPrice(pricing.promo.discount, currencySymbol, locale)}</dd>
                   </div>
                 )}
               </dl>
@@ -285,16 +287,16 @@ export function CartView({
               <Divider className="my-5" />
 
               <div className="flex items-baseline justify-between">
-                <span className="label-caps text-secondary">Total</span>
+                <span className="label-caps text-secondary">{t.cart.total}</span>
                 <span className="font-display text-headline-md">
-                  {formatPrice(pricing.total, currencySymbol)}
+                  {formatPrice(pricing.total, currencySymbol, locale)}
                 </span>
               </div>
 
               {/* promo */}
               <div className="mt-6">
                 <label htmlFor="promo" className="label-caps mb-2 block text-secondary">
-                  Promo Code
+                  {t.cart.promoCode}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -307,11 +309,12 @@ export function CartView({
                         applyPromo(e);
                       }
                     }}
-                    placeholder="Enter code"
+                    placeholder={t.cart.promoPlaceholder}
+                    dir="ltr"
                     className="h-11 min-w-0 flex-1 border border-outline-variant bg-background px-4 text-body-md uppercase transition-colors placeholder:normal-case placeholder:text-tertiary focus:border-navy focus:outline-none"
                   />
                   <Button type="button" variant="secondary" onClick={applyPromo}>
-                    Apply
+                    {t.cart.apply}
                   </Button>
                 </div>
                 {appliedCode && pricing.promo && (
@@ -330,12 +333,15 @@ export function CartView({
               <div className="mt-6 border border-outline-variant bg-surface-low p-4">
                 {remainingForFree > 0 ? (
                   <p className="text-body-sm text-secondary">
-                    Spend {formatPrice(remainingForFree, currencySymbol)} more for free shipping.
+                    {fmt(t.cart.spendMore, {
+                      amount: formatPrice(remainingForFree, currencySymbol, locale),
+                    })}
                   </p>
                 ) : (
                   <p className="text-body-sm">
-                    Free shipping on orders over{' '}
-                    {formatPrice(freeShippingOver, currencySymbol)} — applied.
+                    {fmt(t.cart.freeShippingApplied, {
+                      amount: formatPrice(freeShippingOver, currencySymbol, locale),
+                    })}
                   </p>
                 )}
                 <div className="mt-3 h-px w-full bg-outline-variant">
@@ -354,13 +360,11 @@ export function CartView({
                 className="mt-6 w-full"
                 disabled={pricing.loading || items.length === 0}
               >
-                {pricing.loading ? 'Updating…' : 'Proceed to Checkout'}
+                {pricing.loading ? t.cart.updating : t.cart.proceed}
               </Button>
 
               {!form.formState.isValid && form.formState.isSubmitted && (
-                <p className="mt-3 text-body-sm text-error">
-                  Complete the shipping details above to continue.
-                </p>
+                <p className="mt-3 text-body-sm text-error">{t.cart.completeDetails}</p>
               )}
             </div>
           </aside>

@@ -12,6 +12,7 @@ import { Input, Textarea, Select, Checkbox, FieldLabel } from '@/components/ui/f
 import { StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
+import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { bannerSchema, discountSchema } from '@/lib/validations';
 import {
@@ -34,13 +35,19 @@ interface Swatch {
 const EMPTY_BANNER: BannerInput = {
   slot: 'HERO',
   eyebrow: '',
+  eyebrowAr: '',
   heading: '',
+  headingAr: '',
   subheading: '',
+  subheadingAr: '',
   body: '',
+  bodyAr: '',
   ctaLabel: 'Shop Now',
+  ctaLabelAr: '',
   ctaHref: '/shop',
   imageUrl: '',
   badge: '',
+  badgeAr: '',
   active: true,
   startsAt: '',
   endsAt: '',
@@ -49,6 +56,7 @@ const EMPTY_BANNER: BannerInput = {
 
 const EMPTY_DISCOUNT: DiscountInput = {
   name: '',
+  nameAr: '',
   discountType: 'PERCENT',
   discountValue: 10,
   scope: 'PRODUCTS',
@@ -421,28 +429,105 @@ export function OffersManager({
               <option value="HERO">Hero — top of the home page</option>
               <option value="OFFER">Promotional block — below Best Sellers</option>
             </Select>
-            <Input
-              label="Eyebrow"
-              placeholder="Autumn / Winter 2026"
-              {...bannerForm.register('eyebrow')}
+            <Controller
+              control={bannerForm.control}
+              name="eyebrow"
+              render={({ field: en }) => (
+                <Controller
+                  control={bannerForm.control}
+                  name="eyebrowAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Eyebrow"
+                      placeholder="Autumn / Winter 2026"
+                      placeholderAr="خريف / شتاء ٢٠٢٦"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                    />
+                  )}
+                />
+              )}
             />
-            <Input
-              label="Heading"
-              required
-              containerClassName="md:col-span-2"
-              error={bannerForm.formState.errors.heading?.message}
-              {...bannerForm.register('heading')}
+            <Controller
+              control={bannerForm.control}
+              name="heading"
+              render={({ field: en }) => (
+                <Controller
+                  control={bannerForm.control}
+                  name="headingAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Heading"
+                      required
+                      className="md:col-span-2"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                      errorEn={bannerForm.formState.errors.heading?.message}
+                      errorAr={bannerForm.formState.errors.headingAr?.message}
+                    />
+                  )}
+                />
+              )}
             />
-            <Textarea
-              label="Body"
-              rows={3}
-              containerClassName="md:col-span-2"
-              {...bannerForm.register('body')}
+            <Controller
+              control={bannerForm.control}
+              name="body"
+              render={({ field: en }) => (
+                <Controller
+                  control={bannerForm.control}
+                  name="bodyAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Body"
+                      rows={3}
+                      className="md:col-span-2"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                    />
+                  )}
+                />
+              )}
             />
             {bannerSlot === 'OFFER' && (
-              <Input label="Badge" placeholder="Limited Release" {...bannerForm.register('badge')} />
+              <Controller
+                control={bannerForm.control}
+                name="badge"
+                render={({ field: en }) => (
+                  <Controller
+                    control={bannerForm.control}
+                    name="badgeAr"
+                    render={({ field: ar }) => (
+                      <BilingualField
+                        label="Badge"
+                        placeholder="Limited Release"
+                        placeholderAr="إصدار محدود"
+                        english={{ value: en.value, onChange: en.onChange }}
+                        arabic={{ value: ar.value, onChange: ar.onChange }}
+                      />
+                    )}
+                  />
+                )}
+              />
             )}
-            <Input label="Button label" {...bannerForm.register('ctaLabel')} />
+            <Controller
+              control={bannerForm.control}
+              name="ctaLabel"
+              render={({ field: en }) => (
+                <Controller
+                  control={bannerForm.control}
+                  name="ctaLabelAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Button label"
+                      placeholder="Shop Now"
+                      placeholderAr="تسوّق الآن"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                    />
+                  )}
+                />
+              )}
+            />
             <Input
               label="Button link"
               placeholder="/shop?color=Beige"
@@ -522,12 +607,26 @@ export function OffersManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Input
-              label="Campaign name"
-              required
-              containerClassName="md:col-span-2"
-              error={discountForm.formState.errors.name?.message}
-              {...discountForm.register('name')}
+            <Controller
+              control={discountForm.control}
+              name="name"
+              render={({ field: en }) => (
+                <Controller
+                  control={discountForm.control}
+                  name="nameAr"
+                  render={({ field: ar }) => (
+                    <BilingualField
+                      label="Campaign name"
+                      required
+                      className="md:col-span-2"
+                      english={{ value: en.value, onChange: en.onChange }}
+                      arabic={{ value: ar.value, onChange: ar.onChange }}
+                      errorEn={discountForm.formState.errors.name?.message}
+                      errorAr={discountForm.formState.errors.nameAr?.message}
+                    />
+                  )}
+                />
+              )}
             />
             <Select label="Discount type" {...discountForm.register('discountType')}>
               <option value="PERCENT">Percentage off</option>

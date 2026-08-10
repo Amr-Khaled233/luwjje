@@ -1,23 +1,31 @@
 import type { Metadata } from 'next';
 import { CartView } from '@/components/storefront/cart-view';
-import { getShippingRegions } from '@/lib/commerce';
-import { getSettings } from '@/lib/settings';
+import { getGovernorates } from '@/lib/commerce';
+import { getSettings, getCurrencySymbol } from '@/lib/settings';
+import { getI18n } from '@/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Your Bag',
-  robots: { index: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.cart.title, robots: { index: false } };
+}
 
 export default async function CartPage() {
-  const [settings, regions] = await Promise.all([getSettings(), getShippingRegions()]);
+  const { locale, t } = await getI18n();
+  const [settings, governorates, symbol] = await Promise.all([
+    getSettings(),
+    getGovernorates(locale),
+    getCurrencySymbol(locale),
+  ]);
 
   return (
     <CartView
-      regions={regions}
+      governorates={governorates}
       freeShippingOver={settings.freeShippingOver}
-      currencySymbol={settings.currencySymbol}
+      currencySymbol={symbol}
+      locale={locale}
+      t={t}
     />
   );
 }

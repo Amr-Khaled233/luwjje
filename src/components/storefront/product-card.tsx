@@ -8,13 +8,21 @@ import { useToast } from '@/components/ui/toast';
 import { ColorDot } from '@/components/ui/primitives';
 import { formatPrice, cn } from '@/lib/utils';
 import type { ProductCardData } from '@/lib/queries';
+import type { Locale } from '@/i18n/config';
+import type { Dictionary } from '@/i18n/dictionaries';
 
 export function ProductCard({
   product,
+  currencySymbol,
+  locale,
+  t,
   priority = false,
   className,
 }: {
   product: ProductCardData;
+  currencySymbol: string;
+  locale: Locale;
+  t: Dictionary;
   priority?: boolean;
   className?: string;
 }) {
@@ -34,11 +42,10 @@ export function ProductCard({
     try {
       const res = await fetch(`/api/products/${product.slug}/default-variant`);
       if (!res.ok) throw new Error('unavailable');
-      const line = await res.json();
-      addItem(line, 1);
+      addItem(await res.json(), 1);
       openCart();
     } catch {
-      toast('That piece is unavailable right now.', 'error');
+      toast(t.product.unavailable, 'error');
     } finally {
       setAdding(false);
     }
@@ -48,19 +55,21 @@ export function ProductCard({
     <article className={cn('group', className)}>
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-low">
-          <Image
-            src={product.primaryImage}
-            alt={product.name}
-            fill
-            priority={priority}
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            className={cn(
-              'object-cover transition-all duration-500 ease-scandi',
-              product.hoverImage
-                ? 'group-hover:scale-[1.02] group-hover:opacity-0'
-                : 'group-hover:scale-[1.02]',
-            )}
-          />
+          {product.primaryImage && (
+            <Image
+              src={product.primaryImage}
+              alt={product.name}
+              fill
+              priority={priority}
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+              className={cn(
+                'object-cover transition-all duration-500 ease-scandi',
+                product.hoverImage
+                  ? 'group-hover:scale-[1.02] group-hover:opacity-0'
+                  : 'group-hover:scale-[1.02]',
+              )}
+            />
+          )}
           {product.hoverImage && (
             <Image
               src={product.hoverImage}
@@ -73,13 +82,13 @@ export function ProductCard({
           )}
 
           {!product.inStock && (
-            <span className="label-caps absolute left-3 top-3 border border-navy bg-background px-2.5 py-1">
-              Sold out
+            <span className="label-caps absolute top-3 border border-navy bg-background px-2.5 py-1 ltr:left-3 rtl:right-3">
+              {t.product.soldOut}
             </span>
           )}
           {product.discounted && product.inStock && (
-            <span className="label-caps absolute left-3 top-3 border border-navy bg-navy px-2.5 py-1 text-background">
-              Sale
+            <span className="label-caps absolute top-3 border border-navy bg-navy px-2.5 py-1 text-background ltr:left-3 rtl:right-3">
+              {t.product.sale}
             </span>
           )}
 
@@ -89,7 +98,7 @@ export function ProductCard({
               disabled={adding}
               className="label-caps absolute inset-x-3 bottom-3 hidden h-11 items-center justify-center border border-navy bg-background/95 text-navy opacity-0 backdrop-blur-sm transition-all duration-300 ease-scandi hover:bg-navy hover:text-background group-hover:opacity-100 md:flex"
             >
-              {adding ? 'Adding…' : 'Quick Add'}
+              {adding ? t.product.adding : t.product.quickAdd}
             </button>
           )}
         </div>
@@ -99,11 +108,11 @@ export function ProductCard({
           <div className="mt-1.5 flex items-center gap-2">
             {product.discounted && (
               <span className="text-body-md text-tertiary line-through">
-                {formatPrice(product.listPrice)}
+                {formatPrice(product.listPrice, currencySymbol, locale)}
               </span>
             )}
             <span className={cn('text-body-md', product.discounted && 'text-error')}>
-              {formatPrice(product.price)}
+              {formatPrice(product.price, currencySymbol, locale)}
             </span>
           </div>
 
@@ -125,15 +134,33 @@ export function ProductCard({
 
 export function ProductGrid({
   products,
+  currencySymbol,
+  locale,
+  t,
   className,
 }: {
   products: ProductCardData[];
+  currencySymbol: string;
+  locale: Locale;
+  t: Dictionary;
   className?: string;
 }) {
   return (
-    <div className={cn('grid grid-cols-1 gap-x-gutter gap-y-stack-md md:grid-cols-2 lg:grid-cols-4', className)}>
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-x-gutter gap-y-stack-md md:grid-cols-2 lg:grid-cols-4',
+        className,
+      )}
+    >
       {products.map((p, i) => (
-        <ProductCard key={p.id} product={p} priority={i < 4} />
+        <ProductCard
+          key={p.id}
+          product={p}
+          currencySymbol={currencySymbol}
+          locale={locale}
+          t={t}
+          priority={i < 4}
+        />
       ))}
     </div>
   );

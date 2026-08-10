@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { resolveCartLines, calculateShipping, validatePromoCode } from '@/lib/commerce';
-import { getSettings } from '@/lib/settings';
+import { getSettings, getCurrencySymbol } from '@/lib/settings';
+import { getLocale } from '@/i18n/server';
 
 const schema = z.object({
   items: z
     .array(z.object({ variantId: z.string(), quantity: z.number().int().min(1).max(99) }))
     .max(50),
-  region: z.string().optional(),
+  governorate: z.string().optional(),
   promoCode: z.string().optional(),
 });
 
 /**
  * Re-prices the browser's cart against the database and returns the
  * authoritative lines plus totals. Called whenever the cart page mounts or a
- * quantity, region or promo code changes.
+ * quantity, governorate or promo code changes.
  */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
@@ -22,8 +23,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid cart payload.' }, { status: 400 });
   }
 
-  const { items, region, promoCode } = parsed.data;
-  const settings = await getSettings();
+  const { items, governorate, promoCode } = parsed.data;
+  const [settings, locale] = await Promise.all([getSettings(), getLocale()]);
   const lines = await resolveCartLines(items);
   const subtotal = Math.round(lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0) * 100) / 100;
 
@@ -34,22 +35,26 @@ export async function POST(req: Request) {
         rate: 0,
         threshold: settings.freeShippingOver,
         free: true,
+        governorateId: null,
         zoneName: 'Standard',
+        zoneNameAr: '',
         estimatedDays: '',
       }
-    : region
-    ? await calculateShipping(region, subtotal)
+    : governorate
+    ? await calculateShipping(governorate, subtotal)
     : {
         cost: subtotal >= settings.freeShippingOver ? 0 : settings.defaultShippingRate,
         rate: settings.defaultShippingRate,
         threshold: settings.freeShippingOver,
         free: subtotal >= settings.freeShippingOver,
+        governorateId: null,
         zoneName: 'Standard',
-        estimatedDays: '5-8 business days',
+        zoneNameAr: '',
+        estimatedDays: '',
       };
 
   const promo = promoCode
-    ? await validatePromoCode(promoCode, subtotal)
+    ? await validatePromoCode(promoCode, subtotal, locale)
     : { ok: false, discount: 0, message: '', code: undefined };
 
   const total = Math.max(0, Math.round((subtotal + shipping.cost - promo.discount) * 100) / 100);
@@ -67,6 +72,6 @@ export async function POST(req: Request) {
     total,
     changed,
     freeShippingOver: shipping.threshold,
-    currencySymbol: settings.currencySymbol,
+    currencySymbol: await getCurrencySymbol(locale),
   });
 }

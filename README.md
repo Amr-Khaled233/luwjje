@@ -3,8 +3,13 @@
 A production-ready e-commerce store — Scandinavian minimalism, sharp edges, Parchment and Navy.
 Everything on the storefront is driven by the dashboard; nothing is hardcoded.
 
-**No customer accounts.** Shoppers check out as guests. The only login in the whole app is a
-single password on `/dashboard`.
+**Bilingual.** English and Arabic, RTL included, with an `*Ar` twin for every
+customer-visible string. A blank Arabic field falls back to the English one.
+
+**Egypt-first.** Prices in EGP, delivery priced per governorate across all 27.
+
+**No customer accounts.** Shoppers check out as guests and track orders by email. The only
+login in the whole app is a single password on `/dashboard`.
 
 **Stack** — Next.js 14 (App Router) · TypeScript · Tailwind · Prisma · Zustand ·
 React Hook Form + Zod · Recharts
@@ -27,7 +32,8 @@ docker run -d --name luwjje-pg \
 
 npm install          # also runs prisma generate
 npm run db:migrate   # apply prisma/migrations
-npm run db:seed      # 12 products, 90 days of orders, pages, promos, zones
+npm run db:seed      # governorates, pages, settings — catalogue left empty
+npm run db:seed:demo # optional: a demo catalogue in EGP to look around
 npm run dev          # http://localhost:3000
 ```
 
@@ -44,8 +50,12 @@ and the `.env` value stops mattering.
 
 ```bash
 npm run smoke        # 33 checks: pricing, promos, shipping, the order transaction, oversell
-npm run gate         # 51 checks: password gate, session signing, order privacy, route access
+npm run gate         # 50 checks: password gate, session signing, order privacy, route access
+npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
 ```
+
+`npm run features` needs a running server (`npm run build && npm start`), and briefly
+mutates then restores a few rows — point it at a dev database, not production.
 
 `npm run gate` also probes a running server if one is up (`GATE_BASE`, default
 `http://localhost:3010`); without one it runs the non-HTTP checks and says so.
@@ -67,10 +77,9 @@ attempts are throttled (8 per 15 minutes per IP).
 
 **Reading an order without an account.** An order number alone is *not* enough — that would
 expose a stranger's address to anyone guessing. A separate signed cookie records which orders
-this browser has earned: you get it by placing the order, or by passing the lookup form at
-`/orders`, which requires the order number **and** the email on the order. Wrong email and
-unknown order number return the identical message, so the form never confirms which orders
-exist. A dashboard session can read any order.
+this browser has earned: you get it by placing the order, or by entering the order's email at
+`/orders`, which unlocks exactly the orders placed with that address. A dashboard session can
+read any order.
 
 ---
 
@@ -86,7 +95,7 @@ exist. A dashboard session can read any order.
 | `/cart` | Line items, shipping form, sticky summary, promo code, free-shipping meter |
 | `/checkout` | Review → Shipping → Payment, then the order is written |
 | `/order/[number]` | Receipt — gated by the order-access cookie |
-| `/orders` | Guest order lookup (order number + email) |
+| `/orders` | Guest order lookup by email — lists every matching order to pick from |
 | `/about`, `/journal`, `/pages/[slug]` | CMS pages edited in Settings → Content Pages |
 
 ### Dashboard (`/dashboard`, password only)
@@ -95,14 +104,16 @@ exist. A dashboard session can read any order.
 | --- | --- |
 | `/dashboard/login` | The password screen |
 | `/dashboard` | Sales, active orders, inventory level, conversion; revenue chart, low stock, top performers, CSV export |
-| `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering, categories |
+| `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering. Every text field has an EN/ع toggle |
+| `/dashboard/categories` | Rename, reorder, translate, and show or hide each category in the Shop filter |
 | `/dashboard/stock` | Every SKU, inline quantity edit, per-SKU low-stock alert level |
 | `/dashboard/orders` | All orders, detail view, status changes (cancelling returns stock) |
 | `/dashboard/offers` | Hero banner, promo block, discount campaigns, home-page colour palette |
-| `/dashboard/shipping` | Zones, rates, per-zone and global free-shipping thresholds |
+| `/dashboard/shipping` | A delivery price per governorate (all 27), editable as one grid, plus per-governorate free-shipping thresholds |
+| `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
 | `/dashboard/analytics` | Revenue over time, top products, top categories, traffic sources, status breakdown |
-| `/dashboard/settings` | Store identity, commerce defaults, socials, SEO, content pages, **password** |
+| `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages, **password** |
 
 ---
 
@@ -118,7 +129,9 @@ There is no content in the codebase. Each storefront section reads a table:
 | Prices shown | `Product.price`, adjusted by any live `Discount` |
 | Colour palette strip | `PaletteSwatch` |
 | Cart promo field | `PromoCode` |
-| Shipping cost & free-over | `ShippingZone`, falling back to `SiteSettings` |
+| Delivery cost & free-over | `Governorate`, falling back to `SiteSettings` |
+| Shop filter controls | `SiteSettings` toggles + `FilterColor` / `PriceRange` / `Category.visible` |
+| Language shown | `SiteSettings.defaultLocale`, overridden by the visitor's cookie |
 | Header/footer, SEO | `SiteSettings` |
 | About / Journal / legal | `Page` |
 
@@ -141,11 +154,14 @@ decrements it there — so two shoppers cannot both take the last piece.
 prisma/
   schema.prisma        11 models — PostgreSQL, no User table; guests only
   migrations/          0_init, applied automatically on every deploy
-  seed.ts              products, 90 days of orders, CMS content
+  governorates.ts      the 27 Egyptian governorates and their default rates
+  seed.ts              governorates, pages, settings — no catalogue
+  seed-demo.ts         optional demo catalogue, orders and traffic
   placeholders.ts      generates on-brand SVG product imagery (no network)
 scripts/
   smoke-test.ts        commerce core against the real database
   gate-test.ts         password gate, session signing, order privacy
+  feature-check.mjs    Arabic/RTL, EGP, governorates, filter controls
 src/
   app/
     (storefront)/      public pages — full header/footer

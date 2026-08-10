@@ -61,7 +61,7 @@ const en = {
     size: 'Size',
     addToBag: 'Add to Bag',
     added: 'Added',
-    onlyLeft: (n: number) => `Only ${n} left in this colourway.`,
+    onlyLeft: 'Only {n} left in this colourway.',
     combinationSoldOut: 'This combination is sold out.',
     material: 'Material & Dimensions',
     care: 'Care',
@@ -73,7 +73,7 @@ const en = {
     home: 'Home',
     decreaseQty: 'Decrease quantity',
     increaseQty: 'Increase quantity',
-    addedToast: (name: string) => `${name} added to your bag.`,
+    addedToast: '{name} added to your bag.',
     unavailable: 'That piece is unavailable right now.',
   },
   cart: {
@@ -93,8 +93,8 @@ const en = {
     promoCode: 'Promo Code',
     promoPlaceholder: 'Enter code',
     apply: 'Apply',
-    spendMore: (amount: string) => `Spend ${amount} more for free shipping.`,
-    freeShippingApplied: (amount: string) => `Free shipping over ${amount} — applied.`,
+    spendMore: 'Spend {amount} more for free shipping.',
+    freeShippingApplied: 'Free shipping over {amount} — applied.',
     proceed: 'Proceed to Checkout',
     updating: 'Updating…',
     completeDetails: 'Complete the delivery details above to continue.',
@@ -126,7 +126,7 @@ const en = {
     expiry: 'Expiry',
     cvc: 'CVC',
     disabledInTest: 'Disabled in test mode.',
-    pay: (amount: string) => `Pay ${amount}`,
+    pay: 'Pay {amount}',
     placing: 'Placing order…',
     nothingToCheckout: 'There is nothing to check out.',
     bagEmpty: 'Your bag is empty.',
@@ -148,8 +148,8 @@ const en = {
     confirmed: 'Order Confirmed',
     thankYou: 'Thank you',
     order: 'Order',
-    sentTo: (email: string) => `We have sent a confirmation to ${email}.`,
-    placedOn: (date: string) => `Placed ${date}.`,
+    sentTo: 'We have sent a confirmation to {email}.',
+    placedOn: 'Placed {date}.',
     orderNumber: 'Order number',
     status: 'Status',
     placed: 'Placed',
@@ -173,9 +173,9 @@ const en = {
     searching: 'Looking…',
     notFound: 'We could not find any orders for that email.',
     yourOrders: 'Your orders',
-    ordersFound: (n: number) => `${n} order${n === 1 ? '' : 's'} found for this email.`,
+    ordersFound: '{n} order(s) found for this email.',
     viewOrder: 'View order',
-    items: (n: number) => `${n} item${n === 1 ? '' : 's'}`,
+    items: '{n} item(s)',
     searchAgain: 'Search a different email',
   },
   footer: {
@@ -256,7 +256,7 @@ const ar: Dictionary = {
     size: 'المقاس',
     addToBag: 'أضِف إلى الحقيبة',
     added: 'تمت الإضافة',
-    onlyLeft: (n: number) => `باقي ${n} فقط من هذا اللون.`,
+    onlyLeft: 'باقي {n} فقط من هذا اللون.',
     combinationSoldOut: 'هذا الاختيار نفدت كميته.',
     material: 'الخامة والمقاسات',
     care: 'العناية',
@@ -268,7 +268,7 @@ const ar: Dictionary = {
     home: 'الرئيسية',
     decreaseQty: 'تقليل الكمية',
     increaseQty: 'زيادة الكمية',
-    addedToast: (name: string) => `تمت إضافة ${name} إلى حقيبتك.`,
+    addedToast: 'تمت إضافة {name} إلى حقيبتك.',
     unavailable: 'هذه القطعة غير متاحة حالياً.',
   },
   cart: {
@@ -288,8 +288,8 @@ const ar: Dictionary = {
     promoCode: 'كود الخصم',
     promoPlaceholder: 'أدخل الكود',
     apply: 'تطبيق',
-    spendMore: (amount: string) => `أضِف ${amount} للحصول على شحن مجاني.`,
-    freeShippingApplied: (amount: string) => `شحن مجاني فوق ${amount} — تم التطبيق.`,
+    spendMore: 'أضِف {amount} للحصول على شحن مجاني.',
+    freeShippingApplied: 'شحن مجاني فوق {amount} — تم التطبيق.',
     proceed: 'إتمام الطلب',
     updating: 'جارٍ التحديث…',
     completeDetails: 'أكمل بيانات التوصيل بالأعلى للمتابعة.',
@@ -320,7 +320,7 @@ const ar: Dictionary = {
     expiry: 'تاريخ الانتهاء',
     cvc: 'رمز التحقق',
     disabledInTest: 'معطّل في وضع التجربة.',
-    pay: (amount: string) => `ادفع ${amount}`,
+    pay: 'ادفع {amount}',
     placing: 'جارٍ تأكيد الطلب…',
     nothingToCheckout: 'لا يوجد ما يمكن إتمامه.',
     bagEmpty: 'حقيبتك فارغة.',
@@ -342,8 +342,8 @@ const ar: Dictionary = {
     confirmed: 'تم تأكيد الطلب',
     thankYou: 'شكراً لك',
     order: 'الطلب',
-    sentTo: (email: string) => `أرسلنا تأكيداً إلى ${email}.`,
-    placedOn: (date: string) => `تم الطلب في ${date}.`,
+    sentTo: 'أرسلنا تأكيداً إلى {email}.',
+    placedOn: 'تم الطلب في {date}.',
     orderNumber: 'رقم الطلب',
     status: 'الحالة',
     placed: 'تاريخ الطلب',
@@ -367,9 +367,9 @@ const ar: Dictionary = {
     searching: 'جارٍ البحث…',
     notFound: 'لم نجد أي طلبات بهذا البريد الإلكتروني.',
     yourOrders: 'طلباتك',
-    ordersFound: (n: number) => `${n} طلب مرتبط بهذا البريد.`,
+    ordersFound: '{n} طلب مرتبط بهذا البريد.',
     viewOrder: 'عرض الطلب',
-    items: (n: number) => `${n} قطعة`,
+    items: '{n} قطعة',
     searchAgain: 'ابحث ببريد آخر',
   },
   footer: {
@@ -396,4 +396,18 @@ const DICTIONARIES: Record<Locale, Dictionary> = { en, ar };
 
 export function getDictionary(locale: Locale): Dictionary {
   return DICTIONARIES[locale] ?? en;
+}
+
+/**
+ * Fills {placeholders} in a dictionary string.
+ *
+ * Dictionary values must stay plain strings: the whole dictionary is handed
+ * from Server to Client Components, and a function cannot cross that
+ * boundary — it throws "Functions cannot be passed directly to Client
+ * Components" at render time.
+ */
+export function fmt(template: string, values: Record<string, string | number>) {
+  return template.replace(/{(w+)}/g, (match, key) =>
+    key in values ? String(values[key]) : match,
+  );
 }
