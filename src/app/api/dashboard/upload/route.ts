@@ -3,12 +3,15 @@ import { randomUUID } from 'node:crypto';
 import { isDashboardUser } from '@/lib/dashboard-auth';
 
 const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_FILES = 12;
 const ALLOWED = new Map([
   ['image/jpeg', '.jpg'],
   ['image/png', '.png'],
   ['image/webp', '.webp'],
   ['image/avif', '.avif'],
-  ['image/svg+xml', '.svg'],
+  // SVG is deliberately absent: it can carry <script>, and an uploaded file is
+  // served from this origin, so accepting one would be stored XSS. Product
+  // photography is raster anyway.
 ]);
 
 /**
@@ -30,11 +33,17 @@ export async function POST(req: Request) {
   if (files.length === 0) {
     return NextResponse.json({ error: 'No files received.' }, { status: 400 });
   }
+  if (files.length > MAX_FILES) {
+    return NextResponse.json(
+      { error: `Upload at most ${MAX_FILES} images at a time.` },
+      { status: 400 },
+    );
+  }
 
   for (const file of files) {
     if (!ALLOWED.has(file.type)) {
       return NextResponse.json(
-        { error: `${file.name}: only JPG, PNG, WebP, AVIF and SVG are accepted.` },
+        { error: `${file.name}: only JPG, PNG, WebP and AVIF are accepted.` },
         { status: 400 },
       );
     }

@@ -87,12 +87,12 @@ export function ImageUploader({
         <p className="mt-3 text-body-sm text-secondary">
           {uploading ? 'Uploading…' : 'Drop images here, or click to choose'}
         </p>
-        <p className="mt-1 text-body-sm text-tertiary">JPG, PNG, WebP, AVIF or SVG · max 8MB each</p>
+        <p className="mt-1 text-body-sm text-tertiary">JPG, PNG, WebP or AVIF · max 8MB each</p>
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+          accept="image/jpeg,image/png,image/webp,image/avif"
           className="hidden"
           onChange={(e) => e.target.files && upload(e.target.files)}
         />

@@ -18,7 +18,10 @@ const schema = z.object({
  * quantity, governorate or promo code changes.
  */
 export async function POST(req: Request) {
-  const parsed = schema.safeParse(await req.json());
+  // `req.json()` throws on a malformed body; a bad request is the caller's
+  // problem, not a server error.
+  const body = await req.json().catch(() => null);
+  const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid cart payload.' }, { status: 400 });
   }

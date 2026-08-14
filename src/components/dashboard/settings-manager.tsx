@@ -15,6 +15,8 @@ import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
 import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { settingsSchema, pageSchema, changePasswordSchema } from '@/lib/validations';
 import {
   saveSettings,
@@ -28,8 +30,8 @@ type SettingsInput = z.infer<typeof settingsSchema>;
 type PageInput = z.infer<typeof pageSchema>;
 type PasswordInput = z.infer<typeof changePasswordSchema>;
 
-const TABS = ['Store', 'Content Pages', 'Password'] as const;
-type Tab = (typeof TABS)[number];
+const TAB_KEYS = ['store', 'pages', 'password'] as const;
+type Tab = (typeof TAB_KEYS)[number];
 
 const EMPTY_PAGE: PageInput = {
   slug: '',
@@ -57,7 +59,13 @@ export function SettingsManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [tab, setTab] = React.useState<Tab>('Store');
+  const { d } = useDash();
+  const [tab, setTab] = React.useState<Tab>('store');
+  const TAB_LABELS: Record<Tab, string> = {
+    store: d.settings.tabStore,
+    pages: d.settings.tabPages,
+    password: d.settings.tabPassword,
+  };
   const [pending, setPending] = React.useState(false);
 
   const settingsForm = useForm<SettingsInput>({
@@ -89,7 +97,7 @@ export function SettingsManager({
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -101,7 +109,7 @@ export function SettingsManager({
     <>
       {/* tabs */}
       <div className="flex flex-wrap border-b border-outline-variant">
-        {TABS.map((t) => (
+        {TAB_KEYS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -110,53 +118,53 @@ export function SettingsManager({
               tab === t ? 'text-on-surface' : 'text-secondary hover:text-on-surface',
             )}
           >
-            {t}
+            {TAB_LABELS[t]}
             {tab === t && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-navy" />}
           </button>
         ))}
       </div>
 
       {/* ------------------------------------------------------------ store */}
-      {tab === 'Store' && (
+      {tab === 'store' && (
         <form
           onSubmit={settingsForm.handleSubmit(async (values) => {
-            await run(() => saveSettings(values), 'Settings saved — the storefront is updated.');
+            await run(() => saveSettings(values), d.settings.saved);
           })}
           noValidate
           className="flex flex-col gap-8"
         >
           <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">Identity</h2>
+            <h2 className="font-display text-headline-sm">{d.settings.identity}</h2>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <Input
-                label="Store name"
+                label={d.settings.storeName}
                 required
-                hint="Appears as the wordmark in the header and footer."
+                hint={d.settings.storeName}
                 error={settingsForm.formState.errors.storeName?.message}
                 {...settingsForm.register('storeName')}
               />
               <Input
-                label="Tagline"
+                label={d.settings.tagline}
                 error={settingsForm.formState.errors.tagline?.message}
                 {...settingsForm.register('tagline')}
               />
               <Input
-                label="Tagline (Arabic)"
+                label={`${d.settings.tagline} (${d.common.arabic})`}
                 dir="rtl"
                 containerClassName="md:col-span-2"
-                hint="Blank falls back to the English tagline."
+                hint={d.common.blankFallsBack}
                 error={settingsForm.formState.errors.taglineAr?.message}
                 {...settingsForm.register('taglineAr')}
               />
               <Input
-                label="Support email"
+                label={d.settings.supportEmail}
                 type="email"
                 required
                 error={settingsForm.formState.errors.supportEmail?.message}
                 {...settingsForm.register('supportEmail')}
               />
               <Input
-                label="Support phone"
+                label={d.settings.supportPhone}
                 error={settingsForm.formState.errors.supportPhone?.message}
                 {...settingsForm.register('supportPhone')}
               />
@@ -166,7 +174,7 @@ export function SettingsManager({
                   name="logoUrl"
                   render={({ field }) => (
                     <ImageUploader
-                      label="Logo (optional)"
+                      label={d.settings.logo}
                       value={logoUrl ? [{ url: logoUrl, alt: '' }] : []}
                       onChange={(images) => field.onChange(images[images.length - 1]?.url ?? '')}
                     />
@@ -177,19 +185,19 @@ export function SettingsManager({
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">Language</h2>
+            <h2 className="font-display text-headline-sm">{d.settings.language}</h2>
             <p className="mt-2 text-body-sm text-secondary">
               Every product, category and page has an Arabic twin. Where one is left blank the
               English text is shown instead, so a half-translated catalogue still reads.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <Select
-                label="Default language"
-                hint="What a first-time visitor sees before choosing."
+                label={d.settings.defaultLanguage}
+                hint={d.settings.defaultLanguage}
                 error={settingsForm.formState.errors.defaultLocale?.message}
                 {...settingsForm.register('defaultLocale')}
               >
-                <option value="en">English</option>
+                <option value="en">{d.common.english}</option>
                 <option value="ar">العربية</option>
               </Select>
               <div className="flex items-end pb-3">
@@ -200,7 +208,7 @@ export function SettingsManager({
                     <Checkbox
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
-                      label="Offer Arabic — shows the language switcher"
+                      label={d.settings.offerArabic}
                     />
                   )}
                 />
@@ -209,7 +217,7 @@ export function SettingsManager({
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">Commerce defaults</h2>
+            <h2 className="font-display text-headline-sm">{d.settings.commerce}</h2>
             <p className="mt-2 text-body-sm text-secondary">
               Per-governorate prices in{' '}
               <Link href="/dashboard/shipping" className="underline underline-offset-4">
@@ -219,39 +227,39 @@ export function SettingsManager({
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4">
               <Input
-                label="Currency symbol"
+                label={d.settings.currencySymbol}
                 required
-                hint="Shown in English."
+                hint={d.common.english}
                 error={settingsForm.formState.errors.currencySymbol?.message}
                 {...settingsForm.register('currencySymbol')}
               />
               <Input
-                label="Currency symbol (Arabic)"
+                label={`${d.settings.currencySymbol} (${d.common.arabic})`}
                 required
                 dir="rtl"
-                hint="e.g. ج.م"
+                hint={d.common.arabic}
                 error={settingsForm.formState.errors.currencySymbolAr?.message}
                 {...settingsForm.register('currencySymbolAr')}
               />
               <Input
-                label="Currency code"
+                label={d.settings.currencyCode}
                 required
-                hint="EGP, USD…"
+                hint={d.settings.currencyCode}
                 error={settingsForm.formState.errors.currencyCode?.message}
                 {...settingsForm.register('currencyCode')}
               />
               <Input
-                label="Free shipping over"
+                label={d.settings.freeShippingOver}
                 type="number"
                 step="0.01"
                 min="0"
                 required
-                hint="Shown in the cart."
+                hint={d.settings.freeShippingOver}
                 error={settingsForm.formState.errors.freeShippingOver?.message}
                 {...settingsForm.register('freeShippingOver')}
               />
               <Input
-                label="Default shipping rate"
+                label={d.settings.defaultRate}
                 type="number"
                 step="0.01"
                 min="0"
@@ -260,11 +268,11 @@ export function SettingsManager({
                 {...settingsForm.register('defaultShippingRate')}
               />
               <Input
-                label="Default low-stock mark"
+                label={d.settings.lowStockMark}
                 type="number"
                 min="0"
                 required
-                hint="Applied to new SKUs."
+                hint={d.settings.lowStockMark}
                 error={settingsForm.formState.errors.lowStockThreshold?.message}
                 {...settingsForm.register('lowStockThreshold')}
               />
@@ -272,38 +280,38 @@ export function SettingsManager({
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">Social links</h2>
+            <h2 className="font-display text-headline-sm">{d.settings.social}</h2>
             <p className="mt-2 text-body-sm text-secondary">
               Blank fields are hidden from the footer.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Input label="Instagram" placeholder="https://instagram.com/luwjje" {...settingsForm.register('instagramUrl')} />
-              <Input label="Pinterest" placeholder="https://pinterest.com/luwjje" {...settingsForm.register('pinterestUrl')} />
-              <Input label="TikTok" placeholder="https://tiktok.com/@luwjje" {...settingsForm.register('tiktokUrl')} />
-              <Input label="Facebook" placeholder="https://facebook.com/luwjje" {...settingsForm.register('facebookUrl')} />
-              <Input label="WhatsApp" placeholder="https://wa.me/201000000000" {...settingsForm.register('whatsappUrl')} />
+              <Input label={d.settings.instagram} placeholder="https://instagram.com/luwjje" {...settingsForm.register('instagramUrl')} />
+              <Input label={d.settings.pinterest} placeholder="https://pinterest.com/luwjje" {...settingsForm.register('pinterestUrl')} />
+              <Input label={d.settings.tiktok} placeholder="https://tiktok.com/@luwjje" {...settingsForm.register('tiktokUrl')} />
+              <Input label={d.settings.facebook} placeholder="https://facebook.com/luwjje" {...settingsForm.register('facebookUrl')} />
+              <Input label={d.settings.whatsapp} placeholder="https://wa.me/201000000000" {...settingsForm.register('whatsappUrl')} />
             </div>
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
             <h2 className="font-display text-headline-sm">Newsletter &amp; SEO</h2>
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Input label="Newsletter heading" {...settingsForm.register('newsletterHeading')} />
-              <Input label="Newsletter heading (Arabic)" dir="rtl" {...settingsForm.register('newsletterHeadingAr')} />
-              <Input label="Newsletter body" {...settingsForm.register('newsletterBody')} />
-              <Input label="Newsletter body (Arabic)" dir="rtl" {...settingsForm.register('newsletterBodyAr')} />
+              <Input label={d.settings.newsletterHeadingLabel} {...settingsForm.register('newsletterHeading')} />
+              <Input label={`${d.settings.newsletterHeadingLabel} (${d.common.arabic})`} dir="rtl" {...settingsForm.register('newsletterHeadingAr')} />
+              <Input label={d.settings.newsletterBodyLabel} {...settingsForm.register('newsletterBody')} />
+              <Input label={`${d.settings.newsletterBodyLabel} (${d.common.arabic})`} dir="rtl" {...settingsForm.register('newsletterBodyAr')} />
               <Input
-                label="Meta title"
-                hint="Used as the browser tab title and in search results."
+                label={d.settings.metaTitle}
+                hint={d.settings.metaTitleHint}
                 {...settingsForm.register('metaTitle')}
               />
               <Input
-                label="Open Graph image URL"
-                hint="Shown when a link is shared."
+                label={d.settings.ogImage}
+                hint={d.settings.ogImageHint}
                 {...settingsForm.register('ogImageUrl')}
               />
               <Textarea
-                label="Meta description"
+                label={d.settings.metaDescription}
                 rows={3}
                 containerClassName="md:col-span-2"
                 {...settingsForm.register('metaDescription')}
@@ -315,10 +323,10 @@ export function SettingsManager({
             <Button type="submit" size="lg" disabled={settingsForm.formState.isSubmitting}>
               {settingsForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save settings'
+                d.common.save
               )}
             </Button>
           </div>
@@ -326,7 +334,7 @@ export function SettingsManager({
       )}
 
       {/* ------------------------------------------------------------ pages */}
-      {tab === 'Content Pages' && (
+      {tab === 'pages' && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-[70ch] text-body-md text-secondary">
@@ -340,23 +348,21 @@ export function SettingsManager({
                 setPageModal({ open: true, data: null });
               }}
             >
-              <Plus className="h-4 w-4" />
-              New page
-            </Button>
+              <Plus className="h-4 w-4" />{d.settings.newPageTitle}</Button>
           </div>
 
           <section className="border border-outline-variant bg-surface-lowest">
             {pages.length === 0 ? (
-              <EmptyState title="No pages yet." body="Create About and Journal to start." className="border-0" />
+              <EmptyState title={d.settings.noPages} body={d.settings.noPagesBody} className="border-0" />
             ) : (
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>Title</Th>
-                    <Th>URL</Th>
-                    <Th>In footer</Th>
-                    <Th>Status</Th>
-                    <Th className="text-right">Actions</Th>
+                    <Th>{d.settings.pageTitle}</Th>
+                    <Th>{d.settings.url}</Th>
+                    <Th>{d.settings.inFooter}</Th>
+                    <Th>{d.common.status}</Th>
+                    <Th className="text-right">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -420,11 +426,11 @@ export function SettingsManager({
       )}
 
       {/* ---------------------------------------------------------- password */}
-      {tab === 'Password' && (
+      {tab === 'password' && (
         <div className="max-w-[560px]">
           {usingEnvPassword && (
             <div className="mb-6 border border-outline-variant bg-surface-low p-5">
-              <p className="label-caps mb-2 text-secondary">Heads up</p>
+              <p className="label-caps mb-2 text-secondary">{d.settings.envWarning}</p>
               <p className="text-body-md text-secondary">
                 The dashboard is still using <code>DASHBOARD_PASSWORD</code> from your{' '}
                 <code>.env</code> file. Set a password here and it is stored hashed in the
@@ -437,7 +443,7 @@ export function SettingsManager({
             onSubmit={passwordForm.handleSubmit(async (values) => {
               const ok = await run(
                 () => changeDashboardPassword(values),
-                'Password changed. Use the new one next time you sign in.',
+                d.settings.passwordChanged,
               );
               if (ok) passwordForm.reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
             })}
@@ -446,7 +452,7 @@ export function SettingsManager({
           >
             <div className="flex items-center gap-3">
               <KeyRound className="h-5 w-5 text-secondary" />
-              <h2 className="font-display text-headline-sm">Dashboard password</h2>
+              <h2 className="font-display text-headline-sm">{d.settings.passwordTitle}</h2>
             </div>
             <p className="mt-2 text-body-sm text-secondary">
               One password protects <code>/dashboard</code>. There are no customer accounts, so
@@ -455,7 +461,7 @@ export function SettingsManager({
 
             <div className="mt-8 flex flex-col gap-6">
               <Input
-                label="Current password"
+                label={d.settings.currentPassword}
                 type="password"
                 autoComplete="current-password"
                 required
@@ -463,7 +469,7 @@ export function SettingsManager({
                 {...passwordForm.register('currentPassword')}
               />
               <Input
-                label="New password"
+                label={d.settings.newPassword}
                 type="password"
                 autoComplete="new-password"
                 required
@@ -472,7 +478,7 @@ export function SettingsManager({
                 {...passwordForm.register('newPassword')}
               />
               <Input
-                label="Confirm new password"
+                label={d.settings.confirmPassword}
                 type="password"
                 autoComplete="new-password"
                 required
@@ -484,10 +490,10 @@ export function SettingsManager({
             <Button type="submit" size="lg" className="mt-8" disabled={passwordForm.formState.isSubmitting}>
               {passwordForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Change password'
+                d.settings.changePassword
               )}
             </Button>
           </form>
@@ -504,26 +510,24 @@ export function SettingsManager({
         open={pageModal.open}
         onClose={() => setPageModal({ open: false, data: null })}
         size="lg"
-        title={pageModal.data ? `Edit — ${pageModal.data.title}` : 'New page'}
-        description="Use “## ” at the start of a line for a subheading, and a blank line between paragraphs."
+        title={pageModal.data ? `${d.common.edit} — ${pageModal.data.title}` : d.settings.newPageTitle}
+        description={d.settings.bodyHint}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setPageModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setPageModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={pageForm.formState.isSubmitting}
               onClick={pageForm.handleSubmit(async (values) => {
-                const ok = await run(() => savePage(values), 'Page saved.');
+                const ok = await run(() => savePage(values), d.settings.pageSaved);
                 if (ok) setPageModal({ open: false, data: null });
               })}
             >
               {pageForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save page'
+                d.settings.savePage
               )}
             </Button>
           </>
@@ -552,10 +556,10 @@ export function SettingsManager({
               )}
             />
             <Input
-              label="Slug"
+              label={d.settings.slug}
               required
               placeholder="about"
-              hint="Lowercase letters, numbers and hyphens."
+              hint={d.settings.slugHint}
               error={pageForm.formState.errors.slug?.message}
               {...pageForm.register('slug')}
             />
@@ -608,7 +612,7 @@ export function SettingsManager({
             name="heroImage"
             render={({ field }) => (
               <ImageUploader
-                label="Hero image (optional)"
+                label={d.settings.heroImage}
                 value={heroImage ? [{ url: heroImage, alt: '' }] : []}
                 onChange={(images) => field.onChange(images[images.length - 1]?.url ?? '')}
               />
@@ -623,7 +627,7 @@ export function SettingsManager({
                 <Checkbox
                   checked={field.value}
                   onChange={(e) => field.onChange(e.target.checked)}
-                  label="Published"
+                  label={d.settings.publishedLabel}
                 />
               )}
             />
@@ -634,12 +638,12 @@ export function SettingsManager({
                 <Checkbox
                   checked={field.value}
                   onChange={(e) => field.onChange(e.target.checked)}
-                  label="Show in the footer under Customer Care"
+                  label={d.settings.showInFooter}
                 />
               )}
             />
             <Input
-              label="Footer order"
+              label={d.settings.footerOrder}
               type="number"
               min="0"
               containerClassName="w-32"
@@ -653,11 +657,11 @@ export function SettingsManager({
         open={Boolean(confirmPage)}
         onClose={() => setConfirmPage(null)}
         pending={pending}
-        title="Delete this page?"
-        body="Any link to it will 404. This cannot be undone."
+        title={d.settings.deletePage}
+        body={d.settings.deletePageBody}
         onConfirm={async () => {
           if (!confirmPage) return;
-          const ok = await run(() => deletePage(confirmPage), 'Page deleted.');
+          const ok = await run(() => deletePage(confirmPage), d.settings.pageDeleted);
           if (ok) setConfirmPage(null);
         }}
       />

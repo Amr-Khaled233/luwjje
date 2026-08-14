@@ -53,13 +53,19 @@ npm run smoke        # 33 checks: pricing, promos, shipping, the order transacti
 npm run gate         # 50 checks: password gate, session signing, order privacy, route access
 npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
 npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
+npm run orders       # 45 checks: the order lifecycle end to end
+npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
+npm run i18n         # 49 checks: dictionary coverage plus every page in both languages
 ```
 
-`npm run features` needs a running server (`npm run build && npm start`), and briefly
-mutates then restores a few rows — point it at a dev database, not production.
+241 checks in total. `features`, `security` and `i18n` need a running server
+(`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
+All of them briefly create and then remove their own rows — point them at a dev
+database, not production.
 
-`npm run gate` also probes a running server if one is up (`GATE_BASE`, default
+`npm run gate` probes a running server if one is up (`GATE_BASE`, default
 `http://localhost:3010`); without one it runs the non-HTTP checks and says so.
+`security` and `i18n` read `SECURITY_BASE` (default `http://localhost:3000`).
 
 ---
 
@@ -81,6 +87,25 @@ expose a stranger's address to anyone guessing. A separate signed cookie records
 this browser has earned: you get it by placing the order, or by entering the order's email at
 `/orders`, which unlocks exactly the orders placed with that address. A dashboard session can
 read any order.
+
+---
+
+## Security
+
+What is in place, and what `npm run security` proves on every run:
+
+| | |
+| --- | --- |
+| **Money** | Prices, discounts, delivery and stock are recomputed server-side from the database on every request. Nothing the browser sends about a price is read. Stock is re-checked and decremented inside one transaction, so two shoppers cannot both take the last piece. |
+| **Session** | HMAC-SHA256 over an expiry, httpOnly + SameSite cookie, constant-time comparison. A forged, unsigned or expired cookie is refused by both middleware and the layout. |
+| **Login** | bcrypt against the stored hash, 8 attempts per 15 minutes per IP, `?next=` validated so it can only send you inside `/dashboard`. |
+| **Injection** | Every query goes through Prisma's parameterised client — there is no raw SQL in `src/`. All input is validated with Zod before it reaches the database. JSON-LD is escaped so a product name cannot break out of its `<script>` tag. |
+| **Headers** | CSP (`frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`), nosniff, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy, HSTS. `X-Powered-By` removed. The image optimiser is limited to two hosts so it cannot be used as an open proxy. |
+| **Uploads** | JPEG/PNG/WebP/AVIF only — SVG is refused because it can carry script. Size and count capped, and uploaded paths are served with `default-src 'none'; sandbox`. |
+| **Abuse** | Order lookup, newsletter, tracking and cart re-pricing are all rate-limited per IP. |
+
+Two things are yours to set: a long random `AUTH_SECRET`, and a `DASHBOARD_PASSWORD`
+you change from Settings on first login.
 
 ---
 
@@ -291,6 +316,11 @@ every `requireDashboard()` call site stay as they are.
 | `npm run build` | `prisma generate` + production build |
 | `npm run smoke` | Commerce core checks |
 | `npm run gate` | Access-control checks |
+| `npm run features` | Storefront feature checks |
+| `npm run dash` | Dashboard checks |
+| `npm run orders` | Order lifecycle checks |
+| `npm run security` | Security checks |
+| `npm run i18n` | Arabic/English coverage checks |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:reset` | Drop, re-migrate and re-seed |

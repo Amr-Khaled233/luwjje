@@ -16,7 +16,10 @@
     "gate": "tsx scripts/gate-test.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
     "features": "node scripts/feature-check.mjs",
-    "dash": "tsx scripts/dashboard-check.mjs"
+    "dash": "tsx scripts/dashboard-check.mjs",
+    "security": "tsx scripts/security-check.mjs",
+    "orders": "tsx scripts/order-check.mjs",
+    "i18n": "tsx scripts/i18n-check.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

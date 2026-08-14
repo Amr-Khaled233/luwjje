@@ -10,6 +10,7 @@ import { getSettings, getCurrencySymbol } from '@/lib/settings';
 import { getI18n } from '@/i18n/server';
 import { getLocale } from '@/i18n/server';
 import { prisma } from '@/lib/prisma';
+import { jsonLdScript } from '@/lib/json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +74,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     <div className="container-luwjje py-8 md:py-stack-md">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
       />
 
       <nav

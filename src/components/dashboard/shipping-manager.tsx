@@ -12,6 +12,8 @@ import { EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { governorateSchema } from '@/lib/validations';
 import {
   saveGovernorate,
@@ -45,6 +47,7 @@ export function ShippingManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [modal, setModal] = React.useState<{ open: boolean; data: GovernorateInput | null }>({
     open: false,
@@ -82,7 +85,7 @@ export function ShippingManager({
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -97,7 +100,7 @@ export function ShippingManager({
       .map((r) => ({ id: r.id, shippingCost: Number(r.cost), active: r.active }));
 
     if (payload.some((r) => !Number.isFinite(r.shippingCost) || r.shippingCost < 0)) {
-      toast('Every price must be a number of zero or more.', 'error');
+      toast(d.stock.wholeNumbers, 'error');
       return;
     }
 
@@ -106,11 +109,11 @@ export function ShippingManager({
     setSaving('idle');
 
     if (!result.ok) {
-      toast(result.error ?? 'Could not save the prices.', 'error');
+      toast(result.error ?? d.shipping.couldNotSavePrices, 'error');
       return;
     }
     setSaving('saved');
-    toast('Delivery prices updated.');
+    toast(d.shipping.pricesUpdated);
     router.refresh();
     setTimeout(() => setSaving('idle'), 1600);
   }
@@ -128,7 +131,7 @@ export function ShippingManager({
   return (
     <>
       <div className="border border-outline-variant bg-surface-low p-6">
-        <h2 className="font-display text-headline-sm">How delivery is priced</h2>
+        <h2 className="font-display text-headline-sm">{d.shipping.howTitle}</h2>
         <p className="mt-2 max-w-[75ch] text-body-md text-secondary">
           The customer picks a governorate at checkout and is charged its price below. Orders above{' '}
           <strong className="text-on-surface">
@@ -145,35 +148,33 @@ export function ShippingManager({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search governorates…"
-            aria-label="Search governorates"
+            placeholder={d.shipping.searchPlaceholder}
+            aria-label={d.shipping.searchPlaceholder}
             className="h-11 w-full border border-outline-variant bg-background text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none ltr:pl-11 ltr:pr-4 rtl:pl-4 rtl:pr-11"
           />
         </div>
         <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          aria-label="Filter"
+          aria-label={d.common.status}
           className="h-11 w-auto min-w-[160px]"
         >
-          <option value="">All</option>
-          <option value="active">Delivering</option>
-          <option value="inactive">Switched off</option>
+          <option value="">{d.common.all}</option>
+          <option value="active">{d.shipping.delivering}</option>
+          <option value="inactive">{d.shipping.switchedOff}</option>
         </Select>
 
         <div className="flex items-center gap-3 ltr:ml-auto rtl:mr-auto">
           {saving === 'saved' && <Check className="h-4 w-4 text-navy" />}
           <Button variant="secondary" onClick={() => { form.reset(EMPTY); setModal({ open: true, data: null }); }}>
-            <Plus className="h-4 w-4" />
-            Add governorate
-          </Button>
+            <Plus className="h-4 w-4" />{d.shipping.addNew}</Button>
           <Button onClick={saveAll} disabled={!dirty || saving === 'saving'}>
             {saving === 'saving' ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
               </>
             ) : (
-              'Save prices'
+              d.shipping.savePrices
             )}
           </Button>
         </div>
@@ -182,21 +183,21 @@ export function ShippingManager({
       <section className="border border-outline-variant bg-surface-lowest">
         {filtered.length === 0 ? (
           <EmptyState
-            title="No governorates match."
-            body="Clear the search, or add one."
+            title={d.common.noResults}
+            body={d.common.adjustFilters}
             className="border-0"
           />
         ) : (
           <TableWrap>
             <thead>
               <tr>
-                <Th>Governorate</Th>
-                <Th>Arabic name</Th>
-                <Th>Delivery price ({currencySymbol})</Th>
-                <Th>Free over</Th>
-                <Th>Days</Th>
-                <Th>Delivering</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{d.shipping.governorate}</Th>
+                <Th>{d.common.nameAr}</Th>
+                <Th>{d.shipping.deliveryPrice} ({currencySymbol})</Th>
+                <Th>{d.shipping.freeOver}</Th>
+                <Th>{d.shipping.days}</Th>
+                <Th>{d.shipping.delivering}</Th>
+                <Th className="text-right">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -224,14 +225,14 @@ export function ShippingManager({
                         onChange={(e) =>
                           setRates((r) => ({ ...r, [g.id]: { ...draft, cost: e.target.value } }))
                         }
-                        aria-label={`Delivery price for ${g.name}`}
+                        aria-label={`${d.shipping.deliveryPrice} — ${g.name}`}
                         className="h-10 w-28 border border-outline-variant bg-background px-3 text-body-md tabular-nums transition-colors focus:border-navy focus:outline-none"
                       />
                     </Td>
                     <Td className="tabular-nums text-secondary">
                       {g.freeOver
                         ? `${currencySymbol} ${g.freeOver.toLocaleString()}`
-                        : `${globalFreeOver.toLocaleString()} (global)`}
+                        : `${globalFreeOver.toLocaleString()} (${d.shipping.global})`}
                     </Td>
                     <Td className="text-secondary">{g.estimatedDays}</Td>
                     <Td>
@@ -240,7 +241,7 @@ export function ShippingManager({
                         onChange={(e) =>
                           setRates((r) => ({ ...r, [g.id]: { ...draft, active: e.target.checked } }))
                         }
-                        aria-label={`Deliver to ${g.name}`}
+                        aria-label={`${d.shipping.deliveringLabel} — ${g.name}`}
                       />
                     </Td>
                     <Td>
@@ -250,14 +251,14 @@ export function ShippingManager({
                             form.reset(g);
                             setModal({ open: true, data: g });
                           }}
-                          aria-label={`Edit ${g.name}`}
+                          aria-label={`${d.common.edit} ${g.name}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setConfirm(g.id)}
-                          aria-label={`Delete ${g.name}`}
+                          aria-label={`${d.common.delete} ${g.name}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -275,29 +276,27 @@ export function ShippingManager({
       <Modal
         open={modal.open}
         onClose={() => setModal({ open: false, data: null })}
-        title={modal.data ? `Edit — ${modal.data.name}` : 'New governorate'}
-        description="Appears in the checkout dropdown in both languages."
+        title={modal.data ? `${d.common.edit} — ${modal.data.name}` : d.shipping.addNew}
+        description={d.shipping.modalHint}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(async (values) => {
                 const ok = await run(
                   () => saveGovernorate({ ...values, freeOver: values.freeOver || null }),
-                  'Governorate saved.',
+                  d.shipping.saved,
                 );
                 if (ok) setModal({ open: false, data: null });
               })}
             >
               {form.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save'
+                d.common.save
               )}
             </Button>
           </>
@@ -306,14 +305,14 @@ export function ShippingManager({
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Input
-              label="Name (English)"
+              label={d.shipping.nameEnglish}
               required
               placeholder="Cairo"
               error={form.formState.errors.name?.message}
               {...form.register('name')}
             />
             <Input
-              label="Name (Arabic)"
+              label={d.shipping.nameArabic}
               required
               placeholder="القاهرة"
               dir="rtl"
@@ -321,7 +320,7 @@ export function ShippingManager({
               {...form.register('nameAr')}
             />
             <Input
-              label={`Delivery price (${currencySymbol})`}
+              label={`${d.shipping.deliveryPrice} (${currencySymbol})`}
               type="number"
               step="1"
               min="0"
@@ -330,16 +329,16 @@ export function ShippingManager({
               {...form.register('shippingCost')}
             />
             <Input
-              label={`Free over (${currencySymbol})`}
+              label={`${d.shipping.freeOver} (${currencySymbol})`}
               type="number"
               step="1"
               min="0"
-              hint={`Blank uses the global ${globalFreeOver.toLocaleString()}.`}
+              hint={fmt(d.shipping.blankUsesGlobal, { amount: globalFreeOver.toLocaleString() })}
               error={form.formState.errors.freeOver?.message}
               {...form.register('freeOver')}
             />
             <Input
-              label="Estimated days"
+              label={d.shipping.estimatedDays}
               placeholder="2-4"
               containerClassName="md:col-span-2"
               error={form.formState.errors.estimatedDays?.message}
@@ -353,7 +352,7 @@ export function ShippingManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Delivering — offered at checkout"
+                label={d.shipping.deliveringLabel}
               />
             )}
           />
@@ -364,11 +363,11 @@ export function ShippingManager({
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title="Delete this governorate?"
-        body="It disappears from the checkout dropdown. Existing orders keep the name they were placed with."
+        title={d.shipping.deleteTitle}
+        body={d.shipping.deleteBody}
         onConfirm={async () => {
           if (!confirm) return;
-          const ok = await run(() => deleteGovernorate(confirm), 'Governorate deleted.');
+          const ok = await run(() => deleteGovernorate(confirm), d.shipping.deleted);
           if (ok) setConfirm(null);
         }}
       />

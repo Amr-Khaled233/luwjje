@@ -9,6 +9,8 @@ import {
   tooManyAttempts,
 } from '@/lib/dashboard-auth';
 import { COOKIE_NAME, SESSION_COOKIE_OPTIONS, createSessionToken } from '@/lib/session-token';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 
 export interface LoginState {
   error?: string;
@@ -28,17 +30,18 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const password = String(formData.get('password') ?? '');
   const next = String(formData.get('next') ?? '/dashboard');
   const key = clientKey();
+  const d = getDashboardDictionary(await getLocale()).login;
 
   if (tooManyAttempts(key)) {
-    return { error: 'Too many attempts. Try again in a few minutes.' };
+    return { error: d.throttled };
   }
   if (!password) {
-    return { error: 'Enter the password.' };
+    return { error: d.required };
   }
 
   if (!(await checkPassword(password))) {
     recordFailure(key);
-    return { error: 'That password is not correct.' };
+    return { error: d.wrong };
   }
 
   clearAttempts(key);

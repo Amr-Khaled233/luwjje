@@ -1,4 +1,7 @@
 import { StatCard } from '@/components/dashboard/admin-ui';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
+import { fmt } from '@/i18n/dictionaries';
 import { PageTitle } from '@/components/dashboard/page-title';
 import { OrdersManager } from '@/components/dashboard/orders-manager';
 import { prisma } from '@/lib/prisma';
@@ -11,6 +14,7 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: { status?: string };
 }) {
+  const d = getDashboardDictionary(await getLocale());
   const [orders, settings] = await Promise.all([
     prisma.order.findMany({
       include: { items: true },
@@ -31,15 +35,15 @@ export default async function AdminOrdersPage({
       <PageTitle section="orders" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total orders" value={String(orders.length)} />
-        <StatCard label="Active orders" value={String(active)} hint="pending, paid or shipped" />
+        <StatCard label={d.orders.totalOrders} value={String(orders.length)} />
+        <StatCard label={d.orders.activeOrders} value={String(active)} hint={d.orders.activeHint} />
         <StatCard
-          label="Revenue"
+          label={d.orders.revenue}
           value={`${settings.currencySymbol}${revenue.toFixed(2)}`}
-          hint="excluding cancelled"
+          hint={d.orders.revenueHint}
         />
         <StatCard
-          label="Average order"
+          label={d.orders.averageOrder}
           value={`${settings.currencySymbol}${avg.toFixed(2)}`}
         />
       </div>

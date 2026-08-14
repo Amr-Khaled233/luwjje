@@ -78,6 +78,17 @@ export function tooManyAttempts(key: string) {
 export function recordFailure(key: string) {
   const record = attempts.get(key);
   if (!record || Date.now() - record.firstAt > WINDOW_MS) {
+    // Bounded so a flood of spoofed X-Forwarded-For values cannot grow the map
+    // without limit; expired entries go first, and the oldest if none expired.
+    if (attempts.size >= 5_000) {
+      const now = Date.now();
+      for (const [k, v] of Array.from(attempts.entries())) {
+        if (now - v.firstAt > WINDOW_MS) attempts.delete(k);
+      }
+      if (attempts.size >= 5_000) {
+        attempts.delete(Array.from(attempts.keys())[0]);
+      }
+    }
     attempts.set(key, { count: 1, firstAt: Date.now() });
     return;
   }

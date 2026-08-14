@@ -1,4 +1,7 @@
 import { StatCard } from '@/components/dashboard/admin-ui';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
+import { fmt } from '@/i18n/dictionaries';
 import { PageTitle } from '@/components/dashboard/page-title';
 import { ShippingManager } from '@/components/dashboard/shipping-manager';
 import { prisma } from '@/lib/prisma';
@@ -7,6 +10,7 @@ import { getSettings } from '@/lib/settings';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardShippingPage() {
+  const d = getDashboardDictionary(await getLocale());
   const [governorates, settings] = await Promise.all([
     prisma.governorate.findMany({ orderBy: { position: 'asc' } }),
     getSettings(),
@@ -22,16 +26,16 @@ export default async function DashboardShippingPage() {
       <PageTitle section="shipping" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Governorates" value={String(governorates.length)} />
-        <StatCard label="Delivering to" value={String(active.length)} hint="active" />
+        <StatCard label={d.shipping.governorates} value={String(governorates.length)} />
+        <StatCard label={d.shipping.deliveringTo} value={String(active.length)} hint={d.common.active} />
         <StatCard
-          label="Average rate"
+          label={d.shipping.averageRate}
           value={`${settings.currencySymbol} ${average.toFixed(0)}`}
         />
         <StatCard
-          label="Free shipping over"
+          label={d.shipping.freeOver}
           value={`${settings.currencySymbol} ${settings.freeShippingOver.toLocaleString()}`}
-          hint="global default"
+          hint={d.shipping.globalDefault}
         />
       </div>
 

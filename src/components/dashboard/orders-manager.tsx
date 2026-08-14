@@ -10,6 +10,8 @@ import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal } from '@/components/dashboard/modal';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { updateOrderStatus } from '@/app/actions/dashboard';
 import { formatPrice, formatDate, ORDER_STATUSES } from '@/lib/utils';
 
@@ -53,6 +55,7 @@ export function OrdersManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [query, setQuery] = React.useState('');
   const [status, setStatus] = React.useState(initialStatus);
@@ -78,14 +81,14 @@ export function OrdersManager({
     setPendingId(null);
 
     if (!result.ok) {
-      toast(result.error ?? 'Could not update the order.', 'error');
+      toast(result.error ?? d.orders.couldNotUpdate, 'error');
       return;
     }
 
     toast(
       next === 'CANCELLED'
-        ? 'Order cancelled — stock returned to inventory.'
-        : `Order marked ${next.toLowerCase()}.`,
+        ? d.orders.cancelledReturnsStock
+        : fmt(d.orders.markedAs, { status: next.toLowerCase() }),
     );
     setOpen((current) => (current ? { ...current, status: next } : null));
     router.refresh();
@@ -99,41 +102,41 @@ export function OrdersManager({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by order number, name or email…"
-            aria-label="Search orders"
+            placeholder={d.orders.searchPlaceholder}
+            aria-label={d.orders.searchPlaceholder}
             className="h-11 w-full border border-outline-variant bg-background pl-11 pr-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
           />
         </div>
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          aria-label="Filter by status"
+          aria-label={d.common.status}
           className="h-11 w-auto min-w-[180px]"
         >
-          <option value="">All statuses</option>
+          <option value="">{d.orders.allStatuses}</option>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s.charAt(0) + s.slice(1).toLowerCase()}
             </option>
           ))}
         </Select>
-        <span className="pb-3 text-body-sm text-secondary">{filtered.length} orders</span>
+        <span className="pb-3 text-body-sm text-secondary">{fmt(d.orders.ordersCount, { n: filtered.length })}</span>
       </div>
 
       <section className="border border-outline-variant bg-surface-lowest">
         {filtered.length === 0 ? (
-          <EmptyState title="No orders match." body="Adjust the search or filter." className="border-0" />
+          <EmptyState title={d.common.noResults} body={d.common.adjustFilters} className="border-0" />
         ) : (
           <TableWrap>
             <thead>
               <tr>
-                <Th>Order</Th>
-                <Th>Customer</Th>
-                <Th>Date</Th>
-                <Th>Items</Th>
-                <Th>Total</Th>
-                <Th>Status</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{d.orders.order}</Th>
+                <Th>{d.orders.customer}</Th>
+                <Th>{d.common.date}</Th>
+                <Th>{d.orders.items}</Th>
+                <Th>{d.common.total}</Th>
+                <Th>{d.common.status}</Th>
+                <Th align="end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -175,7 +178,7 @@ export function OrdersManager({
                     <div className="flex justify-end">
                       <button
                         onClick={() => setOpen(o)}
-                        aria-label={`View ${o.orderNumber}`}
+                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
                         className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -196,26 +199,23 @@ export function OrdersManager({
         title={open ? `Order ${open.orderNumber}` : ''}
         description={open ? `Placed ${formatDate(open.createdAt)}` : undefined}
         footer={
-          <Button variant="secondary" onClick={() => setOpen(null)}>
-            Close
-          </Button>
+          <Button variant="secondary" onClick={() => setOpen(null)}>{d.common.close}</Button>
         }
       >
         {open && (
           <div className="flex flex-col gap-8">
             <div className="flex flex-wrap items-end gap-6">
               <div>
-                <p className="label-caps mb-2 text-secondary">Status</p>
+                <p className="label-caps mb-2 text-secondary">{d.common.status}</p>
                 <StatusBadge status={open.status} />
               </div>
               <div>
-                <p className="label-caps mb-2 text-secondary">Payment</p>
+                <p className="label-caps mb-2 text-secondary">{d.orders.payment}</p>
                 <StatusBadge status={open.paymentStatus === 'PAID' ? 'PAID' : open.paymentStatus} />
               </div>
               <div className="ml-auto">
                 <label htmlFor="detail-status" className="label-caps mb-2 block text-secondary">
-                  Change status
-                </label>
+                  {d.orders.changeStatus}</label>
                 <select
                   id="detail-status"
                   value={open.status}
@@ -234,13 +234,13 @@ export function OrdersManager({
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="border border-outline-variant p-5">
-                <p className="label-caps mb-3 text-secondary">Customer</p>
+                <p className="label-caps mb-3 text-secondary">{d.orders.customer}</p>
                 <p className="text-body-md">{open.fullName}</p>
                 <p className="mt-1 text-body-sm text-secondary">{open.email}</p>
                 {open.phone && <p className="mt-1 text-body-sm text-secondary">{open.phone}</p>}
               </div>
               <div className="border border-outline-variant p-5">
-                <p className="label-caps mb-3 text-secondary">Shipping to</p>
+                <p className="label-caps mb-3 text-secondary">{d.orders.deliverTo}</p>
                 <address className="not-italic text-body-sm leading-6 text-secondary">
                   {open.street}
                   <br />
@@ -252,13 +252,13 @@ export function OrdersManager({
 
             {open.notes && (
               <div className="border border-outline-variant p-5">
-                <p className="label-caps mb-2 text-secondary">Delivery notes</p>
+                <p className="label-caps mb-2 text-secondary">{d.orders.deliveryNotes}</p>
                 <p className="text-body-md text-secondary">{open.notes}</p>
               </div>
             )}
 
             <div>
-              <p className="label-caps mb-3 text-secondary">Items</p>
+              <p className="label-caps mb-3 text-secondary">{d.orders.itemsHeading}</p>
               <div className="border-t border-outline-variant">
                 {open.items.map((item) => (
                   <div
@@ -280,8 +280,7 @@ export function OrdersManager({
                       <p className="truncate text-label-md">{item.name}</p>
                       <p className="mt-0.5 text-body-sm text-secondary">
                         {item.colorName}
-                        {item.size && ` · ${item.size}`} · {formatPrice(item.unitPrice, currencySymbol)}{' '}
-                        each
+                        {item.size && ` · ${item.size}`} · {formatPrice(item.unitPrice, currencySymbol)}{' '}{d.orders.each}
                       </p>
                     </div>
                     <span className="shrink-0 text-body-sm text-secondary">×{item.quantity}</span>
@@ -296,23 +295,23 @@ export function OrdersManager({
 
               <dl className="flex flex-col gap-2.5 text-body-md">
                 <div className="flex justify-between">
-                  <dt className="text-secondary">Subtotal</dt>
+                  <dt className="text-secondary">{d.orders.subtotal}</dt>
                   <dd className="tabular-nums">{formatPrice(open.subtotal, currencySymbol)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-secondary">Shipping</dt>
+                  <dt className="text-secondary">{d.orders.shipping}</dt>
                   <dd className="tabular-nums">
-                    {open.shippingCost === 0 ? 'Free' : formatPrice(open.shippingCost, currencySymbol)}
+                    {open.shippingCost === 0 ? d.orders.free : formatPrice(open.shippingCost, currencySymbol)}
                   </dd>
                 </div>
                 {open.discount > 0 && (
                   <div className="flex justify-between text-error">
-                    <dt>Discount {open.promoCode && `(${open.promoCode})`}</dt>
+                    <dt>{d.orders.discount} {open.promoCode && `(${open.promoCode})`}</dt>
                     <dd className="tabular-nums">−{formatPrice(open.discount, currencySymbol)}</dd>
                   </div>
                 )}
                 <div className="mt-2 flex items-baseline justify-between border-t border-outline-variant pt-4">
-                  <dt className="label-caps text-secondary">Total</dt>
+                  <dt className="label-caps text-secondary">{d.common.total}</dt>
                   <dd className="font-display text-headline-sm">
                     {formatPrice(open.total, currencySymbol)}
                   </dd>

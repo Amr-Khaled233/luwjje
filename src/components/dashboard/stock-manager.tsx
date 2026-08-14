@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/field';
 import { ColorDot, StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { updateStock } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +32,7 @@ export interface StockRow {
 function Row({ row }: { row: StockRow }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [stock, setStock] = React.useState(String(row.stock));
   const [lowStockAt, setLowStockAt] = React.useState(String(row.lowStockAt));
@@ -49,7 +52,7 @@ function Row({ row }: { row: StockRow }) {
     const nextLow = Number(lowStockAt);
 
     if (!Number.isInteger(nextStock) || nextStock < 0 || !Number.isInteger(nextLow) || nextLow < 0) {
-      toast('Quantities must be whole numbers of zero or more.', 'error');
+      toast(d.stock.wholeNumbers, 'error');
       setStock(String(row.stock));
       setLowStockAt(String(row.lowStockAt));
       return;
@@ -64,7 +67,7 @@ function Row({ row }: { row: StockRow }) {
 
     if (!result.ok) {
       setState('idle');
-      toast(result.error ?? 'Could not save.', 'error');
+      toast(result.error ?? d.common.couldNotSave, 'error');
       return;
     }
 
@@ -134,11 +137,11 @@ function Row({ row }: { row: StockRow }) {
 
       <Td>
         {isOut ? (
-          <span className="label-caps text-error">Out of stock</span>
+          <span className="label-caps text-error">{d.stock.outOfStock}</span>
         ) : isLow ? (
-          <span className="label-caps text-error">Low</span>
+          <span className="label-caps text-error">{d.stock.low}</span>
         ) : (
-          <span className="label-caps text-secondary">In stock</span>
+          <span className="label-caps text-secondary">{d.stock.inStock}</span>
         )}
       </Td>
 
@@ -147,12 +150,12 @@ function Row({ row }: { row: StockRow }) {
           {state === 'saving' && <Loader2 className="h-4 w-4 animate-spin text-secondary" />}
           {state === 'saved' && <Check className="h-4 w-4 text-navy" />}
           {state === 'idle' && dirty && (
-            <span className="text-body-sm text-secondary">Unsaved</span>
+            <span className="text-body-sm text-secondary">{d.stock.unsaved}</span>
           )}
           <Link
             href={`/product/${row.productSlug}`}
             target="_blank"
-            aria-label="View on storefront"
+            aria-label={d.products.viewOnStore}
             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
           >
             <ExternalLink className="h-3.5 w-3.5" />
@@ -170,6 +173,7 @@ export function StockManager({
   rows: StockRow[];
   initialFilter: string;
 }) {
+  const { d } = useDash();
   const [query, setQuery] = React.useState('');
   const [filter, setFilter] = React.useState(initialFilter);
 
@@ -196,42 +200,42 @@ export function StockManager({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by product, SKU or colour…"
-            aria-label="Search stock"
+            placeholder={d.stock.searchPlaceholder}
+            aria-label={d.stock.searchPlaceholder}
             className="h-11 w-full border border-outline-variant bg-background pl-11 pr-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
           />
         </div>
         <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          aria-label="Filter stock"
+          aria-label={d.common.status}
           className="h-11 w-auto min-w-[180px]"
         >
-          <option value="">All SKUs</option>
-          <option value="low">Low or out of stock</option>
-          <option value="out">Out of stock only</option>
-          <option value="in">Healthy stock</option>
+          <option value="">{d.stock.allSkus}</option>
+          <option value="low">{d.stock.lowOrOut}</option>
+          <option value="out">{d.stock.outOnly}</option>
+          <option value="in">{d.stock.healthy}</option>
         </Select>
-        <span className="pb-3 text-body-sm text-secondary">{filtered.length} SKUs</span>
+        <span className="pb-3 text-body-sm text-secondary">{fmt(d.stock.skusCount, { n: filtered.length })}</span>
       </div>
 
       <section className="border border-outline-variant bg-surface-lowest">
         {filtered.length === 0 ? (
           <EmptyState
-            title="No SKUs match."
-            body="Adjust the search or filter above."
+            title={d.common.noResults}
+            body={d.common.adjustFilters}
             className="border-0"
           />
         ) : (
           <TableWrap>
             <thead>
               <tr>
-                <Th>Product</Th>
-                <Th>Colour</Th>
-                <Th>Size</Th>
-                <Th>Quantity</Th>
-                <Th>Alert at</Th>
-                <Th>Status</Th>
+                <Th>{d.stock.product}</Th>
+                <Th>{d.stock.colour}</Th>
+                <Th>{d.stock.size}</Th>
+                <Th>{d.common.quantity}</Th>
+                <Th>{d.stock.alertAt}</Th>
+                <Th>{d.common.status}</Th>
                 <Th className="text-right">&nbsp;</Th>
               </tr>
             </thead>

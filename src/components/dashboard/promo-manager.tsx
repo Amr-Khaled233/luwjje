@@ -12,6 +12,8 @@ import { StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td, ProgressBar } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { promoSchema } from '@/lib/validations';
 import { savePromoCode, deletePromoCode, togglePromoCode } from '@/app/actions/dashboard';
 import { formatPrice } from '@/lib/utils';
@@ -52,6 +54,7 @@ export function PromoManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [modal, setModal] = React.useState<{ open: boolean; data: PromoInput | null }>({
     open: false,
@@ -72,7 +75,7 @@ export function PromoManager({
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -89,30 +92,28 @@ export function PromoManager({
     <>
       <div className="flex justify-end">
         <Button onClick={() => open(null)}>
-          <Plus className="h-4 w-4" />
-          New promo code
-        </Button>
+          <Plus className="h-4 w-4" />{d.promo.addNew}</Button>
       </div>
 
       <section className="border border-outline-variant bg-surface-lowest">
         {codes.length === 0 ? (
           <EmptyState
-            title="No promo codes yet."
-            body="Create one and it works in the cart immediately."
-            action={<Button onClick={() => open(null)}>New promo code</Button>}
+            title={d.promo.emptyTitle}
+            body={d.promo.emptyBody}
+            action={<Button onClick={() => open(null)}>{d.promo.addNew}</Button>}
             className="border-0"
           />
         ) : (
           <TableWrap>
             <thead>
               <tr>
-                <Th>Code</Th>
-                <Th>Discount</Th>
-                <Th>Minimum</Th>
-                <Th>Usage</Th>
-                <Th>Window</Th>
-                <Th>Status</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{d.promo.code}</Th>
+                <Th>{d.promo.discount}</Th>
+                <Th>{d.promo.minimum}</Th>
+                <Th>{d.promo.usage}</Th>
+                <Th>{d.promo.window}</Th>
+                <Th>{d.common.status}</Th>
+                <Th className="text-right">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -149,7 +150,7 @@ export function PromoManager({
                     <Td className="text-body-sm text-secondary">
                       {c.startsAt || c.expiresAt
                         ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
-                        : 'Always'}
+                        : d.promo.always}
                     </Td>
                     <Td>
                       <StatusBadge status={status} />
@@ -160,26 +161,26 @@ export function PromoManager({
                           onClick={() =>
                             run(
                               () => togglePromoCode(c.id!),
-                              c.active ? 'Code disabled.' : 'Code enabled.',
+                              c.active ? d.promo.disabled : d.promo.enabled,
                             )
                           }
                           disabled={pending}
-                          aria-label={c.active ? `Disable ${c.code}` : `Enable ${c.code}`}
-                          title={c.active ? 'Disable' : 'Enable'}
+                          aria-label={`${c.active ? d.common.hide : d.common.show} ${c.code}`}
+                          title={c.active ? d.promo.disabled : d.promo.enabled}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                         >
                           <Power className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => open(c)}
-                          aria-label={`Edit ${c.code}`}
+                          aria-label={`${d.common.edit} ${c.code}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setConfirm(c.id!)}
-                          aria-label={`Delete ${c.code}`}
+                          aria-label={`${d.common.delete} ${c.code}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -197,29 +198,27 @@ export function PromoManager({
       <Modal
         open={modal.open}
         onClose={() => setModal({ open: false, data: null })}
-        title={modal.data ? `Edit — ${modal.data.code}` : 'New promo code'}
-        description="Validated live in the cart the moment you save."
+        title={modal.data ? `${d.common.edit} — ${modal.data.code}` : d.promo.addNew}
+        description={d.promo.modalHint}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(async (values) => {
                 const ok = await run(
                   () => savePromoCode({ ...values, maxUses: values.maxUses || null }),
-                  'Promo code saved.',
+                  d.promo.saved,
                 );
                 if (ok) setModal({ open: false, data: null });
               })}
             >
               {form.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save code'
+                d.promo.saveCode
               )}
             </Button>
           </>
@@ -232,22 +231,22 @@ export function PromoManager({
               required
               placeholder="WELCOME10"
               className="font-mono uppercase tracking-wider"
-              hint="Letters, numbers, hyphen and underscore."
+              hint={d.promo.codeHint}
               error={form.formState.errors.code?.message}
               {...form.register('code')}
             />
             <Input
-              label="Description"
+              label={d.common.description}
               placeholder="10% off a first order."
               error={form.formState.errors.description?.message}
               {...form.register('description')}
             />
-            <Select label="Discount type" {...form.register('discountType')}>
-              <option value="PERCENT">Percentage off</option>
-              <option value="FIXED">Fixed amount off</option>
+            <Select label={d.common.type} {...form.register('discountType')}>
+              <option value="PERCENT">{d.common.percentOff}</option>
+              <option value="FIXED">{d.common.fixedOff}</option>
             </Select>
             <Input
-              label={discountType === 'PERCENT' ? 'Percentage (%)' : `Amount (${currencySymbol})`}
+              label={discountType === 'PERCENT' ? d.promo.percentage : `${d.promo.amount} (${currencySymbol})`}
               type="number"
               step="0.01"
               min="0"
@@ -256,24 +255,24 @@ export function PromoManager({
               {...form.register('discountValue')}
             />
             <Input
-              label={`Minimum order (${currencySymbol})`}
+              label={`${d.promo.minimumOrder} (${currencySymbol})`}
               type="number"
               step="0.01"
               min="0"
-              hint="Zero means no minimum."
+              hint={d.promo.minimumHint}
               error={form.formState.errors.minOrder?.message}
               {...form.register('minOrder')}
             />
             <Input
-              label="Maximum uses"
+              label={d.promo.maxUses}
               type="number"
               min="1"
-              hint="Blank means unlimited."
+              hint={d.promo.maxUsesHint}
               error={form.formState.errors.maxUses?.message}
               {...form.register('maxUses')}
             />
-            <Input label="Starts on" type="date" {...form.register('startsAt')} />
-            <Input label="Expires on" type="date" {...form.register('expiresAt')} />
+            <Input label={d.common.startsOn} type="date" {...form.register('startsAt')} />
+            <Input label={d.promo.expiresOn} type="date" {...form.register('expiresAt')} />
           </div>
 
           <Controller
@@ -283,7 +282,7 @@ export function PromoManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Active — accepted at checkout"
+                label={d.promo.activeAtCheckout}
               />
             )}
           />
@@ -294,11 +293,11 @@ export function PromoManager({
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title="Delete this promo code?"
-        body="Customers who try it will be told it is not recognised. Orders already placed with it are unaffected."
+        title={d.promo.deleteTitle}
+        body={d.promo.deleteBody}
         onConfirm={async () => {
           if (!confirm) return;
-          const ok = await run(() => deletePromoCode(confirm), 'Promo code deleted.');
+          const ok = await run(() => deletePromoCode(confirm), d.promo.deleted);
           if (ok) setConfirm(null);
         }}
       />

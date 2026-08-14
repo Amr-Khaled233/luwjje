@@ -1,4 +1,7 @@
 import { StatCard } from '@/components/dashboard/admin-ui';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
+import { fmt } from '@/i18n/dictionaries';
 import { PageTitle } from '@/components/dashboard/page-title';
 import { StockManager } from '@/components/dashboard/stock-manager';
 import { prisma } from '@/lib/prisma';
@@ -10,6 +13,7 @@ export default async function AdminStockPage({
 }: {
   searchParams: { filter?: string };
 }) {
+  const d = getDashboardDictionary(await getLocale());
   const variants = await prisma.productVariant.findMany({
     include: {
       product: {
@@ -47,10 +51,10 @@ export default async function AdminStockPage({
       <PageTitle section="stock" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total SKUs" value={String(rows.length)} />
-        <StatCard label="Units on hand" value={units.toLocaleString()} />
-        <StatCard label="Low stock" value={String(low)} hint="at or below their own mark" />
-        <StatCard label="Out of stock" value={String(outOfStock)} />
+        <StatCard label={d.stock.totalSkus} value={String(rows.length)} />
+        <StatCard label={d.stock.unitsOnHand} value={units.toLocaleString()} />
+        <StatCard label={d.stock.lowStock} value={String(low)} hint={d.stock.lowStockHint} />
+        <StatCard label={d.stock.outOfStock} value={String(outOfStock)} />
       </div>
 
       <StockManager rows={rows} initialFilter={searchParams.filter ?? ''} />

@@ -12,6 +12,8 @@ import { ColorDot, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { filterColorSchema, priceRangeSchema, filterVisibilitySchema } from '@/lib/validations';
 import {
   syncFilterColors,
@@ -40,8 +42,8 @@ interface RangeRow extends RangeInput {
 const EMPTY_COLOR: ColorInput = { name: '', nameAr: '', hex: '#0b1c30', visible: true };
 const EMPTY_RANGE: RangeInput = { label: '', labelAr: '', min: 0, max: null, visible: true };
 
-const TABS = ['Controls', 'Colours', 'Price ranges'] as const;
-type Tab = (typeof TABS)[number];
+const TAB_KEYS = ['controls', 'colours', 'ranges'] as const;
+type Tab = (typeof TAB_KEYS)[number];
 
 export function FiltersManager({
   colors,
@@ -56,7 +58,13 @@ export function FiltersManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [tab, setTab] = React.useState<Tab>('Controls');
+  const { d } = useDash();
+  const [tab, setTab] = React.useState<Tab>('controls');
+  const TAB_LABELS: Record<Tab, string> = {
+    controls: d.filters.tabControls,
+    colours: d.filters.tabColours,
+    ranges: d.filters.tabRanges,
+  };
   const [pending, setPending] = React.useState(false);
   const [syncing, setSyncing] = React.useState(false);
 
@@ -88,7 +96,7 @@ export function FiltersManager({
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -97,17 +105,17 @@ export function FiltersManager({
   }
 
   const CONTROLS: { key: keyof VisibilityInput; label: string; hint: string }[] = [
-    { key: 'showSearch', label: 'Search', hint: 'The magnifier in the header.' },
-    { key: 'showColorFilter', label: 'Colour filter', hint: 'Curated on the Colours tab.' },
-    { key: 'showCategoryFilter', label: 'Category filter', hint: 'Curated in Categories.' },
-    { key: 'showPriceFilter', label: 'Price filter', hint: 'Buckets on the Price ranges tab.' },
-    { key: 'showSortFilter', label: 'Sort by', hint: 'Best selling, price, newest.' },
+    { key: 'showSearch', label: d.filters.search, hint: d.filters.searchHint },
+    { key: 'showColorFilter', label: d.filters.colourFilter, hint: d.filters.tabColours },
+    { key: 'showCategoryFilter', label: d.filters.categoryFilter, hint: d.nav.categories },
+    { key: 'showPriceFilter', label: d.filters.priceFilter, hint: d.filters.tabRanges },
+    { key: 'showSortFilter', label: d.filters.sortBy, hint: d.analytics.revenue },
   ];
 
   return (
     <>
       <div className="flex flex-wrap border-b border-outline-variant">
-        {TABS.map((x) => (
+        {TAB_KEYS.map((x) => (
           <button
             key={x}
             onClick={() => setTab(x)}
@@ -116,24 +124,24 @@ export function FiltersManager({
               tab === x ? 'text-on-surface' : 'text-secondary hover:text-on-surface',
             )}
           >
-            {x}
+            {TAB_LABELS[x]}
             {tab === x && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-navy" />}
           </button>
         ))}
       </div>
 
       {/* --------------------------------------------------------- controls */}
-      {tab === 'Controls' && (
+      {tab === 'controls' && (
         <form
           onSubmit={visibilityForm.handleSubmit(async (values) => {
-            await run(() => saveFilterVisibility(values), 'Filter bar updated.');
+            await run(() => saveFilterVisibility(values), d.filters.barUpdated);
           })}
           className="max-w-[640px]"
         >
           <div className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">What the customer can filter by</h2>
+            <h2 className="font-display text-headline-sm">{d.filters.controlsTitle}</h2>
             <p className="mt-2 text-body-sm text-secondary">
-              Switch a control off and it disappears from the Shop page entirely.
+              {d.filters.controlsHint}
             </p>
 
             <div className="mt-8 flex flex-col gap-5">
@@ -161,10 +169,10 @@ export function FiltersManager({
             <Button type="submit" size="lg" className="mt-8" disabled={visibilityForm.formState.isSubmitting}>
               {visibilityForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save'
+                d.common.save
               )}
             </Button>
           </div>
@@ -172,7 +180,7 @@ export function FiltersManager({
       )}
 
       {/* ---------------------------------------------------------- colours */}
-      {tab === 'Colours' && (
+      {tab === 'colours' && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-[70ch] text-body-md text-secondary">
@@ -188,21 +196,20 @@ export function FiltersManager({
                   const result = await syncFilterColors();
                   setSyncing(false);
                   if (!result.ok) {
-                    toast(result.error ?? 'Could not sync.', 'error');
+                    toast(result.error ?? d.filters.couldNotSync, 'error');
                     return;
                   }
-                  toast('Colours synced from the catalogue.');
+                  toast(d.filters.synced);
                   router.refresh();
                 }}
               >
                 {syncing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Syncing…
+                    <Loader2 className="h-4 w-4 animate-spin" /> {d.filters.syncing}
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-4 w-4" /> Sync from products
-                  </>
+                    <RefreshCw className="h-4 w-4" />{d.filters.syncFromProducts}</>
                 )}
               </Button>
               <Button
@@ -211,29 +218,27 @@ export function FiltersManager({
                   setColorModal({ open: true, data: null });
                 }}
               >
-                <Plus className="h-4 w-4" />
-                Add colour
-              </Button>
+                <Plus className="h-4 w-4" />{d.filters.addColour}</Button>
             </div>
           </div>
 
           <section className="border border-outline-variant bg-surface-lowest">
             {colors.length === 0 ? (
               <EmptyState
-                title="No filter colours yet."
-                body="Add your products first, then press “Sync from products”."
+                title={d.filters.noColours}
+                body={d.filters.noColoursBody}
                 className="border-0"
               />
             ) : (
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>Colour</Th>
-                    <Th>Arabic name</Th>
-                    <Th>Hex</Th>
-                    <Th>In catalogue</Th>
-                    <Th>Shown</Th>
-                    <Th className="text-right">Actions</Th>
+                    <Th>{d.stock.colour}</Th>
+                    <Th>{d.common.nameAr}</Th>
+                    <Th>{d.filters.colourFilter}</Th>
+                    <Th>{d.filters.inCatalogue}</Th>
+                    <Th>{d.common.visible}</Th>
+                    <Th className="text-right">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -257,9 +262,9 @@ export function FiltersManager({
                       </Td>
                       <Td>
                         {c.inCatalogue ? (
-                          <span className="label-caps text-secondary">Yes</span>
+                          <span className="label-caps text-secondary">{d.common.yes}</span>
                         ) : (
-                          <span className="label-caps text-error">Unused</span>
+                          <span className="label-caps text-error">{d.filters.unused}</span>
                         )}
                       </Td>
                       <Td>
@@ -267,11 +272,11 @@ export function FiltersManager({
                           onClick={() =>
                             run(
                               () => toggleFilterColor(c.id),
-                              c.visible ? 'Hidden from the filter.' : 'Shown in the filter.',
+                              c.visible ? d.categories.hiddenToast : d.categories.shownToast,
                             )
                           }
                           disabled={pending}
-                          aria-label={`Toggle ${c.name}`}
+                          aria-label={`${d.common.visible} — ${c.name}`}
                         >
                           {c.visible ? (
                             <Eye className="h-4 w-4 text-navy" />
@@ -287,14 +292,14 @@ export function FiltersManager({
                               colorForm.reset(c);
                               setColorModal({ open: true, data: c });
                             }}
-                            aria-label={`Edit ${c.name}`}
+                            aria-label={`${d.common.edit} ${c.name}`}
                             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => setConfirm({ kind: 'color', id: c.id })}
-                            aria-label={`Delete ${c.name}`}
+                            aria-label={`${d.common.delete} ${c.name}`}
                             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -311,7 +316,7 @@ export function FiltersManager({
       )}
 
       {/* ----------------------------------------------------- price ranges */}
-      {tab === 'Price ranges' && (
+      {tab === 'ranges' && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-[70ch] text-body-md text-secondary">
@@ -324,28 +329,26 @@ export function FiltersManager({
                 setRangeModal({ open: true, data: null });
               }}
             >
-              <Plus className="h-4 w-4" />
-              Add range
-            </Button>
+              <Plus className="h-4 w-4" />{d.filters.addRange}</Button>
           </div>
 
           <section className="border border-outline-variant bg-surface-lowest">
             {priceRanges.length === 0 ? (
               <EmptyState
-                title="No price ranges."
-                body="The price filter is hidden until you add at least one."
+                title={d.filters.noRanges}
+                body={d.filters.noRangesBody}
                 className="border-0"
               />
             ) : (
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>Label</Th>
+                    <Th>{d.filters.label}</Th>
                     <Th>Arabic label</Th>
-                    <Th>From</Th>
-                    <Th>To</Th>
-                    <Th>Shown</Th>
-                    <Th className="text-right">Actions</Th>
+                    <Th>{d.filters.from}</Th>
+                    <Th>{d.filters.to}</Th>
+                    <Th>{d.common.visible}</Th>
+                    <Th className="text-right">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -377,14 +380,14 @@ export function FiltersManager({
                               rangeForm.reset(r);
                               setRangeModal({ open: true, data: r });
                             }}
-                            aria-label={`Edit ${r.label}`}
+                            aria-label={`${d.common.edit} ${r.label}`}
                             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => setConfirm({ kind: 'range', id: r.id })}
-                            aria-label={`Delete ${r.label}`}
+                            aria-label={`${d.common.delete} ${r.label}`}
                             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -405,29 +408,27 @@ export function FiltersManager({
         open={colorModal.open}
         onClose={() => setColorModal({ open: false, data: null })}
         size="sm"
-        title={colorModal.data ? `Edit — ${colorModal.data.name}` : 'New filter colour'}
-        description="The name must match the colourway spelling on your products exactly."
+        title={colorModal.data ? `${d.common.edit} — ${colorModal.data.name}` : d.filters.newColour}
+        description={d.filters.colourModalHint}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setColorModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setColorModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={colorForm.formState.isSubmitting}
               onClick={colorForm.handleSubmit(async (values) => {
                 const ok = await run(
                   () => saveFilterColor({ ...values, id: colorModal.data?.id }),
-                  'Colour saved.',
+                  d.filters.colourSaved,
                 );
                 if (ok) setColorModal({ open: false, data: null });
               })}
             >
               {colorForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save'
+                d.common.save
               )}
             </Button>
           </>
@@ -435,21 +436,21 @@ export function FiltersManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <Input
-            label="Name (English)"
+            label={d.shipping.nameEnglish}
             required
             placeholder="Deep Navy"
             error={colorForm.formState.errors.name?.message}
             {...colorForm.register('name')}
           />
           <Input
-            label="Name (Arabic)"
+            label={d.shipping.nameArabic}
             placeholder="كحلي غامق"
             dir="rtl"
             error={colorForm.formState.errors.nameAr?.message}
             {...colorForm.register('nameAr')}
           />
           <div>
-            <label className="label-caps mb-2 block text-secondary">Swatch</label>
+            <label className="label-caps mb-2 block text-secondary">{d.products.swatch}</label>
             <div className="flex h-12 items-center gap-2 border border-outline-variant bg-background px-2">
               <Controller
                 control={colorForm.control}
@@ -459,7 +460,7 @@ export function FiltersManager({
                     type="color"
                     value={field.value}
                     onChange={field.onChange}
-                    aria-label="Pick colour"
+                    aria-label={d.products.swatch}
                     className="h-7 w-7 shrink-0 cursor-pointer border-0 bg-transparent p-0"
                   />
                 )}
@@ -478,7 +479,7 @@ export function FiltersManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Show in the Shop colour filter"
+                label={d.filters.showColourInFilter}
               />
             )}
           />
@@ -490,12 +491,10 @@ export function FiltersManager({
         open={rangeModal.open}
         onClose={() => setRangeModal({ open: false, data: null })}
         size="sm"
-        title={rangeModal.data ? `Edit — ${rangeModal.data.label}` : 'New price range'}
+        title={rangeModal.data ? `${d.common.edit} — ${rangeModal.data.label}` : d.filters.newRange}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRangeModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setRangeModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={rangeForm.formState.isSubmitting}
               onClick={rangeForm.handleSubmit(async (values) => {
@@ -506,17 +505,17 @@ export function FiltersManager({
                       id: rangeModal.data?.id,
                       max: values.max === undefined || Number.isNaN(values.max) ? null : values.max,
                     }),
-                  'Price range saved.',
+                  d.filters.rangeSaved,
                 );
                 if (ok) setRangeModal({ open: false, data: null });
               })}
             >
               {rangeForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save'
+                d.common.save
               )}
             </Button>
           </>
@@ -524,14 +523,14 @@ export function FiltersManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <Input
-            label="Label (English)"
+            label={`${d.filters.label} (${d.common.english})`}
             required
             placeholder="EGP 500 – 1,500"
             error={rangeForm.formState.errors.label?.message}
             {...rangeForm.register('label')}
           />
           <Input
-            label="Label (Arabic)"
+            label={`${d.filters.label} (${d.common.arabic})`}
             placeholder="٥٠٠ – ١٥٠٠ ج.م"
             dir="rtl"
             error={rangeForm.formState.errors.labelAr?.message}
@@ -550,7 +549,7 @@ export function FiltersManager({
               label={`To (${currencySymbol})`}
               type="number"
               min="0"
-              hint="Blank = and above."
+              hint={d.filters.andAbove}
               error={rangeForm.formState.errors.max?.message}
               {...rangeForm.register('max')}
             />
@@ -562,7 +561,7 @@ export function FiltersManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Show in the price dropdown"
+                label={d.filters.showRangeInFilter}
               />
             )}
           />
@@ -573,14 +572,14 @@ export function FiltersManager({
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title={confirm?.kind === 'color' ? 'Delete this filter colour?' : 'Delete this price range?'}
-        body="It disappears from the Shop filter. Your products are not affected."
+        title={confirm?.kind === 'color' ? d.filters.deleteColour : d.filters.deleteRange}
+        body={d.filters.deleteBody}
         onConfirm={async () => {
           if (!confirm) return;
           const ok = await run(
             () =>
               confirm.kind === 'color' ? deleteFilterColor(confirm.id) : deletePriceRange(confirm.id),
-            'Deleted.',
+            d.common.deleted,
           );
           if (ok) setConfirm(null);
         }}

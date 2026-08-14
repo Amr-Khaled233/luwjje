@@ -198,8 +198,14 @@ export async function validatePromoCode(
  */
 export async function calculateShipping(governorateName: string, subtotal: number) {
   const settings = await getSettings();
+  // Checkout submits the English name, but accept the Arabic one too so a
+  // stray localised value is priced correctly instead of silently falling
+  // back to the default rate.
   const governorate = await prisma.governorate.findFirst({
-    where: { name: governorateName, active: true },
+    where: {
+      active: true,
+      OR: [{ name: governorateName }, { nameAr: governorateName }],
+    },
   });
 
   const rate = governorate?.shippingCost ?? settings.defaultShippingRate;

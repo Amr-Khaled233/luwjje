@@ -13,6 +13,8 @@ import { EmptyState, StatusBadge } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { categorySchema } from '@/lib/validations';
 import {
   saveCategory,
@@ -41,6 +43,7 @@ const EMPTY: CategoryInput = {
 export function CategoriesManager({ categories }: { categories: CategoryRow[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [modal, setModal] = React.useState<{ open: boolean; data: CategoryRow | null }>({
     open: false,
@@ -59,7 +62,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -73,7 +76,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-body-md text-secondary">
-          {categories.length} categories · {visibleCount} shown in the Shop filter
+          {fmt(d.categories.summary, { total: categories.length, visible: visibleCount })}
         </p>
         <Button
           onClick={() => {
@@ -81,25 +84,21 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
             setModal({ open: true, data: null });
           }}
         >
-          <Plus className="h-4 w-4" />
-          Add category
-        </Button>
+          <Plus className="h-4 w-4" />{d.categories.addNew}</Button>
       </div>
 
       <section className="border border-outline-variant bg-surface-lowest">
         {categories.length === 0 ? (
           <EmptyState
-            title="No categories yet."
-            body="Add one, then assign products to it from Dashboard → Products."
+            title={d.categories.emptyTitle}
+            body={d.categories.emptyBody}
             action={
               <Button
                 onClick={() => {
                   form.reset(EMPTY);
                   setModal({ open: true, data: null });
                 }}
-              >
-                Add category
-              </Button>
+              >{d.categories.addNew}</Button>
             }
             className="border-0"
           />
@@ -107,12 +106,12 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
           <TableWrap>
             <thead>
               <tr>
-                <Th className="w-16">Order</Th>
-                <Th>Name</Th>
-                <Th>Arabic name</Th>
-                <Th>Products</Th>
-                <Th>In Shop filter</Th>
-                <Th className="text-right">Actions</Th>
+                <Th className="w-16">{d.categories.order}</Th>
+                <Th>{d.common.name}</Th>
+                <Th>{d.common.nameAr}</Th>
+                <Th>{d.categories.productsCount}</Th>
+                <Th>{d.categories.inFilter}</Th>
+                <Th className="text-right">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -124,7 +123,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                   <Td>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => run(() => reorderCategory(c.id, 'up'), 'Order updated.')}
+                        onClick={() => run(() => reorderCategory(c.id, 'up'), d.categories.orderUpdated)}
                         disabled={i === 0 || pending}
                         aria-label={`Move ${c.name} up`}
                         className="flex h-7 w-7 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
@@ -132,7 +131,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                         <ArrowUp className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => run(() => reorderCategory(c.id, 'down'), 'Order updated.')}
+                        onClick={() => run(() => reorderCategory(c.id, 'down'), d.categories.orderUpdated)}
                         disabled={i === categories.length - 1 || pending}
                         aria-label={`Move ${c.name} down`}
                         className="flex h-7 w-7 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
@@ -154,12 +153,12 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                       onClick={() =>
                         run(
                           () => toggleCategoryVisible(c.id),
-                          c.visible ? 'Hidden from the filter.' : 'Shown in the filter.',
+                          c.visible ? d.categories.hiddenToast : d.categories.shownToast,
                         )
                       }
                       disabled={pending}
                       className="flex items-center gap-2"
-                      title="Toggle visibility in the Shop filter"
+                      title={d.categories.inFilter}
                     >
                       {c.visible ? (
                         <Eye className="h-4 w-4 text-navy" />
@@ -208,29 +207,27 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
       <Modal
         open={modal.open}
         onClose={() => setModal({ open: false, data: null })}
-        title={modal.data ? `Edit — ${modal.data.name}` : 'New category'}
-        description="The English name sets the URL; the Arabic name is what Arabic shoppers see."
+        title={modal.data ? `${d.common.edit} — ${modal.data.name}` : d.categories.addNew}
+        description={d.categories.nameHint}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(async (values) => {
                 const ok = await run(
                   () => saveCategory({ ...values, id: modal.data?.id }),
-                  'Category saved.',
+                  d.categories.saved,
                 );
                 if (ok) setModal({ open: false, data: null });
               })}
             >
               {form.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save category'
+                d.common.save
               )}
             </Button>
           </>
@@ -239,28 +236,28 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Input
-              label="Name (English)"
+              label={d.shipping.nameEnglish}
               required
               placeholder="Knitwear"
               error={form.formState.errors.name?.message}
               {...form.register('name')}
             />
             <Input
-              label="Name (Arabic)"
+              label={d.shipping.nameArabic}
               placeholder="التريكو"
               dir="rtl"
-              hint="Blank falls back to the English name."
+              hint={d.common.blankFallsBack}
               error={form.formState.errors.nameAr?.message}
               {...form.register('nameAr')}
             />
             <Textarea
-              label="Description (English)"
+              label={`${d.common.description} (${d.common.english})`}
               rows={3}
               error={form.formState.errors.description?.message}
               {...form.register('description')}
             />
             <Textarea
-              label="Description (Arabic)"
+              label={`${d.common.description} (${d.common.arabic})`}
               rows={3}
               dir="rtl"
               error={form.formState.errors.descriptionAr?.message}
@@ -275,7 +272,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Show in the Shop category filter"
+                label={d.categories.showInFilter}
               />
             )}
           />
@@ -286,15 +283,15 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title={`Delete ${confirm?.name}?`}
+        title={fmt(d.categories.deleteTitle, { name: confirm?.name ?? '' })}
         body={
           confirm?.productCount
-            ? `Its ${confirm.productCount} product${confirm.productCount === 1 ? '' : 's'} stay on sale but become uncategorised.`
-            : 'This category has no products.'
+            ? fmt(d.categories.deleteWithProducts, { n: confirm.productCount })
+            : d.categories.deleteEmpty
         }
         onConfirm={async () => {
           if (!confirm) return;
-          const ok = await run(() => deleteCategory(confirm.id), 'Category deleted.');
+          const ok = await run(() => deleteCategory(confirm.id), d.categories.deleted);
           if (ok) setConfirm(null);
         }}
       />

@@ -14,6 +14,8 @@ import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
 import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { bannerSchema, discountSchema } from '@/lib/validations';
 import {
   saveBanner,
@@ -82,6 +84,7 @@ export function OffersManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [bannerModal, setBannerModal] = React.useState<{ open: boolean; data: BannerInput | null }>({
     open: false,
@@ -113,7 +116,7 @@ export function OffersManager({
     const result = await fn();
     setPending(false);
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -151,7 +154,7 @@ export function OffersManager({
             {b.eyebrow && <span className="label-caps text-secondary">{b.eyebrow}</span>}
             <StatusBadge status={b.active ? 'ACTIVE' : 'DISABLED'} />
           </div>
-          <p className="mt-2 font-display text-headline-sm">{b.heading || 'Untitled banner'}</p>
+          <p className="mt-2 font-display text-headline-sm">{b.heading || d.offers.untitled}</p>
           {b.body && <p className="mt-2 line-clamp-2 text-body-sm text-secondary">{b.body}</p>}
           <p className="mt-3 text-body-sm text-tertiary">
             {b.ctaLabel} → {b.ctaHref}
@@ -161,14 +164,14 @@ export function OffersManager({
         <div className="flex shrink-0 gap-2 sm:flex-col">
           <button
             onClick={() => openBanner(b)}
-            aria-label="Edit banner"
+            aria-label={`${d.common.edit} — ${d.offers.heroTitle}`}
             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => setConfirm({ kind: 'banner', id: b.id! })}
-            aria-label="Delete banner"
+            aria-label={`${d.common.delete} — ${d.offers.heroTitle}`}
             className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -184,20 +187,18 @@ export function OffersManager({
       <section className="border border-outline-variant bg-surface-lowest">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
           <div>
-            <h2 className="font-display text-headline-sm">Hero Banner</h2>
+            <h2 className="font-display text-headline-sm">{d.offers.heroTitle}</h2>
             <p className="mt-1.5 text-body-sm text-secondary">
-              The full-width image and glass card at the top of the home page.
+              {d.offers.heroHint}
             </p>
           </div>
           <Button size="sm" onClick={() => openBanner(null, 'HERO')}>
-            <Plus className="h-3.5 w-3.5" />
-            Add hero
-          </Button>
+            <Plus className="h-3.5 w-3.5" />{d.offers.addHero}</Button>
         </header>
         <div className="p-6">
           {heroBanners.length === 0 ? (
             <p className="text-body-sm text-secondary">
-              No hero banner — the home page opens straight into Best Sellers.
+              {d.offers.noHero}
             </p>
           ) : (
             <ul className="flex flex-col gap-4">{heroBanners.map(bannerCard)}</ul>
@@ -210,20 +211,18 @@ export function OffersManager({
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
           <div>
             <h2 className="font-display text-headline-sm">
-              Promotional Block — &ldquo;Discover the New Neutrals&rdquo;
+              {d.offers.offerTitle}
             </h2>
             <p className="mt-1.5 text-body-sm text-secondary">
-              The split image/text card below Best Sellers, with an optional run window.
+              {d.offers.offerHint}
             </p>
           </div>
           <Button size="sm" onClick={() => openBanner(null, 'OFFER')}>
-            <Plus className="h-3.5 w-3.5" />
-            Add block
-          </Button>
+            <Plus className="h-3.5 w-3.5" />{d.offers.addBlock}</Button>
         </header>
         <div className="p-6">
           {offerBanners.length === 0 ? (
-            <p className="text-body-sm text-secondary">No promotional block is running.</p>
+            <p className="text-body-sm text-secondary">{d.offers.noOffer}</p>
           ) : (
             <ul className="flex flex-col gap-4">{offerBanners.map(bannerCard)}</ul>
           )}
@@ -234,61 +233,59 @@ export function OffersManager({
       <section className="border border-outline-variant bg-surface-lowest">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
           <div>
-            <h2 className="font-display text-headline-sm">Discount Campaigns</h2>
+            <h2 className="font-display text-headline-sm">{d.offers.campaigns}</h2>
             <p className="mt-1.5 text-body-sm text-secondary">
-              Automatic price reductions — no code needed. Applied to the products or category you
+              {d.offers.campaignsHint}
               pick, for the window you set.
             </p>
           </div>
           <Button size="sm" onClick={() => openDiscount(null)}>
-            <Plus className="h-3.5 w-3.5" />
-            New campaign
-          </Button>
+            <Plus className="h-3.5 w-3.5" />{d.offers.newCampaign}</Button>
         </header>
 
         <div className="p-6">
           {discounts.length === 0 ? (
             <EmptyState
-              title="No campaigns running."
-              body="Create one to put a percentage or fixed amount off a set of products for a fixed period."
+              title={d.offers.noCampaigns}
+              body={d.offers.noCampaignsBody}
               className="border-0"
             />
           ) : (
             <ul className="flex flex-col gap-3">
-              {discounts.map((d) => (
+              {discounts.map((campaign) => (
                 <li
-                  key={d.id}
+                  key={campaign.id}
                   className="flex flex-wrap items-center gap-4 border border-outline-variant p-4"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-3 text-label-md">
-                      {d.name}
-                      <StatusBadge status={d.active ? 'ACTIVE' : 'DISABLED'} />
+                      {campaign.name}
+                      <StatusBadge status={campaign.active ? 'ACTIVE' : 'DISABLED'} />
                     </p>
                     <p className="mt-1 text-body-sm text-secondary">
-                      {d.discountType === 'PERCENT'
-                        ? `${d.discountValue}% off`
-                        : `$${d.discountValue.toFixed(2)} off`}{' '}
+                      {campaign.discountType === 'PERCENT'
+                        ? `${campaign.discountValue}% off`
+                        : `$${campaign.discountValue.toFixed(2)} off`}{' '}
                       ·{' '}
-                      {d.scope === 'ALL'
+                      {campaign.scope === 'ALL'
                         ? 'the whole catalogue'
-                        : d.scope === 'CATEGORY'
-                          ? categories.find((c) => c.id === d.categoryId)?.name ?? 'a category'
-                          : `${d.productIds.length} products`}
-                      {(d.startsAt || d.endsAt) && ` · ${d.startsAt || '…'} to ${d.endsAt || '…'}`}
+                        : campaign.scope === 'CATEGORY'
+                          ? categories.find((c) => c.id === campaign.categoryId)?.name ?? 'a category'
+                          : `${campaign.productIds.length} products`}
+                      {(campaign.startsAt || campaign.endsAt) && ` · ${campaign.startsAt || '…'} to ${campaign.endsAt || '…'}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => openDiscount(d)}
-                      aria-label="Edit campaign"
+                      onClick={() => openDiscount(campaign)}
+                      aria-label={`${d.common.edit} — ${d.offers.campaignName}`}
                       className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => setConfirm({ kind: 'discount', id: d.id! })}
-                      aria-label="Delete campaign"
+                      onClick={() => setConfirm({ kind: 'discount', id: campaign.id! })}
+                      aria-label={`${d.common.delete} — ${d.offers.campaignName}`}
                       className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -305,9 +302,9 @@ export function OffersManager({
       <section className="border border-outline-variant bg-surface-lowest">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
           <div>
-            <h2 className="font-display text-headline-sm">Colour Palette Showcase</h2>
+            <h2 className="font-display text-headline-sm">{d.offers.paletteTitle}</h2>
             <p className="mt-1.5 text-body-sm text-secondary">
-              The swatch grid at the foot of the home page.
+              {d.offers.paletteHint}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -318,9 +315,7 @@ export function OffersManager({
               onClick={() => setSwatches([...swatches, { name: 'New tone', hex: '#c4c7c9' }])}
               disabled={swatches.length >= 12}
             >
-              <Plus className="h-3.5 w-3.5" />
-              Add swatch
-            </Button>
+              <Plus className="h-3.5 w-3.5" />{d.offers.addSwatch}</Button>
             <Button
               size="sm"
               disabled={swatchState === 'saving'}
@@ -329,21 +324,21 @@ export function OffersManager({
                 const result = await savePaletteSwatches({ swatches });
                 setSwatchState('idle');
                 if (!result.ok) {
-                  toast(result.error ?? 'Could not save the palette.', 'error');
+                  toast(result.error ?? d.offers.couldNotSavePalette, 'error');
                   return;
                 }
                 setSwatchState('saved');
-                toast('Palette updated.');
+                toast(d.offers.paletteUpdated);
                 router.refresh();
                 setTimeout(() => setSwatchState('idle'), 1600);
               }}
             >
               {swatchState === 'saving' ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save palette'
+                d.offers.savePalette
               )}
             </Button>
           </div>
@@ -359,7 +354,7 @@ export function OffersManager({
                   onChange={(e) =>
                     setSwatches(swatches.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
                   }
-                  aria-label="Swatch name"
+                  aria-label={d.offers.swatchName}
                   className="w-full bg-transparent text-body-sm outline-none"
                 />
                 <div className="mt-1 flex items-center gap-2">
@@ -369,7 +364,7 @@ export function OffersManager({
                     onChange={(e) =>
                       setSwatches(swatches.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)))
                     }
-                    aria-label="Swatch colour"
+                    aria-label={d.offers.swatchColour}
                     className="h-5 w-5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
                   />
                   <input
@@ -382,7 +377,7 @@ export function OffersManager({
                   />
                   <button
                     onClick={() => setSwatches(swatches.filter((_, j) => j !== i))}
-                    aria-label="Remove swatch"
+                    aria-label={d.offers.removeSwatch}
                     className="shrink-0 text-tertiary transition-colors hover:text-error"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -398,26 +393,24 @@ export function OffersManager({
       <Modal
         open={bannerModal.open}
         onClose={() => setBannerModal({ open: false, data: null })}
-        title={bannerModal.data ? 'Edit banner' : 'New banner'}
-        description="Live on the home page as soon as you save."
+        title={bannerModal.data ? d.offers.editBanner : d.offers.newBanner}
+        description={d.offers.bannerLive}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setBannerModal({ open: false, data: null })}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={() => setBannerModal({ open: false, data: null })}>{d.common.cancel}</Button>
             <Button
               disabled={bannerForm.formState.isSubmitting}
               onClick={bannerForm.handleSubmit(async (values) => {
-                const ok = await run(() => saveBanner(values), 'Banner saved.');
+                const ok = await run(() => saveBanner(values), d.offers.bannerSaved);
                 if (ok) setBannerModal({ open: false, data: null });
               })}
             >
               {bannerForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save banner'
+                d.offers.saveBanner
               )}
             </Button>
           </>
@@ -425,9 +418,9 @@ export function OffersManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Select label="Slot" {...bannerForm.register('slot')}>
-              <option value="HERO">Hero — top of the home page</option>
-              <option value="OFFER">Promotional block — below Best Sellers</option>
+            <Select label={d.offers.slot} {...bannerForm.register('slot')}>
+              <option value="HERO">{d.offers.slotHero}</option>
+              <option value="OFFER">{d.offers.slotOffer}</option>
             </Select>
             <Controller
               control={bannerForm.control}
@@ -438,7 +431,7 @@ export function OffersManager({
                   name="eyebrowAr"
                   render={({ field: ar }) => (
                     <BilingualField
-                      label="Eyebrow"
+                      label={d.offers.eyebrow}
                       placeholder="Autumn / Winter 2026"
                       placeholderAr="خريف / شتاء ٢٠٢٦"
                       english={{ value: en.value, onChange: en.onChange }}
@@ -457,7 +450,7 @@ export function OffersManager({
                   name="headingAr"
                   render={({ field: ar }) => (
                     <BilingualField
-                      label="Heading"
+                      label={d.offers.heading}
                       required
                       className="md:col-span-2"
                       english={{ value: en.value, onChange: en.onChange }}
@@ -478,7 +471,7 @@ export function OffersManager({
                   name="bodyAr"
                   render={({ field: ar }) => (
                     <BilingualField
-                      label="Body"
+                      label={d.settings.body}
                       rows={3}
                       className="md:col-span-2"
                       english={{ value: en.value, onChange: en.onChange }}
@@ -498,7 +491,7 @@ export function OffersManager({
                     name="badgeAr"
                     render={({ field: ar }) => (
                       <BilingualField
-                        label="Badge"
+                        label={d.offers.badge}
                         placeholder="Limited Release"
                         placeholderAr="إصدار محدود"
                         english={{ value: en.value, onChange: en.onChange }}
@@ -518,7 +511,7 @@ export function OffersManager({
                   name="ctaLabelAr"
                   render={({ field: ar }) => (
                     <BilingualField
-                      label="Button label"
+                      label={d.offers.buttonLabel}
                       placeholder="Shop Now"
                       placeholderAr="تسوّق الآن"
                       english={{ value: en.value, onChange: en.onChange }}
@@ -529,20 +522,20 @@ export function OffersManager({
               )}
             />
             <Input
-              label="Button link"
+              label={d.offers.buttonLink}
               placeholder="/shop?color=Beige"
               {...bannerForm.register('ctaHref')}
             />
             <Input
-              label="Starts on"
+              label={d.common.startsOn}
               type="date"
-              hint="Optional. Blank means it is live now."
+              hint={d.common.blankNoStart}
               {...bannerForm.register('startsAt')}
             />
             <Input
-              label="Ends on"
+              label={d.common.endsOn}
               type="date"
-              hint="Optional. Blank means it never expires."
+              hint={d.common.blankNoEnd}
               {...bannerForm.register('endsAt')}
             />
           </div>
@@ -552,7 +545,7 @@ export function OffersManager({
             name="imageUrl"
             render={({ field }) => (
               <ImageUploader
-                label="Banner image"
+                label={d.offers.bannerImage}
                 value={bannerImage ? [{ url: bannerImage, alt: '' }] : []}
                 onChange={(images) => field.onChange(images[images.length - 1]?.url ?? '')}
               />
@@ -566,7 +559,7 @@ export function OffersManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Active"
+                label={d.common.active}
               />
             )}
           />
@@ -577,29 +570,27 @@ export function OffersManager({
       <Modal
         open={discountModal.open}
         onClose={() => setDiscountModal({ open: false, data: null })}
-        title={discountModal.data ? 'Edit campaign' : 'New discount campaign'}
-        description="Applies automatically at the price shown on the storefront — no code required."
+        title={discountModal.data ? `${d.common.edit} — ${d.offers.campaignName}` : d.offers.newCampaign}
+        description={d.offers.campaignHint}
         footer={
           <>
             <Button
               variant="secondary"
               onClick={() => setDiscountModal({ open: false, data: null })}
-            >
-              Cancel
-            </Button>
+            >{d.common.cancel}</Button>
             <Button
               disabled={discountForm.formState.isSubmitting}
               onClick={discountForm.handleSubmit(async (values) => {
-                const ok = await run(() => saveDiscount(values), 'Campaign saved.');
+                const ok = await run(() => saveDiscount(values), d.offers.campaignSaved);
                 if (ok) setDiscountModal({ open: false, data: null });
               })}
             >
               {discountForm.formState.isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
                 </>
               ) : (
-                'Save campaign'
+                d.offers.saveCampaign
               )}
             </Button>
           </>
@@ -616,7 +607,7 @@ export function OffersManager({
                   name="nameAr"
                   render={({ field: ar }) => (
                     <BilingualField
-                      label="Campaign name"
+                      label={d.offers.campaignName}
                       required
                       className="md:col-span-2"
                       english={{ value: en.value, onChange: en.onChange }}
@@ -628,12 +619,12 @@ export function OffersManager({
                 />
               )}
             />
-            <Select label="Discount type" {...discountForm.register('discountType')}>
-              <option value="PERCENT">Percentage off</option>
-              <option value="FIXED">Fixed amount off</option>
+            <Select label={d.common.type} {...discountForm.register('discountType')}>
+              <option value="PERCENT">{d.common.percentOff}</option>
+              <option value="FIXED">{d.common.fixedOff}</option>
             </Select>
             <Input
-              label="Value"
+              label={d.common.value}
               type="number"
               step="0.01"
               min="0"
@@ -641,14 +632,14 @@ export function OffersManager({
               error={discountForm.formState.errors.discountValue?.message}
               {...discountForm.register('discountValue')}
             />
-            <Select label="Applies to" {...discountForm.register('scope')}>
-              <option value="PRODUCTS">Selected products</option>
-              <option value="CATEGORY">A whole category</option>
-              <option value="ALL">The entire catalogue</option>
+            <Select label={d.offers.appliesTo} {...discountForm.register('scope')}>
+              <option value="PRODUCTS">{d.offers.selectedProducts}</option>
+              <option value="CATEGORY">{d.offers.wholeCategory}</option>
+              <option value="ALL">{d.offers.entireCatalogue}</option>
             </Select>
             {scope === 'CATEGORY' && (
-              <Select label="Category" {...discountForm.register('categoryId')}>
-                <option value="">Choose a category</option>
+              <Select label={d.products.category} {...discountForm.register('categoryId')}>
+                <option value="">{d.offers.chooseCategory}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -656,13 +647,13 @@ export function OffersManager({
                 ))}
               </Select>
             )}
-            <Input label="Starts on" type="date" {...discountForm.register('startsAt')} />
-            <Input label="Ends on" type="date" {...discountForm.register('endsAt')} />
+            <Input label={d.common.startsOn} type="date" {...discountForm.register('startsAt')} />
+            <Input label={d.common.endsOn} type="date" {...discountForm.register('endsAt')} />
           </div>
 
           {scope === 'PRODUCTS' && (
             <div>
-              <FieldLabel>Products</FieldLabel>
+              <FieldLabel>{d.offers.productsLabel}</FieldLabel>
               <Controller
                 control={discountForm.control}
                 name="productIds"
@@ -703,7 +694,7 @@ export function OffersManager({
               <Checkbox
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                label="Active"
+                label={d.common.active}
               />
             )}
           />
@@ -714,17 +705,17 @@ export function OffersManager({
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title={confirm?.kind === 'banner' ? 'Delete this banner?' : 'Delete this campaign?'}
+        title={confirm?.kind === 'banner' ? d.offers.deleteBanner : d.offers.deleteCampaign}
         body={
           confirm?.kind === 'banner'
-            ? 'It disappears from the home page immediately.'
-            : 'Prices revert to their list value immediately.'
+            ? d.offers.deleteBannerBody
+            : d.offers.deleteCampaignBody
         }
         onConfirm={async () => {
           if (!confirm) return;
           const ok = await run(
             () => (confirm.kind === 'banner' ? deleteBanner(confirm.id) : deleteDiscount(confirm.id)),
-            'Deleted.',
+            d.common.deleted,
           );
           if (ok) setConfirm(null);
         }}

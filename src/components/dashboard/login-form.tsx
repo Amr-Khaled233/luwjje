@@ -6,7 +6,16 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { FieldLabel } from '@/components/ui/field';
 import { login, type LoginState } from '@/app/actions/dashboard-session';
 
-function SubmitButton() {
+/** Plain strings, because a function cannot cross the Server → Client boundary. */
+export interface LoginLabels {
+  password: string;
+  show: string;
+  hide: string;
+  submit: string;
+  checking: string;
+}
+
+function SubmitButton({ labels }: { labels: LoginLabels }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -16,16 +25,16 @@ function SubmitButton() {
     >
       {pending ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" /> Checking…
+          <Loader2 className="h-4 w-4 animate-spin" /> {labels.checking}
         </>
       ) : (
-        'Enter'
+        labels.submit
       )}
     </button>
   );
 }
 
-export function LoginForm({ next }: { next: string }) {
+export function LoginForm({ next, labels }: { next: string; labels: LoginLabels }) {
   const [state, formAction] = useFormState<LoginState, FormData>(login, {});
   const [visible, setVisible] = React.useState(false);
 
@@ -33,7 +42,7 @@ export function LoginForm({ next }: { next: string }) {
     <form action={formAction} className="mt-8">
       <input type="hidden" name="next" value={next} />
 
-      <FieldLabel htmlFor="password">Password</FieldLabel>
+      <FieldLabel htmlFor="password">{labels.password}</FieldLabel>
       <div className="relative">
         <input
           id="password"
@@ -42,13 +51,13 @@ export function LoginForm({ next }: { next: string }) {
           autoComplete="current-password"
           autoFocus
           required
-          className="h-12 w-full border border-outline-variant bg-background px-4 pr-12 text-body-md transition-colors focus:border-navy focus:outline-none"
+          className="h-12 w-full border border-outline-variant bg-background px-4 pe-12 text-body-md transition-colors focus:border-navy focus:outline-none"
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          aria-label={visible ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary transition-colors hover:text-on-surface"
+          aria-label={visible ? labels.hide : labels.show}
+          className="absolute end-3 top-1/2 -translate-y-1/2 text-secondary transition-colors hover:text-on-surface"
         >
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -60,7 +69,7 @@ export function LoginForm({ next }: { next: string }) {
         </p>
       )}
 
-      <SubmitButton />
+      <SubmitButton labels={labels} />
     </form>
   );
 }

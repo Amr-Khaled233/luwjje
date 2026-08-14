@@ -15,14 +15,15 @@ import {
   ExternalLink,
   FolderTree,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/field';
 import { StatusBadge, ColorDot, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { ConfirmDialog } from '@/components/dashboard/modal';
 import { ProductEditor, type EditableProduct } from '@/components/dashboard/product-editor';
-import { CategoryManager } from '@/components/dashboard/category-manager';
 import { useToast } from '@/components/ui/toast';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import {
   deleteProduct,
   toggleProductStatus,
@@ -48,12 +49,12 @@ export function ProductsManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { d } = useDash();
 
   const [editing, setEditing] = React.useState<EditableProduct | null>(null);
   const [creating, setCreating] = React.useState(false);
   const [deleting, setDeleting] = React.useState<EditableProduct | null>(null);
   const [pending, setPending] = React.useState(false);
-  const [categoriesOpen, setCategoriesOpen] = React.useState(false);
 
   const [query, setQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
@@ -76,7 +77,7 @@ export function ProductsManager({
     setPending(false);
 
     if (!result.ok) {
-      toast(result.error ?? 'Something went wrong.', 'error');
+      toast(result.error ?? d.common.somethingWrong, 'error');
       return false;
     }
     toast(success);
@@ -102,8 +103,8 @@ export function ProductsManager({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products…"
-            aria-label="Search products"
+            placeholder={d.products.searchPlaceholder}
+            aria-label={d.products.searchPlaceholder}
             className="h-11 w-full border border-outline-variant bg-background pl-11 pr-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
           />
         </div>
@@ -111,21 +112,21 @@ export function ProductsManager({
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label="Filter by status"
+          aria-label={d.common.status}
           className="h-11 w-auto min-w-[150px]"
         >
-          <option value="">All statuses</option>
-          <option value="PUBLISHED">Published</option>
-          <option value="DRAFT">Draft</option>
+          <option value="">{d.products.allStatuses}</option>
+          <option value="PUBLISHED">{d.products.published}</option>
+          <option value="DRAFT">{d.products.draft}</option>
         </Select>
 
         <Select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          aria-label="Filter by category"
+          aria-label={d.products.category}
           className="h-11 w-auto min-w-[170px]"
         >
-          <option value="">All categories</option>
+          <option value="">{d.products.allCategories}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -133,28 +134,26 @@ export function ProductsManager({
           ))}
         </Select>
 
-        <Button variant="secondary" onClick={() => setCategoriesOpen(true)}>
+        <ButtonLink href="/dashboard/categories" variant="secondary">
           <FolderTree className="h-4 w-4" />
-          Categories
-        </Button>
+          {d.nav.categories}
+        </ButtonLink>
 
         <Button onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4" />
-          Add New Product
-        </Button>
+          <Plus className="h-4 w-4" />{d.products.addNew}</Button>
       </div>
 
       {/* ------------------------------------------------------ best sellers */}
       <section className="border border-outline-variant bg-surface-lowest">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
           <div>
-            <h2 className="font-display text-headline-sm">Home page — Best Sellers</h2>
+            <h2 className="font-display text-headline-sm">{d.products.bestSellersTitle}</h2>
             <p className="mt-1.5 text-body-sm text-secondary">
               These four appear in the Best Sellers row. Star a product below to add it; use the
               arrows to set the order.
             </p>
           </div>
-          <span className="label-caps text-secondary">{bestSellers.length} selected</span>
+          <span className="label-caps text-secondary">{fmt(d.products.selected, { n: bestSellers.length })}</span>
         </header>
 
         {bestSellers.length === 0 ? (
@@ -180,17 +179,17 @@ export function ProductsManager({
                 </span>
                 <div className="flex shrink-0 items-center gap-1">
                   <button
-                    onClick={() => run(() => reorderBestSeller(p.id!, 'up'), 'Order updated.')}
+                    onClick={() => run(() => reorderBestSeller(p.id!, 'up'), d.products.orderUpdated)}
                     disabled={i === 0 || pending}
-                    aria-label={`Move ${p.name} up`}
+                    aria-label={`${d.products.moveUp} — ${p.name}`}
                     className="flex h-8 w-8 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
                   </button>
                   <button
-                    onClick={() => run(() => reorderBestSeller(p.id!, 'down'), 'Order updated.')}
+                    onClick={() => run(() => reorderBestSeller(p.id!, 'down'), d.products.orderUpdated)}
                     disabled={i === bestSellers.length - 1 || pending}
-                    aria-label={`Move ${p.name} down`}
+                    aria-label={`${d.products.moveDown} — ${p.name}`}
                     className="flex h-8 w-8 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
@@ -198,7 +197,7 @@ export function ProductsManager({
                   <button
                     onClick={() => run(() => toggleBestSeller(p.id!), 'Removed from Best Sellers.')}
                     disabled={pending}
-                    aria-label={`Remove ${p.name} from Best Sellers`}
+                    aria-label={`${d.products.removedFromBest} — ${p.name}`}
                     className="flex h-8 w-8 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error disabled:opacity-30"
                   >
                     <Star className="h-3.5 w-3.5 fill-current" />
@@ -220,21 +219,21 @@ export function ProductsManager({
                 ? 'Add your first product to populate the storefront.'
                 : 'Try clearing the filters above.'
             }
-            action={<Button onClick={() => setCreating(true)}>Add New Product</Button>}
+            action={<Button onClick={() => setCreating(true)}>{d.products.addNew}</Button>}
             className="border-0"
           />
         ) : (
           <TableWrap>
             <thead>
               <tr>
-                <Th>Product</Th>
-                <Th>Category</Th>
-                <Th>Price</Th>
-                <Th>Colours</Th>
-                <Th>Stock</Th>
-                <Th>Sold</Th>
-                <Th>Status</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{d.stock.product}</Th>
+                <Th>{d.products.category}</Th>
+                <Th>{d.common.price}</Th>
+                <Th>{d.products.colours}</Th>
+                <Th>{d.products.stock}</Th>
+                <Th>{d.products.sold}</Th>
+                <Th>{d.common.status}</Th>
+                <Th className="text-right">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -287,11 +286,11 @@ export function ProductsManager({
                         onClick={() =>
                           run(
                             () => toggleProductStatus(p.id!),
-                            p.status === 'PUBLISHED' ? 'Moved to draft.' : 'Published.',
+                            p.status === 'PUBLISHED' ? d.products.movedToDraft : d.products.publishedToast,
                           )
                         }
                         disabled={pending}
-                        title="Toggle publication"
+                        title={d.products.togglePublish}
                       >
                         <StatusBadge status={p.status} />
                       </button>
@@ -302,12 +301,12 @@ export function ProductsManager({
                           onClick={() =>
                             run(
                               () => toggleBestSeller(p.id!),
-                              p.isBestSeller ? 'Removed from Best Sellers.' : 'Added to Best Sellers.',
+                              p.isBestSeller ? 'Removed from Best Sellers.' : d.products.addedToBest,
                             )
                           }
                           disabled={pending}
-                          aria-label="Toggle best seller"
-                          title="Show in Best Sellers"
+                          aria-label={d.products.toggleBestSeller}
+                          title={d.products.toggleBestSeller}
                           className={cn(
                             'flex h-9 w-9 items-center justify-center border transition-colors',
                             p.isBestSeller
@@ -320,22 +319,22 @@ export function ProductsManager({
                         <Link
                           href={`/product/${p.slug}`}
                           target="_blank"
-                          aria-label="View on storefront"
-                          title="View on storefront"
+                          aria-label={d.products.viewOnStore}
+                          title={d.products.viewOnStore}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                         <button
                           onClick={() => setEditing(p)}
-                          aria-label={`Edit ${p.name}`}
+                          aria-label={`${d.common.edit} ${p.name}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setDeleting(p)}
-                          aria-label={`Delete ${p.name}`}
+                          aria-label={`${d.common.delete} ${p.name}`}
                           className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -362,21 +361,15 @@ export function ProductsManager({
         }}
       />
 
-      <CategoryManager
-        open={categoriesOpen}
-        categories={categories}
-        onClose={() => setCategoriesOpen(false)}
-      />
-
       <ConfirmDialog
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
         pending={pending}
-        title={`Delete ${deleting?.name}?`}
+        title={fmt(d.products.deleteTitle, { name: deleting?.name ?? '' })}
         body="The product disappears from the storefront immediately. Past orders keep their own copy of the name, colour and price, so order history stays intact."
         onConfirm={async () => {
           if (!deleting) return;
-          const ok = await run(() => deleteProduct(deleting.id!), 'Product deleted.');
+          const ok = await run(() => deleteProduct(deleting.id!), d.products.deleted);
           if (ok) setDeleting(null);
         }}
       />
