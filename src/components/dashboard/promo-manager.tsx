@@ -113,7 +113,7 @@ export function PromoManager({
                 <Th>{d.promo.usage}</Th>
                 <Th>{d.promo.window}</Th>
                 <Th>{d.common.status}</Th>
-                <Th className="text-right">{d.common.actions}</Th>
+                <Th className="text-end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>

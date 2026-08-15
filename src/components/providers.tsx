@@ -2,6 +2,12 @@
 
 import { ToastProvider } from '@/components/ui/toast';
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  return <ToastProvider>{children}</ToastProvider>;
+export function Providers({
+  children,
+  dismissLabel,
+}: {
+  children: React.ReactNode;
+  dismissLabel: string;
+}) {
+  return <ToastProvider dismissLabel={dismissLabel}>{children}</ToastProvider>;
 }

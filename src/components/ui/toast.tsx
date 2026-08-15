@@ -19,7 +19,14 @@ export function useToast() {
   return React.useContext(ToastContext);
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({
+  children,
+  dismissLabel = 'Dismiss',
+}: {
+  children: React.ReactNode;
+  /** Passed down from the root layout, which is where the locale is known. */
+  dismissLabel?: string;
+}) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
   const nextId = React.useRef(0);
 
@@ -39,8 +46,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
+      {/* Full width above the safe area on a phone, a corner card on desktop. */}
       <div
-        className="pointer-events-none fixed bottom-6 right-6 z-[100] flex w-[min(92vw,360px)] flex-col gap-2"
+        className="pointer-events-none fixed inset-x-4 bottom-4 z-[100] mb-safe flex flex-col gap-2 sm:inset-x-auto sm:bottom-6 sm:mb-0 sm:w-[min(92vw,360px)] sm:end-6"
         role="status"
         aria-live="polite"
       >
@@ -57,7 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <p className="flex-1 text-body-sm">{t.message}</p>
             <button
               onClick={() => dismiss(t.id)}
-              aria-label="Dismiss"
+              aria-label={dismissLabel}
               className="shrink-0 opacity-60 transition-opacity hover:opacity-100"
             >
               <X className="h-4 w-4" />

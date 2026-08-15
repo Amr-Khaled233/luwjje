@@ -51,12 +51,16 @@ export function NewsletterForm({ placeholder, label }: { placeholder: string; la
           type="submit"
           disabled={state === 'loading'}
           aria-label={label}
-          className="flex h-12 w-12 shrink-0 items-center justify-center border-l border-outline-variant transition-colors hover:bg-navy hover:text-background disabled:opacity-50"
+          className="flex h-12 w-12 shrink-0 items-center justify-center border-s border-outline-variant transition-colors hover:bg-navy hover:text-background disabled:opacity-50"
         >
           <ArrowRight className="h-4 w-4 rtl:rotate-180" />
         </button>
       </div>
-      {state === 'error' && <p className="mt-2 text-body-sm text-error">{message}</p>}
+      {state === 'error' && (
+        <p role="alert" className="mt-2 animate-fade-down text-body-sm text-error">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

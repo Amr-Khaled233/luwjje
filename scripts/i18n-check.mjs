@@ -32,7 +32,7 @@ const ARABIC = /[؀-ۿ]/;
 const placeholders = (s) => (s.match(/\{[a-zA-Z0-9_]+\}/g) ?? []).sort().join(',');
 
 /** Acronyms and brand names that are written the same way in Arabic. */
-const KEPT_AS_IS = new Set(['SKU', 'EGP', 'luwjje', 'Instagram', 'TikTok', 'WhatsApp', 'Facebook']);
+const KEPT_AS_IS = new Set(['SKU', 'EGP', 'luwjje', 'Instagram', 'Facebook']);
 
 /** Walks both trees together, collecting every leaf that fails a rule. */
 function audit(label, base, translated) {

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { useDash } from './dashboard-i18n';
 
 /**
  * Shared chart tokens. The brand is single-hue by design: bar length and line
@@ -36,7 +37,7 @@ export function ChartTooltip({
       {rows.map((r) => (
         <p key={r.key} className="flex items-baseline gap-4 text-body-sm">
           <span className="text-secondary">{r.label}</span>
-          <span className="ml-auto tabular-nums text-on-surface">{r.value}</span>
+          <span className="ms-auto tabular-nums text-on-surface">{r.value}</span>
         </p>
       ))}
     </div>
@@ -57,14 +58,19 @@ export function ChartTable({
   className?: string;
 }) {
   return (
-    <div className={cn('max-h-[320px] w-full overflow-auto border border-outline-variant', className)}>
-      <table className="w-full border-collapse text-left text-body-sm">
+    <div
+      className={cn(
+        'max-h-[280px] w-full overflow-auto overscroll-contain border border-outline-variant md:max-h-[320px]',
+        className,
+      )}
+    >
+      <table className="w-full border-collapse text-start text-body-sm">
         <thead className="sticky top-0 bg-surface-lowest">
           <tr>
             {columns.map((c) => (
               <th
                 key={c}
-                className="label-caps border-b border-outline-variant px-4 py-2.5 text-secondary"
+                className="label-caps whitespace-nowrap border-b border-outline-variant px-3 py-2.5 text-secondary md:px-4"
               >
                 {c}
               </th>
@@ -78,7 +84,7 @@ export function ChartTable({
                 <td
                   key={j}
                   className={cn(
-                    'border-b border-outline-variant px-4 py-2.5',
+                    'border-b border-outline-variant px-3 py-2.5 md:px-4',
                     j > 0 && 'tabular-nums',
                   )}
                 >
@@ -100,19 +106,21 @@ export function ViewToggle({
   view: 'chart' | 'table';
   onChange: (v: 'chart' | 'table') => void;
 }) {
+  const { d } = useDash();
+
   return (
-    <div className="flex border border-outline-variant">
+    <div className="flex shrink-0 border border-outline-variant">
       {(['chart', 'table'] as const).map((v) => (
         <button
           key={v}
           onClick={() => onChange(v)}
           aria-pressed={view === v}
           className={cn(
-            'label-caps px-3 py-2 transition-colors',
+            'label-caps px-3 py-2 transition-colors duration-200 ease-scandi',
             view === v ? 'bg-navy text-background' : 'text-secondary hover:text-on-surface',
           )}
         >
-          {v}
+          {d.analytics[v]}
         </button>
       ))}
     </div>

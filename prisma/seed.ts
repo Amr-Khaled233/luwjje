@@ -67,6 +67,9 @@ async function main() {
       showPriceFilter: true,
       showSortFilter: true,
       showSearch: true,
+      // The store's real channels. Editable from Settings → Social.
+      instagramUrl: 'https://www.instagram.com/luwjje',
+      facebookUrl: 'https://www.facebook.com/share/1BY898bngC/',
       metaTitle: 'luwjje — Considered essentials',
       metaTitleAr: 'luwjje — أساسيات مدروسة',
       metaDescription: 'Quiet, well-made pieces in wool, cotton and leather. Delivered across Egypt.',

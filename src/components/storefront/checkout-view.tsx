@@ -112,8 +112,10 @@ export function CheckoutView({
 
   if (items.length === 0) {
     return (
-      <div className="container-luwjje py-stack-md md:py-stack-lg">
-        <h1 className="mb-stack-md font-display text-display-sm">{t.checkout.title}</h1>
+      <div className="container-luwjje py-10 md:py-stack-lg">
+        <h1 className="mb-8 font-display text-headline-md sm:text-display-sm md:mb-stack-md">
+          {t.checkout.title}
+        </h1>
         <EmptyState
           title={t.checkout.nothingToCheckout}
           body={t.checkout.bagEmpty}
@@ -124,24 +126,28 @@ export function CheckoutView({
   }
 
   return (
-    <div className="container-luwjje py-stack-md md:py-stack-lg">
-      <h1 className="font-display text-display-sm">{t.checkout.title}</h1>
+    <div className="container-luwjje py-10 md:py-stack-lg">
+      <h1 className="font-display text-headline-md sm:text-display-sm">{t.checkout.title}</h1>
 
-      {/* steps */}
-      <ol className="mt-8 flex items-center gap-0 border-y border-outline-variant">
+      {/*
+        Steps. On a phone only the step you are on keeps its label — three
+        full labels plus their numbers do not fit across 360px, and truncating
+        all three tells the shopper less than showing one.
+      */}
+      <ol className="mt-6 flex items-center border-y border-outline-variant md:mt-8">
         {STEPS.map((label, i) => (
-          <li key={label} className="flex flex-1 items-center">
+          <li key={label} className="flex min-w-0 flex-1 items-center">
             <button
               onClick={() => i <= stepIndex && setStepIndex(i)}
               disabled={i > stepIndex}
               className={cn(
-                'flex w-full items-center gap-3 py-5 text-start transition-colors',
+                'flex w-full min-w-0 items-center gap-2 py-4 text-start transition-colors md:gap-3 md:py-5',
                 i <= stepIndex ? 'text-on-surface' : 'cursor-not-allowed text-tertiary',
               )}
             >
               <span
                 className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center border text-label-sm',
+                  'flex h-7 w-7 shrink-0 items-center justify-center border text-label-sm transition-colors duration-300 ease-scandi',
                   i < stepIndex
                     ? 'border-navy bg-navy text-background'
                     : i === stepIndex
@@ -149,21 +155,30 @@ export function CheckoutView({
                       : 'border-outline-variant',
                 )}
               >
-                {i < stepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                {i < stepIndex ? <Check className="h-3.5 w-3.5 animate-scale-in" /> : i + 1}
               </span>
-              <span className="label-caps">{label}</span>
+              <span
+                className={cn(
+                  'label-caps truncate',
+                  i === stepIndex ? 'inline' : 'hidden sm:inline',
+                )}
+              >
+                {label}
+              </span>
             </button>
-            {i < STEPS.length - 1 && <span className="h-px w-6 shrink-0 bg-outline-variant" />}
+            {i < STEPS.length - 1 && (
+              <span className="h-px w-3 shrink-0 bg-outline-variant md:w-6" />
+            )}
           </li>
         ))}
       </ol>
 
-      <div className="mt-stack-md grid grid-cols-1 gap-stack-md lg:grid-cols-12 lg:gap-gutter">
+      <div className="mt-8 grid grid-cols-1 gap-10 md:mt-stack-md md:gap-stack-md lg:grid-cols-12 lg:gap-gutter">
         <div className="lg:col-span-8">
           {/* ---------------------------------------------------- review */}
           {stepIndex === 0 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">{t.checkout.reviewTitle}</h2>
+              <h2 className="font-display text-title-md sm:text-headline-sm">{t.checkout.reviewTitle}</h2>
               <div className="mt-6 border-t border-outline-variant">
                 {pricing.lines.map((line) => (
                   <div
@@ -181,9 +196,9 @@ export function CheckoutView({
                         />
                       )}
                     </div>
-                    <div className="flex flex-1 flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="font-display text-body-lg">{line.name}</p>
+                    <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                      <div className="min-w-0">
+                        <p className="font-display text-body-md sm:text-body-lg">{line.name}</p>
                         <p className="mt-1 text-body-sm text-secondary">
                           {line.colorName}
                           {line.size && ` · ${t.product.size} ${line.size}`} · ×{line.quantity}
@@ -196,7 +211,7 @@ export function CheckoutView({
                   </div>
                 ))}
               </div>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button size="lg" onClick={() => setStepIndex(1)}>
                   {t.checkout.continueToShipping}
                 </Button>
@@ -210,7 +225,7 @@ export function CheckoutView({
           {/* -------------------------------------------------- shipping */}
           {stepIndex === 1 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">{t.checkout.shippingTitle}</h2>
+              <h2 className="font-display text-title-md sm:text-headline-sm">{t.checkout.shippingTitle}</h2>
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Input
                   label={t.fields.fullName}
@@ -282,7 +297,7 @@ export function CheckoutView({
                 </p>
               )}
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button
                   size="lg"
                   onClick={async () => {
@@ -301,7 +316,7 @@ export function CheckoutView({
           {/* --------------------------------------------------- payment */}
           {stepIndex === 2 && (
             <section className="animate-fade-in">
-              <h2 className="font-display text-headline-sm">{t.checkout.paymentTitle}</h2>
+              <h2 className="font-display text-title-md sm:text-headline-sm">{t.checkout.paymentTitle}</h2>
 
               {!stripeEnabled && (
                 <div className="mt-6 border border-outline-variant bg-surface-low p-4">
@@ -320,7 +335,7 @@ export function CheckoutView({
                     key={option.id}
                     onClick={() => setPaymentMethod(option.id)}
                     className={cn(
-                      'flex items-center gap-4 border p-5 text-start transition-colors',
+                      'flex items-center gap-3 border p-4 text-start transition-colors duration-200 ease-scandi sm:gap-4 sm:p-5',
                       paymentMethod === option.id
                         ? 'border-navy bg-surface-lowest'
                         : 'border-outline-variant hover:border-outline',
@@ -328,16 +343,16 @@ export function CheckoutView({
                   >
                     <span
                       className={cn(
-                        'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors',
                         paymentMethod === option.id ? 'border-navy' : 'border-outline-variant',
                       )}
                     >
                       {paymentMethod === option.id && (
-                        <span className="h-2 w-2 rounded-full bg-navy" />
+                        <span className="h-2 w-2 animate-scale-in rounded-full bg-navy" />
                       )}
                     </span>
-                    <option.icon className="h-5 w-5 text-secondary" />
-                    <span className="flex-1">
+                    <option.icon className="h-5 w-5 shrink-0 text-secondary" />
+                    <span className="min-w-0 flex-1">
                       <span className="block text-label-md">{option.label}</span>
                       <span className="block text-body-sm text-secondary">{option.hint}</span>
                     </span>
@@ -366,7 +381,7 @@ export function CheckoutView({
                 </div>
               )}
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button size="lg" onClick={submit} disabled={submitting || pricing.loading}>
                   {submitting ? (
                     <>
@@ -393,16 +408,19 @@ export function CheckoutView({
 
         {/* ---------------------------------------------------- summary */}
         <aside className="lg:col-span-4">
-          <div className="sticky top-6 border border-outline-variant bg-surface-lowest p-6 md:p-8">
-            <h2 className="font-display text-headline-sm">{t.checkout.summary}</h2>
+          {/* top-24 clears the 72px sticky header when this pins on desktop. */}
+          <div className="border border-outline-variant bg-surface-lowest p-5 sm:p-6 lg:sticky lg:top-24 md:p-8">
+            <h2 className="font-display text-title-md sm:text-headline-sm">{t.checkout.summary}</h2>
             <dl className="mt-6 flex flex-col gap-3 text-body-md">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
                 <dt className="text-secondary">{t.cart.subtotal}</dt>
-                <dd>{formatPrice(pricing.subtotal, currencySymbol, locale)}</dd>
+                <dd className="tabular-nums">
+                  {formatPrice(pricing.subtotal, currencySymbol, locale)}
+                </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
                 <dt className="text-secondary">{t.cart.shipping}</dt>
-                <dd>
+                <dd className="tabular-nums">
                   {!governorate ? (
                     <span className="text-secondary">—</span>
                   ) : pricing.shipping?.free ? (
@@ -413,18 +431,20 @@ export function CheckoutView({
                 </dd>
               </div>
               {pricing.promo?.ok && (
-                <div className="flex justify-between text-error">
-                  <dt>
+                <div className="flex animate-fade-in justify-between gap-3 text-error">
+                  <dt className="min-w-0 truncate">
                     {t.cart.discount} ({pricing.promo.code})
                   </dt>
-                  <dd>−{formatPrice(pricing.promo.discount, currencySymbol, locale)}</dd>
+                  <dd className="shrink-0 tabular-nums">
+                    −{formatPrice(pricing.promo.discount, currencySymbol, locale)}
+                  </dd>
                 </div>
               )}
             </dl>
             <Divider className="my-5" />
-            <div className="flex items-baseline justify-between">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="label-caps text-secondary">{t.cart.total}</span>
-              <span className="font-display text-headline-md">
+              <span className="font-display text-headline-sm tabular-nums sm:text-headline-md">
                 {formatPrice(pricing.total, currencySymbol, locale)}
               </span>
             </div>

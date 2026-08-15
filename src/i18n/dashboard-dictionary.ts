@@ -450,7 +450,7 @@ const en = {
     defaultRate: 'Default shipping rate',
     lowStockMark: 'Default low-stock mark',
     social: 'Social links',
-    socialHint: 'Blank fields are hidden from the footer.',
+    socialHint: 'Blank fields are hidden from the footer. Links open in a new tab.',
     newsletterSeo: 'Newsletter & SEO',
     pagesHint: 'Tick “show in footer” to list a page under Customer Care.',
     newPage: 'New page',
@@ -495,9 +495,6 @@ const en = {
     ogImageHint: 'Shown when a link is shared.',
     instagram: 'Instagram',
     facebook: 'Facebook',
-    tiktok: 'TikTok',
-    pinterest: 'Pinterest',
-    whatsapp: 'WhatsApp',
   },
 };
 
@@ -939,7 +936,7 @@ const ar: DashboardDictionary = {
     defaultRate: 'سعر الشحن الافتراضي',
     lowStockMark: 'حد تنبيه المخزون',
     social: 'روابط السوشيال',
-    socialHint: 'الحقول الفاضية بتختفي من الفوتر.',
+    socialHint: 'الحقول الفارغة تختفي من التذييل. الروابط تفتح في صفحة جديدة.',
     newsletterSeo: 'النشرة البريدية و SEO',
     pagesHint: 'فعّل «إظهار في الفوتر» لعرض الصفحة تحت خدمة العملاء.',
     newPage: 'صفحة جديدة',
@@ -984,9 +981,6 @@ const ar: DashboardDictionary = {
     ogImageHint: 'بتظهر لما حد يشارك رابط المتجر.',
     instagram: 'إنستجرام',
     facebook: 'فيسبوك',
-    tiktok: 'تيك توك',
-    pinterest: 'بينتريست',
-    whatsapp: 'واتساب',
   },
 };
 

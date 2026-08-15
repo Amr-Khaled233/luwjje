@@ -19,7 +19,8 @@
     "dash": "tsx scripts/dashboard-check.mjs",
     "security": "tsx scripts/security-check.mjs",
     "orders": "tsx scripts/order-check.mjs",
-    "i18n": "tsx scripts/i18n-check.mjs"
+    "i18n": "tsx scripts/i18n-check.mjs",
+    "responsive": "tsx scripts/responsive-check.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

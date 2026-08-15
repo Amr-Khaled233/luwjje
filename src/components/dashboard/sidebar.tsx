@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDash } from './dashboard-i18n';
+import { useScrollLock, useFocusTrap } from '@/components/ui/motion';
 import { LanguageSwitcher } from '@/components/storefront/language-switcher';
 import type { Locale } from '@/i18n/config';
 import type { DashboardDictionary } from '@/i18n/dashboard-dictionary';
@@ -53,9 +54,20 @@ export function DashboardSidebar({
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => setOpen(false), [pathname]);
+  useScrollLock(open);
+  const panelRef = useFocusTrap(open);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   const nav = (
-    <nav className="flex flex-1 flex-col gap-0.5 px-4">
+    // Scrolls independently: ten links plus the header and footer overflow a
+    // short phone in landscape.
+    <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-4">
       {LINKS.map((link) => {
         // `/dashboard` redirects to Orders, so treat the bare path as Orders.
         const active =
@@ -66,15 +78,16 @@ export function DashboardSidebar({
           <Link
             key={link.href}
             href={link.href}
+            aria-current={active ? 'page' : undefined}
             className={cn(
-              'relative flex items-center gap-3 px-4 py-3 text-label-md transition-colors',
+              'relative flex items-center gap-3 px-4 py-3 text-label-md transition-colors duration-200 ease-scandi',
               active
                 ? 'bg-surface-container text-on-surface'
-                : 'text-secondary hover:text-on-surface',
+                : 'text-secondary hover:bg-surface-low hover:text-on-surface',
             )}
           >
             {/* 2px navy rule marks the active route, on the reading-side edge */}
-            {active && <span className="absolute inset-y-0 start-0 w-0.5 bg-navy" />}
+            {active && <span className="absolute inset-y-0 start-0 w-0.5 animate-fade-in bg-navy" />}
             <link.icon className="h-4 w-4 shrink-0" />
             {d.nav[link.key]}
           </Link>
@@ -85,37 +98,58 @@ export function DashboardSidebar({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label={d.nav.openMenu}
-        className="fixed top-4 z-40 flex h-10 w-10 items-center justify-center border border-outline-variant bg-background start-4 md:hidden"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
+      {/*
+        Phone: a real top bar rather than a floating button. The old version
+        was pinned over the page and covered the heading beneath it.
+      */}
+      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-outline-variant bg-background/95 px-margin-mobile backdrop-blur-sm md:hidden">
+        <button
+          onClick={() => setOpen(true)}
+          aria-label={d.nav.openMenu}
+          aria-expanded={open}
+          className="tap-target -ms-2.5"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Link href="/dashboard/orders" className="min-w-0 truncate">
+          <span className="font-latin text-[18px] font-medium leading-none">{storeName}</span>
+        </Link>
+      </header>
 
-      {open && <div className="scrim fixed inset-0 z-40 md:hidden" onClick={() => setOpen(false)} />}
+      {open && (
+        <div
+          className="scrim fixed inset-0 z-40 animate-fade-in md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
       <aside
+        ref={panelRef}
+        aria-hidden={!open ? undefined : false}
         className={cn(
-          'fixed inset-y-0 start-0 z-50 flex w-[280px] flex-col border-e border-outline-variant bg-background transition-transform duration-300 ease-scandi',
+          'fixed inset-y-0 start-0 z-50 flex w-[min(84vw,280px)] flex-col border-e border-outline-variant bg-background transition-transform duration-300 ease-scandi md:w-[280px]',
           open ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full md:translate-x-0',
         )}
       >
-        <div className="flex items-start justify-between px-8 py-8">
-          <Link href="/dashboard/orders">
-            <span className="block font-latin text-[24px] font-medium leading-none">
+        <div className="flex shrink-0 items-start justify-between gap-3 px-6 py-6 md:px-8 md:py-8">
+          <Link href="/dashboard/orders" className="min-w-0">
+            <span className="block truncate font-latin text-[22px] font-medium leading-none md:text-[24px]">
               {storeName}
             </span>
             <span className="label-caps mt-2 block text-secondary">{d.nav.subtitle}</span>
           </Link>
-          <button onClick={() => setOpen(false)} aria-label={d.nav.close} className="md:hidden">
+          <button
+            onClick={() => setOpen(false)}
+            aria-label={d.nav.close}
+            className="tap-target -me-2.5 shrink-0 md:hidden"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {nav}
 
-        <div className="border-t border-outline-variant p-4">
+        <div className="shrink-0 border-t border-outline-variant p-4 pb-safe">
           {showLanguageSwitcher && (
             <div className="mb-1 px-4 py-3">
               <LanguageSwitcher locale={locale} />

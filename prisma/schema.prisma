@@ -283,11 +283,10 @@ model SiteSettings {
   showSortFilter     Boolean @default(true)
   showSearch         Boolean @default(true)
 
+  /// Only the two channels the store actually runs. Adding another means a
+  /// column here, a field on the Settings form and an entry in the footer.
   instagramUrl String @default("")
-  pinterestUrl String @default("")
-  tiktokUrl    String @default("")
   facebookUrl  String @default("")
-  whatsappUrl  String @default("")
 
   metaTitle         String @default("luwjje")
   metaTitleAr       String @default("")

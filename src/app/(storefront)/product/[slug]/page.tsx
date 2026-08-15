@@ -121,7 +121,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       />
 
       {related.length > 0 && (
-        <section className="mt-stack-lg">
+        <section className="mt-16 md:mt-stack-lg">
           <SectionHeading eyebrow={t.product.relatedEyebrow} title={t.product.related} />
           <div className="mt-stack-md">
             <ProductGrid products={related} currencySymbol={symbol} locale={locale} t={t} />

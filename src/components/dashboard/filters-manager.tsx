@@ -238,7 +238,7 @@ export function FiltersManager({
                     <Th>{d.filters.colourFilter}</Th>
                     <Th>{d.filters.inCatalogue}</Th>
                     <Th>{d.common.visible}</Th>
-                    <Th className="text-right">{d.common.actions}</Th>
+                    <Th className="text-end">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -348,7 +348,7 @@ export function FiltersManager({
                     <Th>{d.filters.from}</Th>
                     <Th>{d.filters.to}</Th>
                     <Th>{d.common.visible}</Th>
-                    <Th className="text-right">{d.common.actions}</Th>
+                    <Th className="text-end">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>

@@ -111,17 +111,17 @@ export function ImageUploader({
                     type="button"
                     onClick={() => onChange(value.filter((_, j) => j !== i))}
                     aria-label="Remove image"
-                    className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center border border-navy bg-background transition-colors hover:bg-error hover:text-background"
+                    className="absolute end-1.5 top-1.5 flex h-7 w-7 items-center justify-center border border-navy bg-background transition-colors hover:bg-error hover:text-background"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                   {i === 0 && (
-                    <span className="label-caps absolute bottom-1.5 left-1.5 border border-navy bg-navy px-2 py-0.5 text-background">
+                    <span className="label-caps absolute bottom-1.5 start-1.5 border border-navy bg-navy px-2 py-0.5 text-background">
                       Primary
                     </span>
                   )}
                   {i === 1 && (
-                    <span className="label-caps absolute bottom-1.5 left-1.5 border border-navy bg-background px-2 py-0.5">
+                    <span className="label-caps absolute bottom-1.5 start-1.5 border border-navy bg-background px-2 py-0.5">
                       Hover
                     </span>
                   )}

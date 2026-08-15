@@ -41,7 +41,7 @@ export async function ContentPage({ slug }: { slug: string }) {
   return (
     <article>
       {page.heroImage && (
-        <div className="relative h-[46vh] min-h-[280px] w-full">
+        <div className="relative h-[38svh] min-h-[220px] w-full overflow-hidden md:h-[46vh] md:min-h-[280px]">
           <Image
             src={page.heroImage}
             alt={title}
@@ -53,13 +53,13 @@ export async function ContentPage({ slug }: { slug: string }) {
         </div>
       )}
 
-      <div className="container-luwjje py-stack-md md:py-stack-lg">
+      <div className="container-luwjje py-10 md:py-stack-lg">
         <div className="mx-auto max-w-[760px]">
-          <header className="mb-stack-md text-center">
+          <header className="mb-8 text-center md:mb-stack-md">
             <p className="label-caps mb-4 text-secondary">luwjje</p>
-            <h1 className="font-display text-display-sm md:text-display-md">{title}</h1>
+            <h1 className="font-display text-headline-md sm:text-display-sm md:text-display-md">{title}</h1>
             {excerpt && (
-              <p className="mx-auto mt-5 max-w-[52ch] text-body-lg text-secondary">{excerpt}</p>
+              <p className="mx-auto mt-4 max-w-[52ch] text-body-md text-secondary sm:mt-5 sm:text-body-lg">{excerpt}</p>
             )}
           </header>
 

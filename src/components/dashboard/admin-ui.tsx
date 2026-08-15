@@ -14,12 +14,14 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn('flex flex-wrap items-end justify-between gap-6 pl-14 md:pl-0', className)}>
+    <header className={cn('flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6', className)}>
       <div>
-        <h1 className="font-display text-headline-lg">{title}</h1>
-        {description && <p className="mt-2 max-w-[60ch] text-body-md text-secondary">{description}</p>}
+        <h1 className="font-display text-headline-md md:text-headline-lg">{title}</h1>
+        {description && (
+          <p className="mt-2 max-w-[60ch] text-body-sm text-secondary md:text-body-md">{description}</p>
+        )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}
+      {actions && <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">{actions}</div>}
     </header>
   );
 }
@@ -39,11 +41,11 @@ export function StatCard({
 }) {
   const up = (change ?? 0) >= 0;
   return (
-    <div className={cn('border border-outline-variant bg-surface-lowest p-6', className)}>
+    <div className={cn('animate-fade-up border border-outline-variant bg-surface-lowest p-5 md:p-6', className)}>
       <p className="label-caps text-secondary">{label}</p>
       {/* Sans + proportional figures: a serif display face on a stat value
           reads as decoration, and tabular-nums looks loose at this size. */}
-      <p className="mt-4 text-[32px] font-normal leading-none tracking-tight">{value}</p>
+      <p className="mt-3 text-[26px] font-normal leading-none tracking-tight md:mt-4 md:text-[32px]">{value}</p>
       <div className="mt-4 flex items-center gap-2">
         {change !== undefined && (
           <span
@@ -78,21 +80,32 @@ export function Panel({
   return (
     <section className={cn('border border-outline-variant bg-surface-lowest', className)}>
       {(title || action) && (
-        <header className="flex items-center justify-between gap-4 border-b border-outline-variant px-6 py-5">
-          {title && <h2 className="font-display text-headline-sm">{title}</h2>}
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-4 py-4 md:gap-4 md:px-6 md:py-5">
+          {title && <h2 className="font-display text-title-md md:text-headline-sm">{title}</h2>}
           {action}
         </header>
       )}
-      <div className={cn('p-6', bodyClassName)}>{children}</div>
+      <div className={cn('p-4 md:p-6', bodyClassName)}>{children}</div>
     </section>
   );
 }
 
-/** Horizontally scrollable table wrapper — the page body never scrolls sideways. */
+/**
+ * Horizontally scrollable table wrapper — the page body never scrolls sideways.
+ *
+ * A grid table cannot usefully reflow to 360px, so on phones it keeps its
+ * shape and scrolls instead. `overscroll-x-contain` stops that scroll from
+ * turning into a browser back-swipe once it reaches the end.
+ */
 export function TableWrap({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('w-full overflow-x-auto', className)}>
-      <table className="w-full min-w-[720px] border-collapse text-left">{children}</table>
+    <div
+      className={cn('w-full overflow-x-auto overscroll-x-contain', className)}
+      // Keyboard users need to be able to reach the scroll container itself.
+      tabIndex={0}
+      role="region"
+    >
+      <table className="w-full min-w-[720px] border-collapse text-start">{children}</table>
     </div>
   );
 }
@@ -117,7 +130,7 @@ export function Th({
     <th
       scope="col"
       className={cn(
-        'label-caps whitespace-nowrap bg-surface-low px-4 py-3 text-secondary',
+        'label-caps whitespace-nowrap bg-surface-low px-3 py-3 text-secondary md:px-4',
         cellRules,
         align === 'end' ? 'text-end' : align === 'center' ? 'text-center' : 'text-start',
         className,
@@ -143,7 +156,7 @@ export function Td({
     <td
       colSpan={colSpan}
       className={cn(
-        'px-4 py-4 align-middle text-body-md',
+        'px-3 py-3 align-middle text-body-sm md:px-4 md:py-4 md:text-body-md',
         cellRules,
         align === 'end' ? 'text-end' : align === 'center' ? 'text-center' : 'text-start',
         className,

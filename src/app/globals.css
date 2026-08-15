@@ -8,6 +8,8 @@
     /* Latin by default; the Arabic block below swaps both stacks at once. */
     --font-body: var(--font-inter);
     --font-heading: var(--font-playfair);
+    /* Drawers slide in from the trailing edge; the RTL rule flips the sign. */
+    --slide-from: 100%;
   }
 
   html[data-locale='ar'] {
@@ -15,13 +17,25 @@
     --font-heading: var(--font-arabic-display);
   }
 
+  [dir='rtl'] {
+    --slide-from: -100%;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Anchor jumps and "back to top" glide instead of teleporting. */
+    scroll-behavior: smooth;
+    /* Sticky header is 72px — keep anchored headings clear of it. */
+    scroll-padding-top: 88px;
   }
 
   body {
     @apply bg-background text-on-background font-sans text-body-md;
+    /* A stray wide child should never let the whole page slide sideways. */
+    overflow-x: hidden;
+    /* Grey flash on tap looks broken next to 1px outlines. */
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Arabic display type sits lower and needs more line height than Playfair. */
@@ -55,6 +69,38 @@
   input[type='number'] {
     -moz-appearance: textfield;
   }
+
+  /*
+   * iOS zooms the page in when a focused input's text is under 16px, and never
+   * zooms back out. Every control therefore holds 16px on phones and drops to
+   * the design size only once we are past the touch breakpoint.
+   */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  /*
+   * One switch for the whole app: a visitor who asks for less motion gets
+   * none. Kept to 0.01ms rather than 0 so animation/transition end events
+   * still fire and nothing waits forever on a callback.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
@@ -66,15 +112,17 @@
     @apply text-label-caps uppercase;
   }
 
-  /* Underline that grows from the left — used on nav + ghost links. */
+  /* Underline that grows from the leading edge — nav links and ghost links. */
   .link-underline {
     @apply relative inline-block;
   }
   .link-underline::after {
     content: '';
-    @apply absolute -bottom-0.5 left-0 h-px w-0 bg-current transition-all duration-300 ease-scandi;
+    @apply absolute -bottom-0.5 h-px w-0 bg-current transition-all duration-300 ease-scandi;
+    inset-inline-start: 0;
   }
-  .link-underline:hover::after {
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
     @apply w-full;
   }
 
@@ -84,7 +132,34 @@
 
   /* Native select arrow removed; we draw our own chevron. */
   .select-reset {
-    @apply appearance-none bg-none pr-9;
+    @apply appearance-none bg-none;
+    padding-inline-end: 2.25rem;
+  }
+
+  /*
+   * Anything a finger has to hit gets 44px of target, the smallest size Apple
+   * and Google both consider reliable — even when the icon inside is 20px.
+   */
+  .tap-target {
+    @apply relative inline-flex items-center justify-center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  @media (min-width: 768px) {
+    .tap-target {
+      min-width: 0;
+      min-height: 0;
+    }
+  }
+
+  /* Loading placeholder: a pale block with a light sweep crossing it. */
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-low;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 animate-shimmer;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
   }
 }
 
@@ -102,5 +177,51 @@
     background-color: rgba(11, 28, 48, 0.05);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+
+  /*
+   * Horizontal scroller that keeps its edge padding — without the trailing
+   * pseudo-element the last card sits flush against the viewport edge.
+   */
+  .edge-scroll {
+    @apply flex overflow-x-auto overscroll-x-contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+  }
+  .edge-scroll > * {
+    scroll-snap-align: start;
+  }
+
+  /* Notched phones: keep fixed bars clear of the home indicator. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /*
+   * Scroll-triggered entrance. The element starts shifted and transparent;
+   * `data-visible` (set by <Reveal>) settles it. Declared as a transition
+   * rather than an animation so an element that scrolls back out and in again
+   * does not restart mid-flight.
+   */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal[data-visible='true'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* JS disabled or still loading — never leave content invisible. */
+  .no-js .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

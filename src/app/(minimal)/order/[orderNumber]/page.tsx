@@ -61,32 +61,32 @@ export default async function OrderConfirmationPage({
     : order.governorate;
 
   return (
-    <div className="container-luwjje py-stack-md md:py-stack-lg">
+    <div className="container-luwjje py-10 md:py-stack-lg">
       <div className="mx-auto max-w-[760px]">
         <div className="text-center">
           {isNew && (
-            <span className="mx-auto mb-8 flex h-14 w-14 items-center justify-center border border-navy">
+            <span className="mx-auto mb-6 flex h-14 w-14 animate-scale-in items-center justify-center border border-navy md:mb-8">
               <Check className="h-6 w-6" />
             </span>
           )}
           <p className="label-caps mb-4 text-secondary">
             {isNew ? t.order.thankYou : t.order.order}
           </p>
-          <h1 className="font-display text-display-sm">
+          <h1 className="font-display text-headline-md sm:text-display-sm">
             {isNew ? t.order.confirmed : `${t.order.order} ${order.orderNumber}`}
           </h1>
-          <p className="mt-4 text-body-lg text-secondary">
+          <p className="mt-4 text-body-md text-secondary sm:text-body-lg">
             {isNew
               ? fmt(t.order.sentTo, { email: order.email })
               : fmt(t.order.placedOn, { date: formatDate(order.createdAt, locale) })}
           </p>
         </div>
 
-        <div className="mt-stack-md border border-outline-variant bg-surface-lowest">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant p-6">
+        <div className="mt-8 border border-outline-variant bg-surface-lowest md:mt-stack-md">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant p-5 md:p-6">
             <div>
               <p className="label-caps text-secondary">{t.order.orderNumber}</p>
-              <p className="mt-1 font-display text-headline-sm" dir="ltr">
+              <p className="mt-1 font-display text-title-md sm:text-headline-sm" dir="ltr">
                 {order.orderNumber}
               </p>
             </div>
@@ -102,11 +102,11 @@ export default async function OrderConfirmationPage({
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-5 md:p-6">
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 border-b border-outline-variant py-4 last:border-b-0"
+                className="flex gap-3 border-b border-outline-variant py-4 last:border-b-0 sm:gap-4"
               >
                 {item.imageUrl && (
                   <div className="relative h-20 w-[60px] shrink-0 overflow-hidden bg-surface-low">
@@ -119,9 +119,9 @@ export default async function OrderConfirmationPage({
                     />
                   </div>
                 )}
-                <div className="flex flex-1 flex-wrap items-start justify-between gap-2">
+                <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-1">
                   <div>
-                    <p className="font-display text-body-lg">{pick(locale, item.name, item.nameAr)}</p>
+                    <p className="font-display text-body-md sm:text-body-lg">{pick(locale, item.name, item.nameAr)}</p>
                     <p className="mt-1 text-body-sm text-secondary">
                       {item.colorName}
                       {item.size && ` · ${t.product.size} ${item.size}`} · ×{item.quantity}

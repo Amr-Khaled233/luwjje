@@ -96,22 +96,22 @@ export function OrdersManager({
 
   return (
     <>
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="relative w-full sm:min-w-[220px] sm:flex-1">
+          <Search className="absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={d.orders.searchPlaceholder}
             aria-label={d.orders.searchPlaceholder}
-            className="h-11 w-full border border-outline-variant bg-background pl-11 pr-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
+            className="h-11 w-full border border-outline-variant bg-background ps-11 pe-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
           />
         </div>
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label={d.common.status}
-          className="h-11 w-auto min-w-[180px]"
+          className="h-11 w-full sm:w-auto sm:min-w-[180px]"
         >
           <option value="">{d.orders.allStatuses}</option>
           {ORDER_STATUSES.map((s) => (
@@ -161,7 +161,7 @@ export function OrdersManager({
                         onChange={(e) => changeStatus(o.id, e.target.value)}
                         disabled={pendingId === o.id}
                         aria-label={`Status of ${o.orderNumber}`}
-                        className="select-reset h-9 cursor-pointer border border-outline-variant bg-background pl-3 pr-8 text-label-sm transition-colors focus:border-navy focus:outline-none disabled:opacity-50"
+                        className="select-reset h-9 cursor-pointer border border-outline-variant bg-background ps-3 pe-8 text-label-sm transition-colors focus:border-navy focus:outline-none disabled:opacity-50"
                       >
                         {ORDER_STATUSES.map((s) => (
                           <option key={s} value={s}>
@@ -213,7 +213,7 @@ export function OrdersManager({
                 <p className="label-caps mb-2 text-secondary">{d.orders.payment}</p>
                 <StatusBadge status={open.paymentStatus === 'PAID' ? 'PAID' : open.paymentStatus} />
               </div>
-              <div className="ml-auto">
+              <div className="ms-auto">
                 <label htmlFor="detail-status" className="label-caps mb-2 block text-secondary">
                   {d.orders.changeStatus}</label>
                 <select
@@ -221,7 +221,7 @@ export function OrdersManager({
                   value={open.status}
                   onChange={(e) => changeStatus(open.id, e.target.value)}
                   disabled={pendingId === open.id}
-                  className="select-reset h-11 cursor-pointer border border-outline-variant bg-background pl-4 pr-9 text-label-md focus:border-navy focus:outline-none disabled:opacity-50"
+                  className="select-reset h-11 cursor-pointer border border-outline-variant bg-background ps-4 pe-9 text-label-md focus:border-navy focus:outline-none disabled:opacity-50"
                 >
                   {ORDER_STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -284,7 +284,7 @@ export function OrdersManager({
                       </p>
                     </div>
                     <span className="shrink-0 text-body-sm text-secondary">×{item.quantity}</span>
-                    <span className="w-24 shrink-0 text-right tabular-nums">
+                    <span className="w-24 shrink-0 text-end tabular-nums">
                       {formatPrice(item.unitPrice * item.quantity, currencySymbol)}
                     </span>
                   </div>

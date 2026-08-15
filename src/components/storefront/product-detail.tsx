@@ -42,11 +42,11 @@ function Accordion({ title, children }: { title: string; children: React.ReactNo
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between py-5 text-left"
+        className="flex w-full items-center justify-between gap-4 py-5 text-start"
       >
         <span className="label-caps">{title}</span>
         <span className="relative h-3 w-3 shrink-0">
-          <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-current" />
+          <span className="absolute start-0 top-1/2 h-px w-3 -translate-y-1/2 bg-current" />
           <span
             className={cn(
               'absolute left-1/2 top-0 h-3 w-px -translate-x-1/2 bg-current transition-transform duration-300 ease-scandi',
@@ -121,6 +121,21 @@ export function ProductDetail({
 
   React.useEffect(() => setQuantity(1), [selected?.id]);
 
+  // The sticky phone buy bar appears only once the real button is off screen.
+  const buyRowRef = React.useRef<HTMLDivElement>(null);
+  const [barVisible, setBarVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const node = buyRowRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => setBarVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { threshold: 0 },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
   const maxStock = selected?.stock ?? 0;
   const canAdd = Boolean(selected) && maxStock > 0;
 
@@ -148,11 +163,11 @@ export function ProductDetail({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2 lg:gap-gutter">
+    <div className="grid grid-cols-1 gap-8 md:gap-stack-md lg:grid-cols-2 lg:gap-gutter">
       {/* ----------------------------------------------------------- gallery */}
       <div className="flex flex-col-reverse gap-4 md:flex-row">
         {product.images.length > 1 && (
-          <div className="flex gap-3 overflow-x-auto md:flex-col md:overflow-visible">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain sm:gap-3 md:flex-col md:overflow-visible">
             {product.images.map((img, i) => (
               <button
                 key={img.url + i}
@@ -172,25 +187,28 @@ export function ProductDetail({
         <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-low">
           {product.images[activeImage] && (
             <Image
+              // Re-keying on the index restarts the fade, so switching
+              // thumbnails cross-dissolves instead of snapping.
+              key={activeImage}
               src={product.images[activeImage].url}
               alt={product.images[activeImage].alt || product.name}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 45vw"
-              className="object-cover"
+              className="animate-fade-in object-cover"
             />
           )}
         </div>
       </div>
 
       {/* -------------------------------------------------------------- info */}
-      <div className="lg:pl-8">
+      <div className="lg:ps-8">
         {product.categoryName && (
           <p className="label-caps mb-4 text-secondary">{product.categoryName}</p>
         )}
-        <h1 className="font-display text-headline-md md:text-display-sm">{product.name}</h1>
+        <h1 className="font-display text-headline-sm sm:text-headline-md md:text-display-sm">{product.name}</h1>
 
-        <div className="mt-4 flex items-baseline gap-3">
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 md:mt-4">
           {product.discounted && (
             <span className="text-body-lg text-tertiary line-through">
               {formatPrice(product.listPrice, currencySymbol, locale)}
@@ -202,7 +220,7 @@ export function ProductDetail({
         </div>
 
         {product.description && (
-          <p className="mt-6 max-w-[52ch] whitespace-pre-line text-body-md leading-7 text-secondary">
+          <p className="mt-5 max-w-[52ch] whitespace-pre-line text-body-md leading-7 text-secondary md:mt-6">
             {product.description}
           </p>
         )}
@@ -270,8 +288,8 @@ export function ProductDetail({
         )}
 
         {/* quantity + add */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <div className="flex h-14 items-center border border-outline-variant">
+        <div ref={buyRowRef} className="mt-8 flex flex-col gap-3 xs:flex-row">
+          <div className="flex h-12 shrink-0 items-center justify-between border border-outline-variant sm:h-14">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               disabled={quantity <= 1}
@@ -309,7 +327,7 @@ export function ProductDetail({
         </div>
 
         {/* accordions */}
-        <div className="mt-stack-md border-t border-outline-variant">
+        <div className="mt-10 border-t border-outline-variant md:mt-stack-md">
           {product.materialInfo && (
             <Accordion title={t.product.material}>
               <p className="whitespace-pre-line">{product.materialInfo}</p>
@@ -329,6 +347,28 @@ export function ProductDetail({
           </Accordion>
         </div>
       </div>
+
+      {/*
+        Phone: once the real Add to Bag button has scrolled past, the same
+        action reappears pinned to the bottom. Without this a shopper reading
+        the description has to scroll back up to buy.
+      */}
+      {barVisible && canAdd && (
+        <div className="fixed inset-x-0 bottom-0 z-30 animate-fade-up border-t border-outline-variant bg-background/95 px-margin-mobile py-3 pb-safe backdrop-blur-sm lg:hidden">
+          <Button size="lg" onClick={handleAdd} className="w-full">
+            {added ? (
+              <>
+                <Check className="h-4 w-4" /> {t.product.added}
+              </>
+            ) : (
+              <>
+                <PlusIcon className="h-4 w-4" /> {t.product.addToBag} —{' '}
+                {formatPrice(product.price * quantity, currencySymbol, locale)}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

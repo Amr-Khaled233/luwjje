@@ -23,6 +23,11 @@ const config: Config = {
       DEFAULT: 'none',
     },
     extend: {
+      screens: {
+        // Small phones (iPhone SE, 360px Androids) need their own step —
+        // between them and `sm` is where single-column layouts start to work.
+        xs: '400px',
+      },
       colors: {
         background: '#f8f9ff',
         surface: {
@@ -92,19 +97,66 @@ const config: Config = {
       transitionTimingFunction: {
         scandi: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
+      /**
+       * Motion vocabulary. Short, eased with `scandi`, and never bouncy —
+       * movement should feel like paper settling, not a spring. Every one of
+       * these is disabled wholesale under `prefers-reduced-motion` in
+       * globals.css, so nothing here needs its own guard.
+       *
+       * Drawers slide along the inline axis via `--slide-from`, which the RTL
+       * rule in globals.css flips, so one keyframe serves both directions.
+       */
       keyframes: {
         'fade-in': {
           from: { opacity: '0' },
           to: { opacity: '1' },
         },
+        'fade-out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        },
         'fade-up': {
           from: { opacity: '0', transform: 'translateY(12px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        'fade-down': {
+          from: { opacity: '0', transform: 'translateY(-8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-in': {
+          from: { opacity: '0', transform: 'translateX(var(--slide-from, 100%))' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
+        'scale-in': {
+          from: { opacity: '0', transform: 'scale(0.98) translateY(8px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        // Panel that grows out of nothing — used by accordions and filter drawers.
+        'expand-down': {
+          from: { opacity: '0', maxHeight: '0' },
+          to: { opacity: '1', maxHeight: '1200px' },
+        },
+        // Loading placeholder sweep. Distance is set by the element's width.
+        shimmer: {
+          from: { transform: 'translateX(-100%)' },
+          to: { transform: 'translateX(100%)' },
+        },
+        // The 1px rule that draws itself under a section heading.
+        'draw-rule': {
+          from: { transform: 'scaleX(0)' },
+          to: { transform: 'scaleX(1)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-out': 'fade-out 180ms cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-up': 'fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-down': 'fade-down 220ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'slide-in': 'slide-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'scale-in': 'scale-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'expand-down': 'expand-down 300ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        shimmer: 'shimmer 1.4s ease-in-out infinite',
+        'draw-rule': 'draw-rule 500ms cubic-bezier(0.22, 1, 0.36, 1) both',
       },
     },
   },

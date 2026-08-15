@@ -29,8 +29,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           locale={locale}
           showLanguageSwitcher={settings.enableArabic}
         />
+        {/* pt-14 on phones clears the fixed dashboard top bar. */}
         <div className="min-w-0 flex-1 md:ps-[280px]">
-          <div className="px-margin-mobile py-8 md:px-10 md:py-10">{children}</div>
+          <div className="px-margin-mobile pb-12 pt-[calc(3.5rem+1.5rem)] md:px-10 md:py-10">
+            {children}
+          </div>
         </div>
       </div>
     </DashboardI18nProvider>

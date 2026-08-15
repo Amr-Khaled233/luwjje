@@ -142,8 +142,8 @@ export function ShippingManager({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="relative min-w-[220px] flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="relative w-full sm:min-w-[220px] sm:flex-1">
           <Search className="absolute top-1/2 h-4 w-4 -translate-y-1/2 text-secondary ltr:left-4 rtl:right-4" />
           <input
             value={query}
@@ -157,7 +157,7 @@ export function ShippingManager({
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           aria-label={d.common.status}
-          className="h-11 w-auto min-w-[160px]"
+          className="h-11 w-full sm:w-auto sm:min-w-[160px]"
         >
           <option value="">{d.common.all}</option>
           <option value="active">{d.shipping.delivering}</option>
@@ -197,7 +197,7 @@ export function ShippingManager({
                 <Th>{d.shipping.freeOver}</Th>
                 <Th>{d.shipping.days}</Th>
                 <Th>{d.shipping.delivering}</Th>
-                <Th className="text-right">{d.common.actions}</Th>
+                <Th className="text-end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>

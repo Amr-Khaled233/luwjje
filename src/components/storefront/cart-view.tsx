@@ -84,8 +84,8 @@ export function CartView({
 
   if (items.length === 0) {
     return (
-      <div className="container-luwjje py-stack-md md:py-stack-lg">
-        <h1 className="mb-stack-md font-display text-display-sm">{t.cart.title}</h1>
+      <div className="container-luwjje py-10 md:py-stack-lg">
+        <h1 className="mb-8 font-display text-headline-md sm:text-display-sm md:mb-stack-md">{t.cart.title}</h1>
         <EmptyState
           title={t.cart.empty}
           body={t.cart.emptyHint}
@@ -98,11 +98,11 @@ export function CartView({
   const remainingForFree = Math.max(0, freeShippingOver - pricing.subtotal);
 
   return (
-    <div className="container-luwjje py-stack-md md:py-stack-lg">
-      <h1 className="mb-stack-md font-display text-display-sm">{t.cart.title}</h1>
+    <div className="container-luwjje py-10 md:py-stack-lg">
+      <h1 className="mb-8 font-display text-headline-md sm:text-display-sm md:mb-stack-md">{t.cart.title}</h1>
 
       <form onSubmit={form.handleSubmit(proceed)} noValidate>
-        <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-12 lg:gap-gutter">
+        <div className="grid grid-cols-1 gap-10 md:gap-stack-md lg:grid-cols-12 lg:gap-gutter">
           {/* ------------------------------------------------- items + form */}
           <div className="lg:col-span-8">
             <div className="border-t border-outline-variant">
@@ -114,11 +114,11 @@ export function CartView({
                 return (
                   <div
                     key={item.variantId}
-                    className="flex gap-4 border-b border-outline-variant py-6 md:gap-6"
+                    className="flex gap-3 border-b border-outline-variant py-5 sm:gap-4 md:gap-6 md:py-6"
                   >
                     <Link
                       href={`/product/${item.slug}`}
-                      className="relative h-[132px] w-24 shrink-0 overflow-hidden bg-surface-low"
+                      className="relative h-[110px] w-20 shrink-0 overflow-hidden bg-surface-low sm:h-[132px] sm:w-24"
                     >
                       {item.imageUrl && (
                         <Image
@@ -132,11 +132,11 @@ export function CartView({
                     </Link>
 
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
+                      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                        <div className="min-w-0">
                           <Link
                             href={`/product/${item.slug}`}
-                            className="font-display text-headline-sm leading-8 hover:underline"
+                            className="font-display text-body-lg leading-7 hover:underline sm:text-headline-sm sm:leading-8"
                           >
                             {item.name}
                           </Link>
@@ -148,14 +148,14 @@ export function CartView({
                             {formatPrice(unitPrice, currencySymbol, locale)} {t.cart.each}
                           </p>
                         </div>
-                        <span className="text-body-lg">
+                        <span className="shrink-0 text-body-md tabular-nums sm:text-body-lg">
                           {formatPrice(unitPrice * item.quantity, currencySymbol, locale)}
                         </span>
                       </div>
 
                       {line?.notice && <p className="mt-2 text-body-sm text-error">{line.notice}</p>}
 
-                      <div className="mt-auto flex items-center gap-6 pt-4">
+                      <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 sm:gap-6">
                         <div className="flex items-center border border-outline-variant">
                           <button
                             type="button"
@@ -192,11 +192,13 @@ export function CartView({
             </div>
 
             {/* delivery details */}
-            <section className="mt-stack-md">
-              <h2 className="font-display text-headline-sm">{t.cart.shippingDetails}</h2>
+            <section className="mt-10 md:mt-stack-md">
+              <h2 className="font-display text-title-md sm:text-headline-sm">
+                {t.cart.shippingDetails}
+              </h2>
               <p className="mt-2 text-body-sm text-secondary">{t.cart.shippingDetailsHint}</p>
 
-              <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="mt-6 grid grid-cols-1 gap-5 sm:gap-6 md:mt-8 md:grid-cols-2">
                 <Input
                   label={t.fields.fullName}
                   required
@@ -254,7 +256,7 @@ export function CartView({
 
           {/* --------------------------------------------------- summary */}
           <aside className="lg:col-span-4">
-            <div className="sticky top-6 border border-outline-variant bg-surface-lowest p-6 md:p-8">
+            <div className="border border-outline-variant bg-surface-lowest p-5 sm:p-6 lg:sticky lg:top-24 md:p-8">
               <h2 className="font-display text-headline-sm">{t.cart.summary}</h2>
 
               <dl className="mt-6 flex flex-col gap-3 text-body-md">
@@ -288,7 +290,7 @@ export function CartView({
 
               <div className="flex items-baseline justify-between">
                 <span className="label-caps text-secondary">{t.cart.total}</span>
-                <span className="font-display text-headline-md">
+                <span className="font-display text-headline-sm tabular-nums sm:text-headline-md">
                   {formatPrice(pricing.total, currencySymbol, locale)}
                 </span>
               </div>

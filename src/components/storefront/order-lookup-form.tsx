@@ -17,7 +17,7 @@ function SubmitButton({ t }: { t: Dictionary }) {
     <button
       type="submit"
       disabled={pending}
-      className="label-caps mt-2 flex h-14 w-full items-center justify-center gap-2 border border-navy bg-navy text-background transition-colors hover:bg-[#060f1c] disabled:opacity-60"
+      className="label-caps mt-2 flex h-12 w-full items-center justify-center gap-2 border border-navy bg-navy text-background transition-[background-color,transform] hover:bg-[#060f1c] active:scale-[0.98] disabled:opacity-60 sm:h-14"
     >
       {pending ? (
         <>
@@ -44,9 +44,9 @@ export function OrderLookupForm({
   // Once orders come back, the form is replaced by the picker.
   if (state.orders?.length) {
     return (
-      <div className="mt-stack-md">
+      <div className="mt-10 md:mt-stack-md">
         <div className="mb-6 text-center">
-          <h2 className="font-display text-headline-sm">{t.track.yourOrders}</h2>
+          <h2 className="font-display text-title-md sm:text-headline-sm">{t.track.yourOrders}</h2>
           <p className="mt-2 text-body-sm text-secondary">
             {fmt(t.track.ordersFound, { n: state.orders.length })}
           </p>
@@ -57,7 +57,7 @@ export function OrderLookupForm({
             <li key={order.orderNumber}>
               <Link
                 href={`/order/${order.orderNumber}`}
-                className="group flex items-center gap-4 border border-outline-variant bg-surface-lowest p-4 transition-colors hover:border-navy"
+                className="group flex items-center gap-3 border border-outline-variant bg-surface-lowest p-3 transition-colors hover:border-navy sm:gap-4 sm:p-4"
               >
                 <div className="flex shrink-0 gap-1">
                   {order.thumbnails.length > 0 ? (
@@ -72,7 +72,7 @@ export function OrderLookupForm({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-body-lg" dir="ltr">
+                  <p className="truncate font-display text-body-md sm:text-body-lg" dir="ltr">
                     {order.orderNumber}
                   </p>
                   <p className="mt-1 text-body-sm text-secondary">
@@ -103,7 +103,7 @@ export function OrderLookupForm({
   }
 
   return (
-    <form action={formAction} className="mt-stack-md flex flex-col gap-6">
+    <form action={formAction} className="mt-10 flex flex-col gap-5 sm:gap-6 md:mt-stack-md">
       <div>
         <FieldLabel htmlFor="email" required>
           {t.track.email}

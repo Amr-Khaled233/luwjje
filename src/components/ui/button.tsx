@@ -16,14 +16,18 @@ const variants: Record<Variant, string> = {
     'bg-transparent text-error border border-error hover:bg-error hover:text-background',
 };
 
+// `lg` steps down to 48px on phones — 56px of button reads as a slab on a
+// 360px screen, and 48 is still comfortably above the 44px touch minimum.
 const sizes: Record<Size, string> = {
   sm: 'h-9 px-4 text-label-sm',
-  md: 'h-11 px-6 text-label-md',
-  lg: 'h-14 px-8 text-label-md',
+  md: 'h-11 px-5 sm:px-6 text-label-md',
+  lg: 'h-12 px-6 sm:h-14 sm:px-8 text-label-md',
 };
 
 const base =
-  'inline-flex items-center justify-center gap-2 uppercase tracking-[0.1em] font-semibold text-[12px] leading-4 transition-colors duration-200 ease-scandi disabled:cursor-not-allowed select-none';
+  'inline-flex items-center justify-center gap-2 uppercase tracking-[0.1em] font-semibold text-[12px] leading-4 transition-[background-color,color,border-color,transform] duration-200 ease-scandi disabled:cursor-not-allowed select-none ' +
+  // A press should register on touch, where there is no hover to confirm it.
+  'active:scale-[0.98] disabled:active:scale-100 motion-reduce:active:scale-100';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;

@@ -20,7 +20,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        'label-caps inline-flex items-center border px-3 py-1.5',
+        'label-caps inline-flex items-center border px-3 py-1.5 transition-colors duration-200 ease-scandi',
         active ? 'border-navy bg-navy text-background' : 'border-outline-variant text-secondary',
         className,
       )}
@@ -41,12 +41,21 @@ export function SectionHeading({
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-end justify-between gap-6', className)}>
-      <div>
-        {eyebrow && <p className="label-caps mb-3 text-secondary">{eyebrow}</p>}
-        <h2 className="font-display text-headline-md text-on-surface md:text-headline-md">{title}</h2>
+    // Stacks under 640px so a long title and its "View all" link never fight
+    // for the same row on a phone.
+    <div
+      className={cn(
+        'flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6',
+        className,
+      )}
+    >
+      <div className="min-w-0">
+        {eyebrow && <p className="label-caps mb-2 text-secondary sm:mb-3">{eyebrow}</p>}
+        <h2 className="font-display text-headline-sm text-on-surface sm:text-headline-md">
+          {title}
+        </h2>
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -98,12 +107,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center border border-dashed border-outline-variant px-6 py-20 text-center',
+        'flex animate-fade-in flex-col items-center justify-center border border-dashed border-outline-variant px-5 py-14 text-center sm:px-6 sm:py-20',
         className,
       )}
     >
-      <h3 className="font-display text-headline-sm text-on-surface">{title}</h3>
-      {body && <p className="mt-2 max-w-md text-body-md text-secondary">{body}</p>}
+      <h3 className="font-display text-title-md text-on-surface sm:text-headline-sm">{title}</h3>
+      {body && <p className="mt-2 max-w-md text-body-sm text-secondary sm:text-body-md">{body}</p>}
       {action && <div className="mt-6">{action}</div>}
     </div>
   );

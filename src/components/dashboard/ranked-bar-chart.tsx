@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { CHART, axisTick, ChartTooltip, ChartTable, ViewToggle } from './chart-parts';
+import { useDash } from './dashboard-i18n';
 
 interface Row {
   name: string;
@@ -34,6 +35,17 @@ export function RankedBarChart({
   currencySymbol?: string;
 }) {
   const [view, setView] = React.useState<'chart' | 'table'>('chart');
+  const { d } = useDash();
+
+  // A 140px name gutter swallows a phone; shorten it under 640px.
+  const [dense, setDense] = React.useState(false);
+  React.useEffect(() => {
+    const query = window.matchMedia('(max-width: 640px)');
+    const sync = () => setDense(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
 
   const valueFormatter = React.useCallback(
     (v: number) =>
@@ -44,8 +56,8 @@ export function RankedBarChart({
   if (data.length === 0) {
     return (
       <div>
-        <h2 className="font-display text-headline-sm">{title}</h2>
-        <p className="mt-6 text-body-sm text-secondary">No data in this period yet.</p>
+        <h2 className="font-display text-title-md md:text-headline-sm">{title}</h2>
+        <p className="mt-6 text-body-sm text-secondary">{d.analytics.noData}</p>
       </div>
     );
   }
@@ -55,9 +67,9 @@ export function RankedBarChart({
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="font-display text-headline-sm">{title}</h2>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3 md:mb-6 md:gap-4">
+        <div className="min-w-0">
+          <h2 className="font-display text-title-md md:text-headline-sm">{title}</h2>
           {subtitle && <p className="mt-1.5 text-body-sm text-secondary">{subtitle}</p>}
         </div>
         <ViewToggle view={view} onChange={setView} />
@@ -65,7 +77,7 @@ export function RankedBarChart({
 
       {view === 'table' ? (
         <ChartTable
-          columns={['Name', valueLabel, ...(secondaryLabel ? [secondaryLabel] : [])]}
+          columns={[d.analytics.nameCol, valueLabel, ...(secondaryLabel ? [secondaryLabel] : [])]}
           rows={data.map((d) => [
             d.name,
             valueFormatter(d.value),
@@ -78,7 +90,7 @@ export function RankedBarChart({
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
+              margin={{ top: 0, right: dense ? 8 : 24, bottom: 0, left: 0 }}
               barCategoryGap="20%"
             >
               <CartesianGrid stroke={CHART.grid} strokeWidth={1} horizontal={false} />
@@ -95,7 +107,7 @@ export function RankedBarChart({
                 tick={axisTick}
                 tickLine={false}
                 axisLine={false}
-                width={140}
+                width={dense ? 92 : 140}
               />
               <Tooltip
                 cursor={{ fill: 'rgba(11, 28, 48, 0.04)' }}

@@ -111,7 +111,7 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.categories.productsCount}</Th>
                 <Th>{d.categories.inFilter}</Th>
-                <Th className="text-right">{d.common.actions}</Th>
+                <Th className="text-end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>

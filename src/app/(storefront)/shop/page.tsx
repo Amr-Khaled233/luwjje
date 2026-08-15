@@ -51,13 +51,13 @@ export default async function ShopPage({
     settings.showSortFilter;
 
   return (
-    <div className="container-luwjje py-stack-md md:py-stack-lg">
+    <div className="container-luwjje py-10 md:py-stack-lg">
       <header className="text-center">
         <p className="label-caps mb-4 text-secondary">{t.shop.eyebrow}</p>
-        <h1 className="font-display text-display-sm md:text-display-md">
+        <h1 className="font-display text-headline-md sm:text-display-sm md:text-display-md">
           {filters.q ? `“${filters.q}”` : t.shop.title}
         </h1>
-        <p className="mt-4 text-body-md text-secondary">
+        <p className="mt-3 text-body-sm text-secondary sm:mt-4 sm:text-body-md">
           {total} {total === 1 ? t.shop.piece : t.shop.pieces}
         </p>
       </header>
@@ -69,11 +69,11 @@ export default async function ShopPage({
           categories={settings.showCategoryFilter ? options.categories : []}
           priceRanges={settings.showPriceFilter ? options.priceRanges : []}
           showSort={settings.showSortFilter}
-          className="mt-stack-md"
+          className="mt-8 md:mt-stack-md"
         />
       )}
 
-      <div className="mt-stack-md">
+      <div className="mt-8 md:mt-stack-md">
         {products.length ? (
           <ProductGrid products={products} currencySymbol={symbol} locale={locale} t={t} />
         ) : total === 0 && !filters.q && !filters.color && !filters.category && !filters.price ? (
@@ -93,7 +93,7 @@ export default async function ShopPage({
           pageCount={pageCount}
           previousLabel={t.common.previousPage}
           nextLabel={t.common.nextPage}
-          className="mt-stack-md"
+          className="mt-8 md:mt-stack-md"
         />
       )}
     </div>

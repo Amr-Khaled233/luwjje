@@ -280,16 +280,23 @@ export function SettingsManager({
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">{d.settings.social}</h2>
-            <p className="mt-2 text-body-sm text-secondary">
-              Blank fields are hidden from the footer.
-            </p>
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Input label={d.settings.instagram} placeholder="https://instagram.com/luwjje" {...settingsForm.register('instagramUrl')} />
-              <Input label={d.settings.pinterest} placeholder="https://pinterest.com/luwjje" {...settingsForm.register('pinterestUrl')} />
-              <Input label={d.settings.tiktok} placeholder="https://tiktok.com/@luwjje" {...settingsForm.register('tiktokUrl')} />
-              <Input label={d.settings.facebook} placeholder="https://facebook.com/luwjje" {...settingsForm.register('facebookUrl')} />
-              <Input label={d.settings.whatsapp} placeholder="https://wa.me/201000000000" {...settingsForm.register('whatsappUrl')} />
+            <h2 className="font-display text-title-md md:text-headline-sm">{d.settings.social}</h2>
+            <p className="mt-2 text-body-sm text-secondary">{d.settings.socialHint}</p>
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2">
+              <Input
+                label={d.settings.instagram}
+                placeholder="https://www.instagram.com/luwjje"
+                dir="ltr"
+                error={settingsForm.formState.errors.instagramUrl?.message}
+                {...settingsForm.register('instagramUrl')}
+              />
+              <Input
+                label={d.settings.facebook}
+                placeholder="https://www.facebook.com/luwjje"
+                dir="ltr"
+                error={settingsForm.formState.errors.facebookUrl?.message}
+                {...settingsForm.register('facebookUrl')}
+              />
             </div>
           </section>
 
@@ -362,7 +369,7 @@ export function SettingsManager({
                     <Th>{d.settings.url}</Th>
                     <Th>{d.settings.inFooter}</Th>
                     <Th>{d.common.status}</Th>
-                    <Th className="text-right">{d.common.actions}</Th>
+                    <Th className="text-end">{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>

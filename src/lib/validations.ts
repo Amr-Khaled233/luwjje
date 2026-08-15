@@ -230,6 +230,20 @@ export const bannerSchema = z.object({
 
 // ---------------------------------------------------------------- settings & pages
 
+/**
+ * A social link goes straight into an `href` the footer renders, so it has to
+ * be http(s) or nothing — `javascript:` and `data:` URLs would otherwise be
+ * stored XSS with the dashboard as the entry point.
+ */
+const socialUrl = z
+  .string()
+  .trim()
+  .max(300)
+  .default('')
+  .refine((v) => v === '' || /^https?:\/\/\S+$/i.test(v), {
+    message: 'Enter a full link starting with https://',
+  });
+
 export const settingsSchema = z.object({
   storeName: z.string().trim().min(1).max(60),
   tagline: z.string().trim().max(200).default(''),
@@ -245,11 +259,8 @@ export const settingsSchema = z.object({
   freeShippingOver: z.coerce.number().min(0),
   defaultShippingRate: z.coerce.number().min(0),
   lowStockThreshold: z.coerce.number().int().min(0).max(1000),
-  instagramUrl: z.string().trim().max(300).default(''),
-  pinterestUrl: z.string().trim().max(300).default(''),
-  tiktokUrl: z.string().trim().max(300).default(''),
-  facebookUrl: z.string().trim().max(300).default(''),
-  whatsappUrl: z.string().trim().max(300).default(''),
+  instagramUrl: socialUrl,
+  facebookUrl: socialUrl,
   metaTitle: z.string().trim().max(120).default(''),
   metaTitleAr: z.string().trim().max(120).default(''),
   metaDescription: z.string().trim().max(300).default(''),

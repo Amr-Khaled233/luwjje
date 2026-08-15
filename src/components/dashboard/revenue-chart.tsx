@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { CHART, axisTick, ChartTooltip, ChartTable, ViewToggle } from './chart-parts';
+import { useDash } from './dashboard-i18n';
+import { fmt } from '@/i18n/dictionaries';
 import { formatPrice } from '@/lib/utils';
 
 interface Point {
@@ -36,21 +38,38 @@ export function RevenueChart({
   days: number;
 }) {
   const [view, setView] = React.useState<'chart' | 'table'>('chart');
+  const { locale, d: dict } = useDash();
+  const a = dict.analytics;
 
   const total = data.reduce((s, d) => s + d.revenue, 0);
   const peak = data.reduce((best, d) => (d.revenue > best.revenue ? d : best), data[0]);
 
-  // Thin out ticks so labels never collide on longer ranges.
-  const tickInterval = Math.max(0, Math.floor(data.length / 8));
+  // Thin out ticks so labels never collide on longer ranges. Phones show
+  // roughly half as many before they start overlapping.
+  const [dense, setDense] = React.useState(false);
+  React.useEffect(() => {
+    const query = window.matchMedia('(max-width: 640px)');
+    const sync = () => setDense(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
+  const tickInterval = Math.max(0, Math.floor(data.length / (dense ? 4 : 8)));
+
+  const shortDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+    });
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="font-display text-headline-sm">Revenue</h2>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3 md:mb-6 md:gap-4">
+        <div className="min-w-0">
+          <h2 className="font-display text-title-md md:text-headline-sm">{a.revenue}</h2>
           <p className="mt-1.5 text-body-sm text-secondary">
-            {formatPrice(total, currencySymbol)} across the last {days} days
-            {peak && ` · peak ${format(new Date(peak.date), 'd MMM')}`}
+            {fmt(a.revenueAcross, { amount: formatPrice(total, currencySymbol, locale), days })}
+            {peak && ` · ${fmt(a.peak, { date: shortDate(peak.date) })}`}
           </p>
         </div>
         <ViewToggle view={view} onChange={setView} />
@@ -58,7 +77,7 @@ export function RevenueChart({
 
       {view === 'table' ? (
         <ChartTable
-          columns={['Date', `Revenue (${currencySymbol})`, 'Orders']}
+          columns={[a.dateCol, `${a.revenue} (${currencySymbol})`, a.ordersCol]}
           rows={data.map((d) => [
             format(new Date(d.date), 'd MMM yyyy'),
             d.revenue.toFixed(2),
@@ -67,7 +86,7 @@ export function RevenueChart({
         />
       ) : (
         // Height includes the x-axis band so the card never scrolls internally.
-        <div className="h-[320px] w-full">
+        <div className="h-[240px] w-full sm:h-[280px] md:h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
               <defs>
@@ -96,9 +115,11 @@ export function RevenueChart({
                 tick={axisTick}
                 tickLine={false}
                 axisLine={false}
-                width={64}
+                // A 64px gutter is a fifth of a 360px phone; abbreviate
+                // harder there so the plot keeps the room.
+                width={dense ? 44 : 64}
                 tickFormatter={(v: number) =>
-                  v >= 1000 ? `${currencySymbol}${(v / 1000).toFixed(1)}k` : `${currencySymbol}${v}`
+                  v >= 1000 ? `${(v / 1000).toFixed(dense ? 0 : 1)}k` : String(v)
                 }
               />
               <Tooltip
@@ -113,10 +134,10 @@ export function RevenueChart({
                       rows={[
                         {
                           key: 'revenue',
-                          label: 'Revenue',
-                          value: formatPrice(point.revenue, currencySymbol),
+                          label: a.revenue,
+                          value: formatPrice(point.revenue, currencySymbol, locale),
                         },
-                        { key: 'orders', label: 'Orders', value: String(point.orders) },
+                        { key: 'orders', label: a.orders, value: String(point.orders) },
                       ]}
                     />
                   );

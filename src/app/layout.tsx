@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display, IBM_Plex_Sans_Arabic, Amiri } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { getSettings } from '@/lib/settings';
-import { getLocale } from '@/i18n/server';
+import { getI18n, getLocale } from '@/i18n/server';
 import { DIRECTION, pick } from '@/i18n/config';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -31,6 +31,19 @@ const amiri = Amiri({
   display: 'swap',
 });
 
+/**
+ * `viewportFit: 'cover'` lets the page reach under a notch; the `pb-safe`
+ * utility then keeps fixed bars clear of the home indicator. Zoom is left
+ * unrestricted on purpose — pinching to read a product detail is legitimate,
+ * and `maximumScale: 1` would take that away.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#f8f9ff',
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const [s, locale] = await Promise.all([getSettings(), getLocale()]);
 
@@ -54,7 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
+  const { locale, t } = await getI18n();
 
   return (
     <html
@@ -65,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-locale={locale}
     >
       <body>
-        <Providers>{children}</Providers>
+        <Providers dismissLabel={t.nav.close}>{children}</Providers>
       </body>
     </html>
   );

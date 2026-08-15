@@ -28,7 +28,12 @@ export function FieldLabel({
 
 export function FieldError({ children }: { children?: React.ReactNode }) {
   if (!children) return null;
-  return <p className="mt-1.5 text-body-sm text-error">{children}</p>;
+  // Fades in so a validation message appearing does not jolt the layout.
+  return (
+    <p role="alert" className="mt-1.5 animate-fade-down text-body-sm text-error">
+      {children}
+    </p>
+  );
 }
 
 export function FieldHint({ children }: { children?: React.ReactNode }) {
@@ -138,7 +143,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           </select>
           <ChevronDown
             aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary"
+            className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary"
           />
         </div>
         <FieldError>{error}</FieldError>

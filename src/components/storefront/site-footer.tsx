@@ -15,29 +15,26 @@ export async function SiteFooter() {
   const socials = [
     { label: 'Instagram', url: settings.instagramUrl },
     { label: 'Facebook', url: settings.facebookUrl },
-    { label: 'TikTok', url: settings.tiktokUrl },
-    { label: 'Pinterest', url: settings.pinterestUrl },
-    { label: 'WhatsApp', url: settings.whatsappUrl },
   ].filter((s) => s.url);
 
   return (
-    <footer className="mt-stack-lg border-t border-outline-variant bg-surface-low">
-      <div className="container-luwjje grid grid-cols-1 gap-10 py-stack-md md:grid-cols-4 md:gap-gutter md:py-stack-lg">
+    <footer className="mt-16 border-t border-outline-variant bg-surface-low md:mt-stack-lg">
+      <div className="container-luwjje grid grid-cols-1 gap-8 py-10 sm:grid-cols-2 sm:gap-10 md:grid-cols-4 md:gap-gutter md:py-stack-lg">
         <div>
-          <Link href="/" className="font-latin text-[28px] font-medium leading-none">
+          <Link href="/" className="font-latin text-[26px] font-medium leading-none transition-opacity hover:opacity-70 sm:text-[28px]">
             {settings.storeName}
           </Link>
           <p className="mt-4 max-w-[26ch] text-body-sm text-secondary">
             {pick(locale, settings.tagline, settings.taglineAr)}
           </p>
-          <p className="mt-8 text-body-sm text-tertiary">
+          <p className="mt-6 text-body-sm text-tertiary md:mt-8">
             © {new Date().getFullYear()} {settings.storeName}. {t.footer.rights}
           </p>
           {settings.enableArabic && <LanguageSwitcher locale={locale} className="mt-4" />}
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">{t.footer.customerCare}</h3>
+          <h3 className="label-caps mb-4 text-secondary md:mb-5">{t.footer.customerCare}</h3>
           <ul className="flex flex-col gap-3 text-body-sm">
             <li>
               <Link href="/orders" className="link-underline text-secondary hover:text-on-surface">
@@ -66,7 +63,7 @@ export async function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">{t.footer.social}</h3>
+          <h3 className="label-caps mb-4 text-secondary md:mb-5">{t.footer.social}</h3>
           {socials.length ? (
             <ul className="flex flex-col gap-3 text-body-sm">
               {socials.map((s) => (
@@ -88,7 +85,7 @@ export async function SiteFooter() {
         </div>
 
         <div>
-          <h3 className="label-caps mb-5 text-secondary">
+          <h3 className="label-caps mb-4 text-secondary md:mb-5">
             {pick(locale, settings.newsletterHeading, settings.newsletterHeadingAr)}
           </h3>
           <p className="mb-5 text-body-sm text-secondary">

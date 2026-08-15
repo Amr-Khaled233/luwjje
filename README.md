@@ -56,9 +56,10 @@ npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
 npm run orders       # 45 checks: the order lifecycle end to end
 npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
 npm run i18n         # 49 checks: dictionary coverage plus every page in both languages
+npm run responsive   # 64 checks: RTL-safe layout, touch targets, motion, phone rendering
 ```
 
-241 checks in total. `features`, `security` and `i18n` need a running server
+354 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.
@@ -163,6 +164,32 @@ There is no content in the codebase. Each storefront section reads a table:
 
 Edit a price and the product page shows it on the next load. Unpublish a product and it leaves
 the grid and its URL 404s. Disable a promo code and the cart stops accepting it.
+
+Social links are the store's two real channels, Instagram and Facebook, set in
+Settings → Social. Both open in a new tab, and a blank field disappears from the
+footer. A link must start with `http://` or `https://` — the field goes straight
+into an `href`, so a `javascript:` URL would be stored XSS with the dashboard as
+the way in.
+
+---
+
+## On a phone
+
+Every page is built for 360px first and opens up from there.
+
+| | |
+| --- | --- |
+| **Grid** | Products are two across on a phone, three on a tablet, four on a desktop. |
+| **Reach** | Anything a finger has to hit is at least 44px. Quick Add has a permanent button on touch, because there is no hover to reveal the bar. Product pages grow a pinned Add to Bag once the real button scrolls away. |
+| **Filters** | On a phone the three filter selects move into a sheet behind one button that counts what is active; sort stays on the bar. The select itself is rendered once, not duplicated per breakpoint. |
+| **Overlays** | The bag, the menu, the filter sheet and every dashboard modal lock the page behind them, trap Tab, and close on Escape. |
+| **Tables** | A grid table cannot honestly reflow to 360px, so it keeps its shape and scrolls — without that scroll turning into a browser back-swipe. |
+| **iOS** | Inputs hold 16px on phones so focusing one never zooms the page in. Fixed bars clear the home indicator. |
+| **Arabic** | Layout uses logical properties throughout, so every panel, rule and drawer flips with the language rather than being pinned left. |
+
+Motion is a fade and a 16px rise, eased, nothing bouncy. Sections arrive as they
+scroll into view, drawers slide from the reading edge, and the whole vocabulary
+switches off under `prefers-reduced-motion`.
 
 ### Trust boundary
 
@@ -321,6 +348,7 @@ every `requireDashboard()` call site stay as they are.
 | `npm run orders` | Order lifecycle checks |
 | `npm run security` | Security checks |
 | `npm run i18n` | Arabic/English coverage checks |
+| `npm run responsive` | Responsive and motion checks |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:reset` | Drop, re-migrate and re-seed |

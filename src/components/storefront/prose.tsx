@@ -16,14 +16,14 @@ export function Prose({ body, className }: { body: string; className?: string })
       {blocks.map((block, i) => {
         if (block.startsWith('## ')) {
           return (
-            <h2 key={i} className="mt-6 font-display text-headline-sm first:mt-0">
+            <h2 key={i} className="mt-6 font-display text-title-md first:mt-0 sm:text-headline-sm">
               {block.slice(3)}
             </h2>
           );
         }
         if (block.startsWith('# ')) {
           return (
-            <h2 key={i} className="mt-6 font-display text-headline-md first:mt-0">
+            <h2 key={i} className="mt-6 font-display text-headline-sm first:mt-0 sm:text-headline-md">
               {block.slice(2)}
             </h2>
           );
@@ -31,7 +31,7 @@ export function Prose({ body, className }: { body: string; className?: string })
         if (/^[-*]\s/.test(block)) {
           const bullets = block.split('\n').map((l) => l.replace(/^[-*]\s/, ''));
           return (
-            <ul key={i} className="flex list-disc flex-col gap-2 pl-5 text-body-lg leading-8 text-secondary">
+            <ul key={i} className="flex list-disc flex-col gap-2 ps-5 text-body-md leading-7 text-secondary sm:text-body-lg sm:leading-8">
               {bullets.map((b, j) => (
                 <li key={j}>{b}</li>
               ))}
@@ -39,7 +39,7 @@ export function Prose({ body, className }: { body: string; className?: string })
           );
         }
         return (
-          <p key={i} className="whitespace-pre-line text-body-lg leading-8 text-secondary">
+          <p key={i} className="whitespace-pre-line text-body-md leading-7 text-secondary sm:text-body-lg sm:leading-8">
             {block}
           </p>
         );
