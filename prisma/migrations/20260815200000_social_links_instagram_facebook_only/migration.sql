@@ -1,7 +1,9 @@
 -- AlterTable
-ALTER TABLE "SiteSettings" DROP COLUMN "pinterestUrl",
-DROP COLUMN "tiktokUrl",
-DROP COLUMN "whatsappUrl";
+-- IF EXISTS so a re-run after a partial apply completes instead of dying on
+-- the first already-dropped column and leaving the migration marked failed.
+ALTER TABLE "SiteSettings" DROP COLUMN IF EXISTS "pinterestUrl",
+DROP COLUMN IF EXISTS "tiktokUrl",
+DROP COLUMN IF EXISTS "whatsappUrl";
 
 
 -- Seed the store's two real channels where nothing has been set yet. Written
