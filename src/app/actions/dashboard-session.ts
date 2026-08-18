@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation';
 import {
   checkPassword,
   clearAttempts,
+  newSessionToken,
   recordFailure,
   tooManyAttempts,
 } from '@/lib/dashboard-auth';
-import { COOKIE_NAME, SESSION_COOKIE_OPTIONS, createSessionToken } from '@/lib/session-token';
+import { COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/session-token';
 import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 
@@ -45,7 +46,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 
   clearAttempts(key);
-  cookies().set(COOKIE_NAME, await createSessionToken(), SESSION_COOKIE_OPTIONS);
+  cookies().set(COOKIE_NAME, await newSessionToken(), SESSION_COOKIE_OPTIONS);
 
   // Only ever redirect inside the dashboard — never to an attacker's URL.
   redirect(next.startsWith('/dashboard') ? next : '/dashboard');

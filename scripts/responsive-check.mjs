@@ -14,7 +14,7 @@ import './load-env.ts';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { prisma } from '../src/lib/prisma.ts';
-import { COOKIE_NAME, createSessionToken } from '../src/lib/session-token.ts';
+import { COOKIE_NAME, staffCookie } from './session.mjs';
 
 const BASE = process.env.SECURITY_BASE ?? 'http://localhost:3000';
 const ROOT = process.cwd();
@@ -173,7 +173,8 @@ const PAGES = [
   '/about',
 ].filter(Boolean);
 
-const session = await createSessionToken();
+const cookie = await staffCookie();
+const session = cookie.split('=').slice(1).join('=');
 
 async function html(path, cookie = '') {
   const res = await fetch(`${BASE}${path}`, { headers: cookie ? { cookie } : {} });

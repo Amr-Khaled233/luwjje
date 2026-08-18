@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { prisma } from './prisma';
 import { safeEqual } from './signing';
-import { COOKIE_NAME, verifySessionToken } from './session-token';
+import { COOKIE_NAME, createSessionToken, readSession, verifySessionToken } from './session-token';
 
 /**
  * Single-password gate for /dashboard. No customer accounts exist — this is
@@ -15,9 +15,37 @@ import { COOKIE_NAME, verifySessionToken } from './session-token';
 
 export { COOKIE_NAME, SESSION_COOKIE_OPTIONS, createSessionToken, verifySessionToken } from './session-token';
 
-/** Is the current request holding a valid dashboard session? */
+/** The epoch every new session is stamped with. Bumped by a password reset. */
+export async function currentSessionEpoch(): Promise<number> {
+  try {
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { sessionEpoch: true },
+    });
+    return settings?.sessionEpoch ?? 0;
+  } catch {
+    // The app already degrades to defaults when the database is unreachable;
+    // refusing every session here would lock the owner out over a blip.
+    return 0;
+  }
+}
+
+/** Issues a session stamped with the current epoch. */
+export async function newSessionToken() {
+  return createSessionToken(await currentSessionEpoch());
+}
+
+/**
+ * Is the current request holding a valid dashboard session?
+ *
+ * Signature and expiry are not enough: a session issued before a password
+ * reset carries an older epoch and is refused here, which is what makes the
+ * reset able to evict whoever prompted it.
+ */
 export async function isDashboardUser() {
-  return verifySessionToken(cookies().get(COOKIE_NAME)?.value);
+  const session = await readSession(cookies().get(COOKIE_NAME)?.value);
+  if (!session) return false;
+  return session.epoch === (await currentSessionEpoch());
 }
 
 export async function requireDashboard() {

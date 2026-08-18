@@ -43,10 +43,6 @@ model Product {
   slug           String  @unique
   description    String  @default("")
   descriptionAr  String  @default("")
-  materialInfo   String  @default("")
-  materialInfoAr String  @default("")
-  careInfo       String  @default("")
-  careInfoAr     String  @default("")
   price          Float
   compareAtPrice Float?
   sku            String? @unique
@@ -256,6 +252,11 @@ model SiteSettings {
   /// point DASHBOARD_PASSWORD from .env is used instead.
   dashboardPasswordHash String?
 
+  /// Bumped whenever the password is reset. The number is baked into every
+  /// session token, so a reset invalidates sessions already open elsewhere —
+  /// otherwise whoever prompted the reset would simply stay logged in.
+  sessionEpoch Int @default(0)
+
   storeName    String @default("luwjje")
   tagline      String @default("Considered essentials for a quiet life.")
   taglineAr    String @default("")
@@ -361,6 +362,21 @@ model NewsletterSubscriber {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+/// A single outstanding "forgot password" link.
+///
+/// Only the SHA-256 of the token is stored — a database dump must not hand
+/// anyone a working reset link. The row is kept after use rather than deleted
+/// so a replayed link can be told apart from an expired one.
+model PasswordReset {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
 }
 
 /// Lightweight funnel tracking so Conversion Rate / traffic sources are real.

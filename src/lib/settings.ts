@@ -7,7 +7,15 @@ type Settings = Awaited<ReturnType<typeof readSettings>>;
 async function readSettings() {
   const existing = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
   if (existing) return existing;
-  return prisma.siteSettings.create({ data: { id: 'singleton' } });
+
+  // `upsert` rather than `create`: a build renders many pages at once and they
+  // all call this, so a plain create loses the race on the unique id and logs
+  // a constraint error for every page but the first.
+  return prisma.siteSettings.upsert({
+    where: { id: 'singleton' },
+    update: {},
+    create: { id: 'singleton' },
+  });
 }
 
 /**
@@ -38,6 +46,7 @@ function fallbackSettings(): Settings {
     showPriceFilter: true,
     showSortFilter: true,
     showSearch: true,
+    sessionEpoch: 0,
     instagramUrl: '',
     facebookUrl: '',
     metaTitle: 'luwjje',

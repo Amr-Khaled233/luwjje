@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { requireDashboard, checkPassword, setPassword } from '@/lib/dashboard-auth';
+import { requireDashboard } from '@/lib/dashboard-auth';
 import { slugify } from '@/lib/utils';
 import {
   productSchema,
@@ -16,7 +16,6 @@ import {
   discountSchema,
   settingsSchema,
   pageSchema,
-  changePasswordSchema,
   categorySchema,
 } from '@/lib/validations';
 import { z } from 'zod';
@@ -112,10 +111,6 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       slug,
       description: data.description,
       descriptionAr: data.descriptionAr,
-      materialInfo: data.materialInfo,
-      materialInfoAr: data.materialInfoAr,
-      careInfo: data.careInfo,
-      careInfoAr: data.careInfoAr,
       price: data.price,
       compareAtPrice: data.compareAtPrice || null,
       sku: data.sku || null,
@@ -900,26 +895,3 @@ export async function deletePage(id: string): Promise<ActionResult> {
   }) as Promise<ActionResult>;
 }
 
-// ================================================================ dashboard password
-
-export async function changeDashboardPassword(input: unknown): Promise<ActionResult> {
-  return guard(async () => {
-    const parsed = changePasswordSchema.safeParse(input);
-    if (!parsed.success) return zodErrors(parsed.error);
-
-    const { currentPassword, newPassword } = parsed.data;
-
-    // Knowing the session cookie is not enough to rotate the password.
-    if (!(await checkPassword(currentPassword))) {
-      return {
-        ok: false,
-        error: 'The current password is not correct.',
-        fieldErrors: { currentPassword: 'Not correct.' },
-      };
-    }
-
-    await setPassword(newPassword);
-    revalidatePath('/dashboard/settings');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}

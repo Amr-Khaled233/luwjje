@@ -9,7 +9,7 @@
  * stock tampering, injection, upload filtering and rate limits.
  */
 import './load-env.ts';
-import { COOKIE_NAME, createSessionToken } from '../src/lib/session-token.ts';
+import { COOKIE_NAME, staffCookie } from './session.mjs';
 import { signToken } from '../src/lib/signing.ts';
 import { jsonLdScript } from '../src/lib/json-ld.ts';
 import { prisma } from '../src/lib/prisma.ts';
@@ -28,7 +28,8 @@ const check = (label, ok, detail) => {
   }
 };
 
-const session = await createSessionToken();
+const cookie = await staffCookie();
+const session = cookie.split('=').slice(1).join('=');
 const STAFF = { cookie: `${COOKIE_NAME}=${session}` };
 
 const DASHBOARD_ROUTES = [

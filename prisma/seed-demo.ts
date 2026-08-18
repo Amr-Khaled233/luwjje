@@ -48,10 +48,6 @@ const PRODUCTS: {
   category: string;
   description: string;
   descriptionAr: string;
-  materialInfo: string;
-  materialInfoAr: string;
-  careInfo: string;
-  careInfoAr: string;
   bestSeller?: number;
   variants: SeedVariant[];
 }[] = [
@@ -65,10 +61,6 @@ const PRODUCTS: {
       'A closed-loop scarf in brushed lambswool. Wide enough to sit as a collar, long enough to double.',
     descriptionAr:
       'وشاح مغلق من صوف الحملان المُمشّط. عريض بما يكفي ليكون ياقة، وطويل بما يكفي ليُلفّ مرتين.',
-    materialInfo: '100% brushed lambswool. 180 × 34 cm.',
-    materialInfoAr: '١٠٠٪ صوف حملان مُمشّط. ١٨٠ × ٣٤ سم.',
-    careInfo: 'Dry clean, or hand wash cold and dry flat.',
-    careInfoAr: 'تنظيف جاف، أو غسل يدوي بماء بارد وتجفيف مسطّح.',
     variants: [
       { colorName: 'Dark Charcoal Grey', colorNameAr: 'رمادي فحمي', colorHex: '#3a3d42', stock: 42 },
       { colorName: 'Deep Navy', colorNameAr: 'كحلي غامق', colorHex: '#213145', stock: 18 },
@@ -82,10 +74,6 @@ const PRODUCTS: {
     bestSeller: 2,
     description: 'The lightest of the four — a fine-gauge merino loop for the shoulder seasons.',
     descriptionAr: 'الأخف بين الأربعة — حلقة مرينو رفيعة لمواسم ما بين الحر والبرد.',
-    materialInfo: '100% extra-fine merino wool. 175 × 32 cm.',
-    materialInfoAr: '١٠٠٪ صوف مرينو فائق النعومة. ١٧٥ × ٣٢ سم.',
-    careInfo: 'Hand wash cold, dry flat, reshape while damp.',
-    careInfoAr: 'غسل يدوي بارد، تجفيف مسطّح، وإعادة التشكيل وهو رطب.',
     variants: [
       { colorName: 'Off-White', colorNameAr: 'أبيض مائل', colorHex: '#efe9df', stock: 31 },
       { colorName: 'Beige', colorNameAr: 'بيج', colorHex: '#d8cbb8', stock: 24 },
@@ -99,10 +87,6 @@ const PRODUCTS: {
     bestSeller: 3,
     description: 'Heather-spun yarn gives it depth — grey that reads warm in daylight.',
     descriptionAr: 'خيط مُخلّط يمنحه عمقاً — رمادي يبدو دافئاً في ضوء النهار.',
-    materialInfo: '80% lambswool, 20% nylon. 178 × 33 cm.',
-    materialInfoAr: '٨٠٪ صوف حملان، ٢٠٪ نايلون. ١٧٨ × ٣٣ سم.',
-    careInfo: 'Hand wash cold or dry clean. Dry flat.',
-    careInfoAr: 'غسل يدوي بارد أو تنظيف جاف. تجفيف مسطّح.',
     variants: [
       { colorName: 'Light Grey Heather', colorNameAr: 'رمادي فاتح', colorHex: '#c4c7c9', stock: 4 },
       { colorName: 'Stone', colorNameAr: 'حجري', colorHex: '#b3ada4', stock: 12 },
@@ -116,10 +100,6 @@ const PRODUCTS: {
     bestSeller: 4,
     description: 'Solid black, overdyed twice for depth. The formal one.',
     descriptionAr: 'أسود صريح، مصبوغ مرتين لعمق أكبر. الأكثر رسمية.',
-    materialInfo: '100% brushed lambswool, double-dyed. 180 × 34 cm.',
-    materialInfoAr: '١٠٠٪ صوف حملان مُمشّط، صباغة مزدوجة. ١٨٠ × ٣٤ سم.',
-    careInfo: 'Dry clean recommended.',
-    careInfoAr: 'يُفضّل التنظيف الجاف.',
     variants: [{ colorName: 'Solid Black', colorNameAr: 'أسود', colorHex: '#0f1113', stock: 27 }],
   },
   {
@@ -129,10 +109,6 @@ const PRODUCTS: {
     category: 'Outerwear',
     description: 'Single-breasted, in double-faced Italian wool, unlined so the cloth can move.',
     descriptionAr: 'بصف أزرار واحد، من صوف إيطالي مزدوج الوجه، بدون بطانة ليتحرك القماش بحرية.',
-    materialInfo: '90% virgin wool, 10% cashmere. Horn buttons.',
-    materialInfoAr: '٩٠٪ صوف بكر، ١٠٪ كشمير. أزرار قرن.',
-    careInfo: 'Dry clean only. Brush after wear.',
-    careInfoAr: 'تنظيف جاف فقط. يُفرشى بعد الارتداء.',
     variants: [
       { colorName: 'Camel', colorNameAr: 'جملي', colorHex: '#b08d5f', stock: 8, sizes: ['S', 'M', 'L', 'XL'] },
       { colorName: 'Charcoal', colorNameAr: 'فحمي', colorHex: '#42464b', stock: 11, sizes: ['S', 'M', 'L', 'XL'] },
@@ -145,10 +121,6 @@ const PRODUCTS: {
     category: 'Shirting',
     description: 'Long-staple Egyptian cotton, garment-washed once so it arrives already soft.',
     descriptionAr: 'قطن مصري طويل التيلة، مغسول مرة ليصلك ناعماً من أول ارتداء.',
-    materialInfo: '100% Egyptian cotton poplin, 120gsm.',
-    materialInfoAr: '١٠٠٪ بوبلين قطن مصري، ١٢٠ جم/م².',
-    careInfo: 'Machine wash cold, tumble dry low, warm iron.',
-    careInfoAr: 'غسيل آلي بارد، تجفيف على حرارة منخفضة، كي دافئ.',
     variants: [
       { colorName: 'Optic White', colorNameAr: 'أبيض ناصع', colorHex: '#f5f3ee', stock: 34, sizes: ['S', 'M', 'L', 'XL'] },
       { colorName: 'Pale Blue', colorNameAr: 'أزرق فاتح', colorHex: '#c3d2e4', stock: 21, sizes: ['S', 'M', 'L', 'XL'] },
@@ -162,10 +134,6 @@ const PRODUCTS: {
     category: 'Footwear',
     description: 'Hand-lasted penny loafer on a leather sole, Blake-stitched so it can be resoled.',
     descriptionAr: 'لوفر مُشكّل يدوياً بنعل جلدي وخياطة بليك، يمكن تغيير نعله مراراً.',
-    materialInfo: 'Vegetable-tanned Italian calfskin, leather sole.',
-    materialInfoAr: 'جلد عجل إيطالي مدبوغ نباتياً، نعل جلدي.',
-    careInfo: 'Condition monthly. Use shoe trees.',
-    careInfoAr: 'يُرطّب شهرياً. استخدم قوالب الحذاء.',
     variants: [
       { colorName: 'Chestnut', colorNameAr: 'بني كستنائي', colorHex: '#7d4f2e', stock: 9, sizes: ['40', '41', '42', '43', '44'] },
       { colorName: 'Black', colorNameAr: 'أسود', colorHex: '#17181a', stock: 14, sizes: ['40', '41', '42', '43', '44'] },
@@ -178,10 +146,6 @@ const PRODUCTS: {
     category: 'Trousers',
     description: 'A wide, flat-front trouser in heavyweight Belgian linen.',
     descriptionAr: 'بنطلون واسع بواجهة مسطّحة من كتان بلجيكي ثقيل.',
-    materialInfo: '100% Belgian linen, 260gsm. Unlined.',
-    materialInfoAr: '١٠٠٪ كتان بلجيكي، ٢٦٠ جم/م². بدون بطانة.',
-    careInfo: 'Machine wash cold on gentle, line dry.',
-    careInfoAr: 'غسيل آلي بارد على دورة لطيفة، تجفيف بالنشر.',
     variants: [
       { colorName: 'Natural', colorNameAr: 'طبيعي', colorHex: '#e2d9c8', stock: 17, sizes: ['30', '32', '34', '36'] },
       { colorName: 'Olive', colorNameAr: 'زيتي', colorHex: '#6b6f52', stock: 6, sizes: ['30', '32', '34'] },
@@ -194,10 +158,6 @@ const PRODUCTS: {
     category: 'Accessories',
     description: 'An unlined tote in a single panel of bridle leather, saddle-stitched at two seams.',
     descriptionAr: 'شنطة بدون بطانة من قطعة جلد واحدة، مخيطة يدوياً عند درزتين.',
-    materialInfo: 'English bridle leather. 38 × 32 × 12 cm.',
-    materialInfoAr: 'جلد إنجليزي. ٣٨ × ٣٢ × ١٢ سم.',
-    careInfo: 'Wipe with a dry cloth. Condition twice yearly.',
-    careInfoAr: 'يُمسح بقطعة قماش جافة. يُرطّب مرتين سنوياً.',
     variants: [
       { colorName: 'Tan', colorNameAr: 'عسلي', colorHex: '#9a6b3f', stock: 7 },
       { colorName: 'Black', colorNameAr: 'أسود', colorHex: '#1a1b1d', stock: 10 },
@@ -210,10 +170,6 @@ const PRODUCTS: {
     category: 'Knitwear',
     description: 'Two-ply Mongolian cashmere at a gauge heavy enough to wear alone.',
     descriptionAr: 'كشمير منغولي مزدوج الخيط بسماكة تكفي لارتدائه وحده.',
-    materialInfo: '100% grade-A Mongolian cashmere, 2-ply.',
-    materialInfoAr: '١٠٠٪ كشمير منغولي درجة أولى، خيطان.',
-    careInfo: 'Hand wash cold with cashmere shampoo. Dry flat.',
-    careInfoAr: 'غسل يدوي بارد بشامبو الكشمير. تجفيف مسطّح.',
     variants: [
       { colorName: 'Oatmeal', colorNameAr: 'بيج فاتح', colorHex: '#d9cfbc', stock: 15, sizes: ['S', 'M', 'L', 'XL'] },
       { colorName: 'Slate', colorNameAr: 'رمادي أزرق', colorHex: '#5d646d', stock: 2, sizes: ['S', 'M', 'L'] },
@@ -227,10 +183,6 @@ const PRODUCTS: {
     category: 'Accessories',
     description: 'Hand-rolled silk twill, printed in a single muted tone with a hairline border.',
     descriptionAr: 'حرير تويل بحواف مطوية يدوياً، بلون هادئ واحد وإطار رفيع.',
-    materialInfo: '100% silk twill. 40 × 40 cm.',
-    materialInfoAr: '١٠٠٪ حرير تويل. ٤٠ × ٤٠ سم.',
-    careInfo: 'Dry clean only. Store flat.',
-    careInfoAr: 'تنظيف جاف فقط. يُحفظ مفروداً.',
     variants: [
       { colorName: 'Ivory', colorNameAr: 'عاجي', colorHex: '#f0ebe1', stock: 40 },
       { colorName: 'Petrol', colorNameAr: 'بترولي', colorHex: '#2c4a52', stock: 22 },
@@ -243,10 +195,6 @@ const PRODUCTS: {
     category: 'Denim',
     description: 'Fourteen-ounce selvedge denim, woven on shuttle looms and left entirely raw.',
     descriptionAr: 'دنيم سلفدج بوزن ١٤ أونصة، منسوج على أنوال مكوكية ومتروك خاماً تماماً.',
-    materialInfo: '14oz unsanforized selvedge denim. Copper hardware.',
-    materialInfoAr: 'دنيم سلفدج ١٤ أونصة غير مُعالج. إكسسوارات نحاسية.',
-    careInfo: 'Wear six months before the first wash. Then cold soak inside out.',
-    careInfoAr: 'ارتده ٦ أشهر قبل أول غسلة، ثم انقعه بماء بارد مقلوباً.',
     variants: [
       { colorName: 'Indigo', colorNameAr: 'نيلي', colorHex: '#2f4058', stock: 23, sizes: ['30', '32', '34', '36'] },
       { colorName: 'Washed Black', colorNameAr: 'أسود مغسول', colorHex: '#2b2c30', stock: 5, sizes: ['30', '32', '34'] },
@@ -310,10 +258,6 @@ async function main() {
         slug,
         description: p.description,
         descriptionAr: p.descriptionAr,
-        materialInfo: p.materialInfo,
-        materialInfoAr: p.materialInfoAr,
-        careInfo: p.careInfo,
-        careInfoAr: p.careInfoAr,
         price: p.price,
         sku: `LW-${slug.toUpperCase().replace(/-/g, '').slice(0, 10)}`,
         categoryId: categoryMap.get(p.category),

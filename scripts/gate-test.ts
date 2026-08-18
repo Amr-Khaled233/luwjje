@@ -49,7 +49,8 @@ async function main() {
   check('an empty password is rejected', !(await checkPassword('')));
 
   console.log('\n▸ Session token');
-  const valid = await createSessionToken();
+  const epoch = (await prisma.siteSettings.findUnique({ where: { id: 'singleton' }, select: { sessionEpoch: true } }))?.sessionEpoch ?? 0;
+  const valid = await createSessionToken(epoch);
   check('a freshly minted token verifies', await verifySessionToken(valid));
   check('no token is rejected', !(await verifySessionToken(undefined)));
   check('garbage is rejected', !(await verifySessionToken('not-a-token')));

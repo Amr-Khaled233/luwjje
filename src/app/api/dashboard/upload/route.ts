@@ -59,14 +59,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ urls });
   } catch (err) {
     console.error('upload failed', err);
-    return NextResponse.json(
-      {
-        error: useBlob
-          ? 'Could not reach blob storage. Check BLOB_READ_WRITE_TOKEN.'
-          : 'Could not write the file. On a serverless host, connect a Blob store.',
-      },
-      { status: 500 },
-    );
+
+    // This route is behind the dashboard password, so the provider's own
+    // message is safe to show — and it is the difference between "check your
+    // token" and knowing the token belongs to a different Blob store.
+    const detail = err instanceof Error ? err.message : String(err);
+    const context = useBlob
+      ? 'Blob storage refused the upload.'
+      : 'Could not write the file. On a serverless host, connect a Blob store.';
+
+    return NextResponse.json({ error: `${context} ${detail}`.trim() }, { status: 500 });
   }
 }
 

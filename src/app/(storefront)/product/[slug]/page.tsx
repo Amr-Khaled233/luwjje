@@ -106,8 +106,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           slug: product.slug,
           name: product.name,
           description: product.description,
-          materialInfo: product.materialInfo,
-          careInfo: product.careInfo,
           price: product.effectivePrice,
           listPrice: product.listPrice,
           discounted: product.discounted,

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useFormState, useFormStatus } from 'react-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { FieldLabel } from '@/components/ui/field';
@@ -13,6 +14,7 @@ export interface LoginLabels {
   hide: string;
   submit: string;
   checking: string;
+  forgot: string;
 }
 
 function SubmitButton({ labels }: { labels: LoginLabels }) {
@@ -70,6 +72,12 @@ export function LoginForm({ next, labels }: { next: string; labels: LoginLabels 
       )}
 
       <SubmitButton labels={labels} />
+
+      <p className="mt-5 text-center">
+        <Link href="/dashboard/forgot" className="link-underline text-body-sm text-secondary">
+          {labels.forgot}
+        </Link>
+      </p>
     </form>
   );
 }

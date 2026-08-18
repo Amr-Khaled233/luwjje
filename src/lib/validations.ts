@@ -4,15 +4,19 @@ export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid 
 
 // ---------------------------------------------------------------- dashboard access
 
-/** The store has one dashboard password and no customer accounts. */
-export const changePasswordSchema = z
+/**
+ * The store has one dashboard password and no customer accounts. It is set
+ * only through the emailed reset link — there is no "change password" form
+ * behind the login, so a stolen session cannot lock the owner out.
+ */
+export const newPasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Enter the current password.'),
+    token: z.string().regex(/^[0-9a-f]{64}$/, 'That reset link is not valid.'),
     newPassword: z.string().min(8, 'Use at least 8 characters.').max(128),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'The new passwords do not match.',
+    message: 'The two passwords do not match.',
     path: ['confirmPassword'],
   });
 
@@ -73,10 +77,6 @@ export const productSchema = z.object({
   slug: z.string().trim().max(140).optional().or(z.literal('')),
   description: z.string().trim().max(5000).default(''),
   descriptionAr: z.string().trim().max(5000).default(''),
-  materialInfo: z.string().trim().max(2000).default(''),
-  materialInfoAr: z.string().trim().max(2000).default(''),
-  careInfo: z.string().trim().max(2000).default(''),
-  careInfoAr: z.string().trim().max(2000).default(''),
   price: z.coerce.number().min(0.01, 'Price must be greater than zero.').max(10000000),
   compareAtPrice: z.coerce.number().min(0).max(10000000).optional().nullable(),
   sku: z.string().trim().max(60).optional().or(z.literal('')),

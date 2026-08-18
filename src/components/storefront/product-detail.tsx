@@ -25,8 +25,6 @@ interface DetailProduct {
   slug: string;
   name: string;
   description: string;
-  materialInfo: string;
-  careInfo: string;
   price: number;
   listPrice: number;
   discounted: boolean;
@@ -328,22 +326,13 @@ export function ProductDetail({
 
         {/* accordions */}
         <div className="mt-10 border-t border-outline-variant md:mt-stack-md">
-          {product.materialInfo && (
-            <Accordion title={t.product.material}>
-              <p className="whitespace-pre-line">{product.materialInfo}</p>
-            </Accordion>
-          )}
-          {product.careInfo && (
-            <Accordion title={t.product.care}>
-              <p className="whitespace-pre-line">{product.careInfo}</p>
-            </Accordion>
-          )}
+          {/*
+            Material and Care used to live here, but they were four fields to
+            fill in per product for two panels most shoppers never open. What
+            is left is the same for every item and needs no data entry.
+          */}
           <Accordion title={t.product.shippingReturns}>
-            <p>
-              Dispatched within two working days. Shipping is calculated at checkout by destination
-              and is complimentary above the threshold shown in your bag. Return anything unworn
-              within 30 days for a full refund.
-            </p>
+            <p>{t.product.shippingReturnsBody}</p>
           </Accordion>
         </div>
       </div>

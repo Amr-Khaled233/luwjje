@@ -25,10 +25,6 @@ export interface EditableProduct {
   slug: string;
   description: string;
   descriptionAr: string;
-  materialInfo: string;
-  materialInfoAr: string;
-  careInfo: string;
-  careInfoAr: string;
   price: number;
   compareAtPrice: number | null;
   sku: string | null;
@@ -57,10 +53,6 @@ const EMPTY: ProductInput = {
   slug: '',
   description: '',
   descriptionAr: '',
-  materialInfo: '',
-  materialInfoAr: '',
-  careInfo: '',
-  careInfoAr: '',
   price: 0,
   compareAtPrice: null,
   sku: '',
@@ -112,10 +104,6 @@ export function ProductEditor({
         slug: product.slug,
         description: product.description,
         descriptionAr: product.descriptionAr,
-        materialInfo: product.materialInfo,
-        materialInfoAr: product.materialInfoAr,
-        careInfo: product.careInfo,
-        careInfoAr: product.careInfoAr,
         price: product.price,
         compareAtPrice: product.compareAtPrice,
         sku: product.sku ?? '',
@@ -282,48 +270,6 @@ export function ProductEditor({
               />
             )}
           />
-          <Controller
-            control={form.control}
-            name="materialInfo"
-            render={({ field: en }) => (
-              <Controller
-                control={form.control}
-                name="materialInfoAr"
-                render={({ field: ar }) => (
-                  <BilingualField
-                    label={d.products.material}
-                    rows={3}
-                    hint={d.products.accordionHint}
-                    english={{ value: en.value, onChange: en.onChange }}
-                    arabic={{ value: ar.value, onChange: ar.onChange }}
-                    errorEn={form.formState.errors.materialInfo?.message}
-                    errorAr={form.formState.errors.materialInfoAr?.message}
-                  />
-                )}
-              />
-            )}
-          />
-          <Controller
-            control={form.control}
-            name="careInfo"
-            render={({ field: en }) => (
-              <Controller
-                control={form.control}
-                name="careInfoAr"
-                render={({ field: ar }) => (
-                  <BilingualField
-                    label={d.products.care}
-                    rows={3}
-                    hint={d.products.accordionHint}
-                    english={{ value: en.value, onChange: en.onChange }}
-                    arabic={{ value: ar.value, onChange: ar.onChange }}
-                    errorEn={form.formState.errors.careInfo?.message}
-                    errorAr={form.formState.errors.careInfoAr?.message}
-                  />
-                )}
-              />
-            )}
-          />
         </section>
 
         {/* ------------------------------------------------------- images */}
@@ -455,16 +401,6 @@ export function ProductEditor({
                   />
                 </div>
 
-                <div className="md:col-span-1">
-                  <Input
-                    label={d.products.lowAt}
-                    type="number"
-                    min="0"
-                    error={form.formState.errors.variants?.[index]?.lowStockAt?.message}
-                    {...form.register(`variants.${index}.lowStockAt`)}
-                  />
-                </div>
-
                 <div className="col-span-2 flex items-end md:col-span-1">
                   <button
                     type="button"
@@ -491,13 +427,6 @@ export function ProductEditor({
             <option value="PUBLISHED">{d.products.publishedVisible}</option>
             <option value="DRAFT">{d.products.draftHidden}</option>
           </Select>
-
-          <Input
-            label={d.products.internalSku}
-            containerClassName="min-w-[200px]"
-            hint={d.products.internalSkuHint}
-            {...form.register('sku')}
-          />
 
           <Controller
             control={form.control}

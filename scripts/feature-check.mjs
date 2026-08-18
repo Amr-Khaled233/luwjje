@@ -44,7 +44,10 @@ check('English product name', pEn.includes('The Classic Snood'));
 check('Arabic product name', pAr.includes('سنود كلاسيك'));
 check('Arabic colourway name', pAr.includes('رمادي فحمي'));
 check('Arabic Add-to-bag label', pAr.includes('أضِف إلى الحقيبة'));
-check('Arabic accordion titles', pAr.includes('الخامة والمقاسات') && pAr.includes('العناية'));
+// Material and Care were dropped from the product form; Shipping & Returns is
+// the one accordion left, and it needs no data entry.
+check('Arabic accordion title', pAr.includes('الشحن والإرجاع'));
+check('English accordion title', pEn.includes('Shipping &amp; Returns') || pEn.includes('Shipping & Returns'));
 
 console.log('\n▸ Currency');
 check('English price in EGP', /EGP\s?1,250/.test(pEn), pEn.match(/EGP[^<]{0,12}/)?.[0]);

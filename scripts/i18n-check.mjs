@@ -11,7 +11,7 @@
 import './load-env.ts';
 import { getDictionary, fmt } from '../src/i18n/dictionaries.ts';
 import { getDashboardDictionary } from '../src/i18n/dashboard-dictionary.ts';
-import { COOKIE_NAME, createSessionToken } from '../src/lib/session-token.ts';
+import { staffCookie } from './session.mjs';
 import { prisma } from '../src/lib/prisma.ts';
 
 const BASE = process.env.SECURITY_BASE ?? 'http://localhost:3000';
@@ -170,7 +170,7 @@ const DASHBOARD = [
   '/dashboard/settings',
 ];
 
-const session = await createSessionToken();
+const staff = await staffCookie();
 
 async function page(path, locale, extraCookie = '') {
   const cookie = [`luwjje_locale=${locale}`, extraCookie].filter(Boolean).join('; ');
@@ -203,9 +203,8 @@ for (const path of STOREFRONT) {
 }
 
 console.log('\n▸ Dashboard in Arabic');
-const staffCookie = `${COOKIE_NAME}=${session}`;
 for (const path of DASHBOARD) {
-  const ar = await page(path, 'ar', staffCookie);
+  const ar = await page(path, 'ar', staff);
   const arabic = ARABIC.test(visibleText(ar.html));
   const rtl = /dir="rtl"/.test(ar.html);
   check(`${path} — 200, rtl, Arabic text`, ar.status === 200 && rtl && arabic, `status ${ar.status}, rtl ${rtl}, arabic ${arabic}`);
@@ -213,7 +212,7 @@ for (const path of DASHBOARD) {
 
 console.log('\n▸ Dashboard in English');
 for (const path of DASHBOARD) {
-  const en = await page(path, 'en', staffCookie);
+  const en = await page(path, 'en', staff);
   check(`${path} — 200`, en.status === 200, en.status);
 }
 
@@ -222,7 +221,7 @@ console.log('\n▸ No raw placeholders reach the page');
 // that would have caught it.
 for (const path of [...STOREFRONT, ...DASHBOARD]) {
   for (const locale of ['en', 'ar']) {
-    const rendered = await page(path, locale, staffCookie);
+    const rendered = await page(path, locale, staff);
     const leaked = visibleText(rendered.html).match(/\{[a-zA-Z_]\w*\}/g);
     if (leaked) {
       check(`${path} (${locale}) has no unsubstituted placeholder`, false, leaked.join(', '));
@@ -235,7 +234,7 @@ console.log(`  ✓ ${(STOREFRONT.length + DASHBOARD.length) * 2} pages checked`)
 
 console.log('\n▸ The dashboard language toggle');
 for (const locale of ['en', 'ar']) {
-  const shell = await page('/dashboard/orders', locale, staffCookie);
+  const shell = await page('/dashboard/orders', locale, staff);
   check(
     `both languages are offered in ${locale}`,
     shell.html.includes('English') && shell.html.includes('العربية'),

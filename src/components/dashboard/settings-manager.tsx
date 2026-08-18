@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Loader2, ExternalLink, KeyRound } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea, Select, Checkbox } from '@/components/ui/field';
 import { StatusBadge, EmptyState } from '@/components/ui/primitives';
@@ -17,20 +17,14 @@ import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { settingsSchema, pageSchema, changePasswordSchema } from '@/lib/validations';
-import {
-  saveSettings,
-  savePage,
-  deletePage,
-  changeDashboardPassword,
-} from '@/app/actions/dashboard';
+import { settingsSchema, pageSchema } from '@/lib/validations';
+import { saveSettings, savePage, deletePage } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
 type SettingsInput = z.infer<typeof settingsSchema>;
 type PageInput = z.infer<typeof pageSchema>;
-type PasswordInput = z.infer<typeof changePasswordSchema>;
 
-const TAB_KEYS = ['store', 'pages', 'password'] as const;
+const TAB_KEYS = ['store', 'pages'] as const;
 type Tab = (typeof TAB_KEYS)[number];
 
 const EMPTY_PAGE: PageInput = {
@@ -47,16 +41,7 @@ const EMPTY_PAGE: PageInput = {
   position: 0,
 };
 
-export function SettingsManager({
-  settings,
-  pages,
-  usingEnvPassword,
-}: {
-  settings: SettingsInput;
-  pages: PageInput[];
-  /** True while the password still comes from DASHBOARD_PASSWORD in .env. */
-  usingEnvPassword: boolean;
-}) {
+export function SettingsManager({ settings, pages }: { settings: SettingsInput; pages: PageInput[] }) {
   const router = useRouter();
   const { toast } = useToast();
   const { d } = useDash();
@@ -64,7 +49,6 @@ export function SettingsManager({
   const TAB_LABELS: Record<Tab, string> = {
     store: d.settings.tabStore,
     pages: d.settings.tabPages,
-    password: d.settings.tabPassword,
   };
   const [pending, setPending] = React.useState(false);
 
@@ -76,11 +60,6 @@ export function SettingsManager({
   const pageForm = useForm<PageInput>({
     resolver: zodResolver(pageSchema),
     defaultValues: EMPTY_PAGE,
-  });
-
-  const passwordForm = useForm<PasswordInput>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   });
 
   const [pageModal, setPageModal] = React.useState<{ open: boolean; data: PageInput | null }>({
@@ -430,86 +409,6 @@ export function SettingsManager({
             )}
           </section>
         </>
-      )}
-
-      {/* ---------------------------------------------------------- password */}
-      {tab === 'password' && (
-        <div className="max-w-[560px]">
-          {usingEnvPassword && (
-            <div className="mb-6 border border-outline-variant bg-surface-low p-5">
-              <p className="label-caps mb-2 text-secondary">{d.settings.envWarning}</p>
-              <p className="text-body-md text-secondary">
-                The dashboard is still using <code>DASHBOARD_PASSWORD</code> from your{' '}
-                <code>.env</code> file. Set a password here and it is stored hashed in the
-                database instead — the env value then becomes irrelevant.
-              </p>
-            </div>
-          )}
-
-          <form
-            onSubmit={passwordForm.handleSubmit(async (values) => {
-              const ok = await run(
-                () => changeDashboardPassword(values),
-                d.settings.passwordChanged,
-              );
-              if (ok) passwordForm.reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            })}
-            noValidate
-            className="border border-outline-variant bg-surface-lowest p-6"
-          >
-            <div className="flex items-center gap-3">
-              <KeyRound className="h-5 w-5 text-secondary" />
-              <h2 className="font-display text-headline-sm">{d.settings.passwordTitle}</h2>
-            </div>
-            <p className="mt-2 text-body-sm text-secondary">
-              One password protects <code>/dashboard</code>. There are no customer accounts, so
-              this is the only login in the store.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-6">
-              <Input
-                label={d.settings.currentPassword}
-                type="password"
-                autoComplete="current-password"
-                required
-                error={passwordForm.formState.errors.currentPassword?.message}
-                {...passwordForm.register('currentPassword')}
-              />
-              <Input
-                label={d.settings.newPassword}
-                type="password"
-                autoComplete="new-password"
-                required
-                hint="At least 8 characters."
-                error={passwordForm.formState.errors.newPassword?.message}
-                {...passwordForm.register('newPassword')}
-              />
-              <Input
-                label={d.settings.confirmPassword}
-                type="password"
-                autoComplete="new-password"
-                required
-                error={passwordForm.formState.errors.confirmPassword?.message}
-                {...passwordForm.register('confirmPassword')}
-              />
-            </div>
-
-            <Button type="submit" size="lg" className="mt-8" disabled={passwordForm.formState.isSubmitting}>
-              {passwordForm.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
-                </>
-              ) : (
-                d.settings.changePassword
-              )}
-            </Button>
-          </form>
-
-          <p className="mt-6 text-body-sm text-tertiary">
-            Sessions last 12 hours. Signing out from the sidebar ends the current one; changing
-            the password does not close sessions already open elsewhere.
-          </p>
-        </div>
       )}
 
       {/* -------------------------------------------------------- page modal */}

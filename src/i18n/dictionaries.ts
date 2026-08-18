@@ -64,8 +64,6 @@ const en = {
     added: 'Added',
     onlyLeft: 'Only {n} left in this colourway.',
     combinationSoldOut: 'This combination is sold out.',
-    material: 'Material & Dimensions',
-    care: 'Care',
     shippingReturns: 'Shipping & Returns',
     shippingReturnsBody:
       'Dispatched within two working days. Shipping is calculated at checkout by governorate and is complimentary above the threshold shown in your bag. Return anything unworn within 14 days.',
@@ -260,8 +258,6 @@ const ar: Dictionary = {
     added: 'تمت الإضافة',
     onlyLeft: 'باقي {n} فقط من هذا اللون.',
     combinationSoldOut: 'هذا الاختيار نفدت كميته.',
-    material: 'الخامة والمقاسات',
-    care: 'العناية',
     shippingReturns: 'الشحن والإرجاع',
     shippingReturnsBody:
       'يتم الشحن خلال يومي عمل. تُحسب تكلفة الشحن عند الدفع حسب المحافظة، وتكون مجانية فوق الحد الموضّح في حقيبتك. يمكنك الإرجاع خلال 14 يوماً طالما لم تُستخدم القطعة.',

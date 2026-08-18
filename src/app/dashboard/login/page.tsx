@@ -50,6 +50,7 @@ export default async function DashboardLoginPage({
               hide: d.hide,
               submit: d.submit,
               checking: d.checking,
+              forgot: d.forgot,
             }}
           />
         </div>

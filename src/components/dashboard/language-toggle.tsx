@@ -7,13 +7,14 @@ import { LOCALES, LOCALE_LABEL, type Locale } from '@/i18n/config';
 import { cn } from '@/lib/utils';
 
 /**
- * Two labelled halves rather than the storefront's single toggle link.
+ * Both languages side by side with the current one filled, so the operator can
+ * see at a glance which language the dashboard is in.
  *
- * On the storefront a shopper reading English only needs to see "العربية" to
- * know where the other language is. Here both are shown with the current one
- * filled, so the operator can see at a glance which language the dashboard is
- * in — the same reason a settings screen shows a segmented control instead of
- * a link that says "switch".
+ * On a phone that context is not worth the width — the surrounding page is
+ * already visibly in one language — so only the language you would switch *to*
+ * is shown, matching the storefront switcher. Done in CSS rather than by
+ * branching on a breakpoint in JS, which would need a resize listener and
+ * would render the wrong half on the server.
  */
 export function DashboardLanguageToggle({
   locale,
@@ -53,9 +54,9 @@ export function DashboardLanguageToggle({
             disabled={pending}
             aria-pressed={active}
             className={cn(
-              'label-caps flex-1 py-2.5 transition-colors duration-200 ease-scandi disabled:cursor-wait',
+              'label-caps flex-1 px-3 py-2.5 transition-colors duration-200 ease-scandi disabled:cursor-wait',
               active
-                ? 'bg-navy text-background'
+                ? 'bg-navy text-background max-md:hidden'
                 : 'text-secondary hover:bg-surface-low hover:text-on-surface',
               // Arabic reads better in its own body face than in label caps.
               option === 'ar' && 'font-sans',

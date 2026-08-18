@@ -8,11 +8,17 @@ import { COOKIE_NAME, verifySessionToken } from '@/lib/session-token';
  * itself is never checked here. The dashboard layout repeats the check
  * server-side so protection never depends on middleware alone.
  */
+/**
+ * Reachable without a session, because they are how you get one back. The
+ * reset page validates its own token, and the forgot page mails a fixed
+ * address, so neither is an opening.
+ */
+const PUBLIC_PATHS = new Set(['/dashboard/login', '/dashboard/forgot', '/dashboard/reset']);
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // The password screen itself must stay reachable.
-  if (pathname === '/dashboard/login') return NextResponse.next();
+  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
 
   const valid = await verifySessionToken(req.cookies.get(COOKIE_NAME)?.value);
   if (valid) return NextResponse.next();

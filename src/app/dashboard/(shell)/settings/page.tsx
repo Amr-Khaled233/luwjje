@@ -57,7 +57,6 @@ export default async function DashboardSettingsPage() {
           showInFooter: p.showInFooter,
           position: p.position,
         }))}
-        usingEnvPassword={!settings.dashboardPasswordHash}
       />
     </div>
   );

@@ -27,7 +27,8 @@ docker run -d --name luwjje-pg \
   -e POSTGRES_USER=luwjje -e POSTGRES_PASSWORD=luwjje -e POSTGRES_DB=luwjje \
   -p 5434:5432 postgres:16-alpine
 
-# 2. cp .env.example .env  and fill DATABASE_URL, AUTH_SECRET, DASHBOARD_PASSWORD
+# 2. cp .env.example .env  and fill DATABASE_URL, AUTH_SECRET, DASHBOARD_PASSWORD,
+#    PASSWORD_RESET_EMAIL
 #    (the committed .env already points at the container above)
 
 npm install          # also runs prisma generate
@@ -43,23 +44,39 @@ Open **http://localhost:3000/dashboard** → a password screen appears.
 
 Default password: **`luwjje-admin`** (set by `DASHBOARD_PASSWORD` in `.env`).
 
-Change it from **Settings → Password**. Once changed it is stored bcrypt-hashed in the database
-and the `.env` value stops mattering.
+**Changing it.** There is no "change password" form inside the dashboard. The only way to set a
+new password is **Forgot the password?** on the sign-in screen, which emails a link to one fixed
+address. That is deliberate: a stolen session cannot lock the owner out, and there is no
+recipient field for an attacker to point somewhere else. Once a password is set this way it is
+stored bcrypt-hashed and the `.env` value stops mattering.
+
+Set the destination with `PASSWORD_RESET_EMAIL`, and give the app a way to send:
+
+| | |
+| --- | --- |
+| `RESEND_API_KEY` | Resend's HTTP API. No dependency — it is a `fetch` call. Set `MAIL_FROM` once you have verified a domain. |
+| `SMTP_HOST` (+ `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`) | Any mailbox, including Gmail with an app password. |
+| neither | The link is printed to the server log. Fine for development; the page says so rather than pretending it sent. |
+
+A link lasts 30 minutes, works once, and asking for a new one voids the previous. Using it also
+bumps `sessionEpoch`, which is baked into every session cookie — so a reset signs out whoever
+was already inside, which is the point of resetting.
 
 ### Verify it works
 
 ```bash
 npm run smoke        # 33 checks: pricing, promos, shipping, the order transaction, oversell
 npm run gate         # 50 checks: password gate, session signing, order privacy, route access
-npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
+npm run features     # 36 checks: Arabic/RTL, EGP, governorates, filter controls
 npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
 npm run orders       # 45 checks: the order lifecycle end to end
 npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
 npm run i18n         # 101 checks: placeholder substitution, dictionary coverage, every page in both languages
 npm run responsive   # 68 checks: RTL-safe layout, touch targets, motion, phone rendering
+npm run reset        # 42 checks: the emailed password-reset flow end to end
 ```
 
-410 checks in total. `features`, `security` and `i18n` need a running server
+453 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.
@@ -100,13 +117,15 @@ What is in place, and what `npm run security` proves on every run:
 | **Money** | Prices, discounts, delivery and stock are recomputed server-side from the database on every request. Nothing the browser sends about a price is read. Stock is re-checked and decremented inside one transaction, so two shoppers cannot both take the last piece. |
 | **Session** | HMAC-SHA256 over an expiry, httpOnly + SameSite cookie, constant-time comparison. A forged, unsigned or expired cookie is refused by both middleware and the layout. |
 | **Login** | bcrypt against the stored hash, 8 attempts per 15 minutes per IP, `?next=` validated so it can only send you inside `/dashboard`. |
+| **Recovery** | The reset link goes to one address fixed in the environment, so there is no recipient to poison. Only the SHA-256 of the token is stored, it is single-use and expires in 30 minutes, and using it invalidates every open session. Three requests an hour per IP. |
 | **Injection** | Every query goes through Prisma's parameterised client — there is no raw SQL in `src/`. All input is validated with Zod before it reaches the database. JSON-LD is escaped so a product name cannot break out of its `<script>` tag. |
 | **Headers** | CSP (`frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`), nosniff, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy, HSTS. `X-Powered-By` removed. The image optimiser is limited to two hosts so it cannot be used as an open proxy. |
 | **Uploads** | JPEG/PNG/WebP/AVIF only — SVG is refused because it can carry script. Size and count capped, and uploaded paths are served with `default-src 'none'; sandbox`. |
 | **Abuse** | Order lookup, newsletter, tracking and cart re-pricing are all rate-limited per IP. |
 
-Two things are yours to set: a long random `AUTH_SECRET`, and a `DASHBOARD_PASSWORD`
-you change from Settings on first login.
+Yours to set: a long random `AUTH_SECRET`, a first-run `DASHBOARD_PASSWORD`, and a
+`PASSWORD_RESET_EMAIL` you can actually receive mail at — it is the only way back in
+if the password is lost.
 
 ---
 
@@ -130,6 +149,8 @@ you change from Settings on first login.
 | Route | What it controls |
 | --- | --- |
 | `/dashboard/login` | The password screen |
+| `/dashboard/forgot` | Mails a reset link to the recovery address — no email field, the recipient is fixed |
+| `/dashboard/reset` | Sets a new password from a valid link, and signs out every other session |
 | _every page_ | An English / العربية toggle in the sidebar, shown regardless of the storefront language setting — that toggle is about shoppers, not about who runs the store |
 | `/dashboard` | Redirects to Orders — there is no separate Overview page |
 | `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering. Every text field has an EN/ع toggle |
@@ -141,7 +162,7 @@ you change from Settings on first login.
 | `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
 | `/dashboard/analytics` | Revenue over time, top products, top categories, status breakdown, and the Excel export |
-| `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages, **password** |
+| `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages |
 
 ---
 
@@ -350,6 +371,7 @@ every `requireDashboard()` call site stay as they are.
 | `npm run security` | Security checks |
 | `npm run i18n` | Arabic/English coverage checks |
 | `npm run responsive` | Responsive and motion checks |
+| `npm run reset` | Password-recovery checks |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:reset` | Drop, re-migrate and re-seed |

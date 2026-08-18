@@ -18,7 +18,6 @@ import {
   LogOut,
   Menu,
   X,
-  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDash } from './dashboard-i18n';
@@ -108,7 +107,7 @@ export function DashboardSidebar({ storeName, locale }: { storeName: string; loc
         </Link>
         {/* Also on the bar, so switching language on a phone does not mean
             opening the menu first. */}
-        <DashboardLanguageToggle locale={locale} className="w-[104px] shrink-0" />
+        <DashboardLanguageToggle locale={locale} className="shrink-0" />
       </header>
 
       {open && (
@@ -160,14 +159,6 @@ export function DashboardSidebar({ storeName, locale }: { storeName: string; loc
           <div className="mb-2 px-4 pt-1">
             <DashboardLanguageToggle locale={locale} />
           </div>
-          <Link
-            href="/"
-            target="_blank"
-            className="mb-1 flex items-center gap-3 px-4 py-3 text-label-md text-secondary transition-colors hover:text-on-surface"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {d.nav.viewStorefront}
-          </Link>
           <form action={logout}>
             <button
               type="submit"

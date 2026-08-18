@@ -7,10 +7,11 @@
  *   npm run dash
  */
 import './load-env.ts';
-import { COOKIE_NAME, createSessionToken } from '../src/lib/session-token.ts';
+import { COOKIE_NAME, staffCookie } from './session.mjs';
 
 const BASE = process.env.DASH_BASE ?? 'http://localhost:3000';
-const token = await createSessionToken();
+const cookie = await staffCookie();
+const token = cookie.split('=').slice(1).join('=');
 const EN = { cookie: `${COOKIE_NAME}=${token}; luwjje_locale=en` };
 const AR = { cookie: `${COOKIE_NAME}=${token}; luwjje_locale=ar` };
 

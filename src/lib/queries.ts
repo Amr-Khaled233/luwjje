@@ -212,8 +212,6 @@ export async function getProductBySlug(slug: string, locale: Locale) {
     categoryId: product.categoryId,
     name: pick(locale, product.name, product.nameAr),
     description: pick(locale, product.description, product.descriptionAr),
-    materialInfo: pick(locale, product.materialInfo, product.materialInfoAr),
-    careInfo: pick(locale, product.careInfo, product.careInfoAr),
     categoryName: product.category ? pick(locale, product.category.name, product.category.nameAr) : null,
     categorySlug: product.category?.slug ?? null,
     sku: product.sku,
