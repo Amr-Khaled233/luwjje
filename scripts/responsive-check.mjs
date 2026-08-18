@@ -220,6 +220,44 @@ const tableWrap = files.find((f) => f.path.endsWith('admin-ui.tsx'))?.source ?? 
 check('tables scroll rather than overflow the page', tableWrap.includes('overflow-x-auto'));
 check('and that scroll does not become a back-swipe', tableWrap.includes('overscroll-x-contain'));
 
+console.log('\n▸ Direction variants cannot outrank a breakpoint');
+/**
+ * Tailwind compiles `ltr:`/`rtl:` to a `:where()` selector, which contributes
+ * no specificity — so `ltr:-translate-x-full` and `md:translate-x-0` tie at
+ * (0,1,0) and source order decides. `ltr:` is emitted last, which pinned the
+ * dashboard sidebar off-screen at every width. Scope the direction variant to
+ * `max-md:` instead, so the two ranges cannot overlap.
+ */
+const clashes = [];
+for (const { path, source } of files) {
+  for (const line of source.split('\n')) {
+    if (!line.includes('ltr:') && !line.includes('rtl:')) continue;
+    for (const match of line.matchAll(/(?<!max-\w\w:)\b(ltr|rtl):-?([a-z]+(?:-[a-z]+)*)-/g)) {
+      const property = match[2];
+      // Does an unprefixed responsive utility for the same property appear
+      // on the same line, hoping to override it?
+      const rival = new RegExp(`\\b(sm|md|lg|xl):-?${property}-`);
+      if (rival.test(line)) clashes.push(`${path}: ${match[0]}… vs ${property}`);
+    }
+  }
+}
+check(
+  'no ltr:/rtl: utility competes with a breakpoint on the same property',
+  clashes.length === 0,
+  clashes.slice(0, 5).join(' | '),
+);
+
+console.log('\n▸ The dashboard sidebar is visible on a desktop');
+const desktopShell = await html('/dashboard/orders', staff);
+const aside = desktopShell.body.match(/<aside[^>]*class="([^"]*)"/)?.[1] ?? '';
+check('the sidebar renders', aside.length > 0);
+check(
+  'it is not translated away outside the phone breakpoint',
+  !/(?<!max-md:)(ltr|rtl):-?translate-x-full/.test(aside),
+  aside.slice(0, 160),
+);
+check('and it is off-canvas on a phone', /max-md:(ltr|rtl):/.test(aside), aside.slice(0, 160));
+
 console.log('\n▸ Outbound links');
 const footer = files.find((f) => f.path.endsWith('site-footer.tsx'))?.source ?? '';
 check('social links open in a new tab', footer.includes('target="_blank"'));

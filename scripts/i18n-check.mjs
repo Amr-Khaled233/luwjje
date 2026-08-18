@@ -9,7 +9,7 @@
  * Arabic, right-to-left, when the locale cookie says so.
  */
 import './load-env.ts';
-import { getDictionary } from '../src/i18n/dictionaries.ts';
+import { getDictionary, fmt } from '../src/i18n/dictionaries.ts';
 import { getDashboardDictionary } from '../src/i18n/dashboard-dictionary.ts';
 import { COOKIE_NAME, createSessionToken } from '../src/lib/session-token.ts';
 import { prisma } from '../src/lib/prisma.ts';
@@ -78,6 +78,56 @@ function audit(label, base, translated) {
   check(`${label}: placeholders survive translation`, mismatched.length === 0, mismatched.slice(0, 6).join(', '));
   check(`${label}: no English left behind`, untranslated.length === 0, untranslated.slice(0, 8).join(' | '));
 }
+
+console.log('\n▸ Placeholder substitution');
+// Parity between dictionaries is not enough: fmt itself has to work. It once
+// read /{(w+)}/ instead of /\{(\w+)\}/, which matches a literal "w" — so every
+// {n}, {days} and {amount} in the app rendered as the raw placeholder.
+check('a single placeholder is replaced', fmt('{n} orders', { n: 7 }) === '7 orders');
+check(
+  'several placeholders are replaced',
+  fmt('{amount} across {days} days', { amount: 'EGP5', days: 30 }) === 'EGP5 across 30 days',
+);
+check('the same placeholder twice', fmt('{n} of {n}', { n: 3 }) === '3 of 3');
+check('a zero value is not skipped', fmt('{n} left', { n: 0 }) === '0 left');
+check('Arabic text around a placeholder survives', fmt('{n} طلب', { n: 4 }) === '4 طلب');
+check('an unknown placeholder is left alone', fmt('{who} here', { n: 1 }) === '{who} here');
+check('a template with no placeholder is untouched', fmt('plain', { n: 1 }) === 'plain');
+
+/** Every dictionary string carrying a {placeholder}, with its path. */
+function templates(tree, path = '') {
+  const out = [];
+  for (const [key, value] of Object.entries(tree)) {
+    const here = path ? `${path}.${key}` : key;
+    if (value && typeof value === 'object') out.push(...templates(value, here));
+    else if (typeof value === 'string' && /\{\w+\}/.test(value)) out.push([here, value]);
+  }
+  return out;
+}
+
+// Feed every real template a value for each of its own placeholders and prove
+// nothing is left unsubstituted.
+const unresolved = [];
+for (const dictionary of [
+  getDictionary('en'),
+  getDictionary('ar'),
+  getDashboardDictionary('en'),
+  getDashboardDictionary('ar'),
+]) {
+  for (const [path, template] of templates(dictionary)) {
+    const values = {};
+    for (const token of template.match(/\{(\w+)\}/g) ?? []) {
+      values[token.slice(1, -1)] = 'X';
+    }
+    const rendered = fmt(template, values);
+    if (/\{\w+\}/.test(rendered)) unresolved.push(`${path}: ${rendered}`);
+  }
+}
+check(
+  'every dictionary template renders with no placeholder left',
+  unresolved.length === 0,
+  unresolved.slice(0, 5).join(' | '),
+);
 
 console.log('\n▸ Dictionaries');
 audit('storefront', getDictionary('en'), getDictionary('ar'));
@@ -165,6 +215,35 @@ console.log('\n▸ Dashboard in English');
 for (const path of DASHBOARD) {
   const en = await page(path, 'en', staffCookie);
   check(`${path} — 200`, en.status === 200, en.status);
+}
+
+console.log('\n▸ No raw placeholders reach the page');
+// The `{n} orders` bug was visible on screen for a week; this is the check
+// that would have caught it.
+for (const path of [...STOREFRONT, ...DASHBOARD]) {
+  for (const locale of ['en', 'ar']) {
+    const rendered = await page(path, locale, staffCookie);
+    const leaked = visibleText(rendered.html).match(/\{[a-zA-Z_]\w*\}/g);
+    if (leaked) {
+      check(`${path} (${locale}) has no unsubstituted placeholder`, false, leaked.join(', '));
+    } else {
+      pass++;
+    }
+  }
+}
+console.log(`  ✓ ${(STOREFRONT.length + DASHBOARD.length) * 2} pages checked`);
+
+console.log('\n▸ The dashboard language toggle');
+for (const locale of ['en', 'ar']) {
+  const shell = await page('/dashboard/orders', locale, staffCookie);
+  check(
+    `both languages are offered in ${locale}`,
+    shell.html.includes('English') && shell.html.includes('العربية'),
+  );
+  check(
+    `the current language is marked in ${locale}`,
+    /aria-pressed="true"/.test(shell.html),
+  );
 }
 
 // ---------------------------------------------------------------- prices

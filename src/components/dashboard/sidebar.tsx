@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useDash } from './dashboard-i18n';
 import { useScrollLock, useFocusTrap } from '@/components/ui/motion';
-import { LanguageSwitcher } from '@/components/storefront/language-switcher';
+import { DashboardLanguageToggle } from './language-toggle';
 import type { Locale } from '@/i18n/config';
 import type { DashboardDictionary } from '@/i18n/dashboard-dictionary';
 
@@ -40,15 +40,7 @@ const LINKS: { href: string; key: keyof DashboardDictionary['nav']; icon: typeof
   { href: '/dashboard/settings', key: 'settings', icon: Settings },
 ];
 
-export function DashboardSidebar({
-  storeName,
-  locale,
-  showLanguageSwitcher,
-}: {
-  storeName: string;
-  locale: Locale;
-  showLanguageSwitcher: boolean;
-}) {
+export function DashboardSidebar({ storeName, locale }: { storeName: string; locale: Locale }) {
   const pathname = usePathname();
   const { d } = useDash();
   const [open, setOpen] = React.useState(false);
@@ -111,9 +103,12 @@ export function DashboardSidebar({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link href="/dashboard/orders" className="min-w-0 truncate">
+        <Link href="/dashboard/orders" className="min-w-0 flex-1 truncate">
           <span className="font-latin text-[18px] font-medium leading-none">{storeName}</span>
         </Link>
+        {/* Also on the bar, so switching language on a phone does not mean
+            opening the menu first. */}
+        <DashboardLanguageToggle locale={locale} className="w-[104px] shrink-0" />
       </header>
 
       {open && (
@@ -123,12 +118,19 @@ export function DashboardSidebar({
         />
       )}
 
+      {/*
+        The off-canvas transform is scoped to `max-md:` rather than being
+        undone by `md:translate-x-0`. Tailwind compiles `ltr:` to a `:where()`
+        selector, which adds no specificity, so the two rules tie at (0,1,0)
+        and whichever Tailwind emits last wins — `ltr:` does, which pinned the
+        sidebar off-screen on desktop as well. Two ranges that cannot overlap
+        cannot tie.
+      */}
       <aside
         ref={panelRef}
-        aria-hidden={!open ? undefined : false}
         className={cn(
           'fixed inset-y-0 start-0 z-50 flex w-[min(84vw,280px)] flex-col border-e border-outline-variant bg-background transition-transform duration-300 ease-scandi md:w-[280px]',
-          open ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full md:translate-x-0',
+          !open && 'max-md:ltr:-translate-x-full max-md:rtl:translate-x-full',
         )}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 px-6 py-6 md:px-8 md:py-8">
@@ -150,11 +152,14 @@ export function DashboardSidebar({
         {nav}
 
         <div className="shrink-0 border-t border-outline-variant p-4 pb-safe">
-          {showLanguageSwitcher && (
-            <div className="mb-1 px-4 py-3">
-              <LanguageSwitcher locale={locale} />
-            </div>
-          )}
+          {/*
+            Always shown, unlike the storefront switcher. `enableArabic` decides
+            what shoppers get; whoever runs the store still needs to read the
+            dashboard in their own language either way.
+          */}
+          <div className="mb-2 px-4 pt-1">
+            <DashboardLanguageToggle locale={locale} />
+          </div>
           <Link
             href="/"
             target="_blank"

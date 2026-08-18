@@ -24,11 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardI18nProvider locale={locale} dictionary={dictionary}>
       <div className="flex min-h-screen bg-background">
-        <DashboardSidebar
-          storeName={settings.storeName}
-          locale={locale}
-          showLanguageSwitcher={settings.enableArabic}
-        />
+        <DashboardSidebar storeName={settings.storeName} locale={locale} />
         {/* pt-14 on phones clears the fixed dashboard top bar. */}
         <div className="min-w-0 flex-1 md:ps-[280px]">
           <div className="px-margin-mobile pb-12 pt-[calc(3.5rem+1.5rem)] md:px-10 md:py-10">

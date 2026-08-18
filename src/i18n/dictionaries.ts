@@ -409,7 +409,9 @@ export function getDictionary(locale: Locale): Dictionary {
  * Components" at render time.
  */
 export function fmt(template: string, values: Record<string, string | number>) {
-  return template.replace(/{(w+)}/g, (match, key) =>
+  // The braces are literal and the key is \w+ — an earlier version read
+  // /{(w+)}/ , which matches a literal "w" and so substituted nothing at all.
+  return template.replace(/\{(\w+)\}/g, (match, key) =>
     key in values ? String(values[key]) : match,
   );
 }

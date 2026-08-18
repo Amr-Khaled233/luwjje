@@ -55,11 +55,11 @@ npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
 npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
 npm run orders       # 45 checks: the order lifecycle end to end
 npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
-npm run i18n         # 49 checks: dictionary coverage plus every page in both languages
-npm run responsive   # 64 checks: RTL-safe layout, touch targets, motion, phone rendering
+npm run i18n         # 101 checks: placeholder substitution, dictionary coverage, every page in both languages
+npm run responsive   # 68 checks: RTL-safe layout, touch targets, motion, phone rendering
 ```
 
-354 checks in total. `features`, `security` and `i18n` need a running server
+410 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.
@@ -130,6 +130,7 @@ you change from Settings on first login.
 | Route | What it controls |
 | --- | --- |
 | `/dashboard/login` | The password screen |
+| _every page_ | An English / العربية toggle in the sidebar, shown regardless of the storefront language setting — that toggle is about shoppers, not about who runs the store |
 | `/dashboard` | Redirects to Orders — there is no separate Overview page |
 | `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering. Every text field has an EN/ع toggle |
 | `/dashboard/categories` | Rename, reorder, translate, and show or hide each category in the Shop filter |
