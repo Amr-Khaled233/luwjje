@@ -1,5 +1,5 @@
 /**
- * Password recovery checks.
+ * Password recovery and transactional email checks.
  *
  *   npm run reset
  *
@@ -16,7 +16,9 @@ import {
   purgeExpiredResets,
 } from '../src/lib/password-reset.ts';
 import { maskAddress, recoveryAddress } from '../src/lib/mailer.ts';
+import { buildOrderEmail, sendOrderConfirmation } from '../src/lib/order-email.ts';
 import { checkPassword } from '../src/lib/dashboard-auth.ts';
+import { formatPrice } from '../src/lib/utils.ts';
 import { createSessionToken, readSession } from '../src/lib/session-token.ts';
 import { readFileSync } from 'node:fs';
 
@@ -49,6 +51,32 @@ const originalHash = (
     select: { dashboardPasswordHash: true, sessionEpoch: true },
   })
 ) ?? { dashboardPasswordHash: null, sessionEpoch: 0 };
+
+/**
+ * This suite genuinely changes the dashboard password partway through, so the
+ * restore has to survive a crash. Without it, dying mid-run leaves the store
+ * on the test's throwaway password — and the next run captures *that* as the
+ * value to restore, so the real one is gone for good.
+ */
+let restored = false;
+async function restore() {
+  if (restored) return;
+  restored = true;
+  await prisma.passwordReset.deleteMany({});
+  await prisma.siteSettings.update({
+    where: { id: 'singleton' },
+    data: {
+      dashboardPasswordHash: originalHash.dashboardPasswordHash,
+      sessionEpoch: originalHash.sessionEpoch,
+    },
+  });
+  process.env.PASSWORD_RESET_EMAIL = previousEmail;
+}
+for (const signal of ['exit', 'SIGINT', 'uncaughtException', 'unhandledRejection']) {
+  process.once(signal, () => {
+    void restore();
+  });
+}
 
 // ---------------------------------------------------------------- config
 console.log('\n▸ Recovery address');
@@ -207,6 +235,73 @@ check('an unissued link is refused by the page', badLink.status === 200, badLink
 check('and it offers a new link instead of a form', badLink.body.includes('/dashboard/forgot'));
 check('no password fields are drawn for a dead link', !/name="newPassword"/.test(badLink.body));
 
+// ---------------------------------------------------------------- order email
+console.log('\n▸ Order confirmation email');
+const order = await prisma.order.findFirst({
+  include: { items: true },
+  orderBy: { createdAt: 'desc' },
+});
+
+if (!order) {
+  console.log('  … skipped: no orders to confirm.');
+} else {
+  const en = await buildOrderEmail(order.orderNumber, 'en');
+  const both = `${en.text}${en.html}`;
+
+  check('it is addressed to the customer, not the store', en.to === order.email, en.to);
+  check('the subject carries the order number', en.subject.includes(order.orderNumber));
+  // Compare against the formatter the storefront uses rather than guessing at
+  // separators and decimals — `formatPrice` drops the cents on whole amounts.
+  const settings = await prisma.siteSettings.findUnique({
+    where: { id: 'singleton' },
+    select: { currencySymbol: true },
+  });
+  const symbol = settings?.currencySymbol ?? 'EGP';
+  check(
+    'the total is in the body, formatted as on the site',
+    en.text.includes(formatPrice(order.total, symbol, 'en')),
+    formatPrice(order.total, symbol, 'en'),
+  );
+  check(
+    'and in the HTML part too',
+    en.html.includes(formatPrice(order.total, symbol, 'en').replace(/&/g, '&amp;')),
+  );
+  check('every line item is listed', order.items.every((i) => both.includes(i.name)));
+  check('quantities are shown', en.text.includes(`× ${order.items[0].quantity}`));
+  check('the delivery address is included', en.text.includes(order.governorate));
+  check('the buyer name is included', en.text.includes(order.fullName));
+  check('it links to order tracking', en.html.includes('/orders'));
+  check('both a text and an HTML part are built', en.text.length > 0 && en.html.length > 0);
+
+  const ar = await buildOrderEmail(order.orderNumber, 'ar');
+  check('the Arabic version is Arabic', /[؀-ۿ]/.test(ar.text));
+  check('the Arabic version is right-to-left', ar.html.includes('dir="rtl"'));
+  check('the Arabic subject still carries the order number', ar.subject.includes(order.orderNumber));
+
+  check('an unknown order number builds nothing', (await buildOrderEmail('NO-SUCH', 'en')) === null);
+  check(
+    'and sending one is refused quietly',
+    (await sendOrderConfirmation('NO-SUCH-ORDER', 'en')) === false,
+  );
+  check(
+    'with no transport a real order reports as not sent',
+    (await sendOrderConfirmation(order.orderNumber, 'en')) === false,
+    'claimed a send with no provider configured',
+  );
+
+  // A product name reaches the HTML email; it must not be able to carry markup
+  // into someone's inbox.
+  const item = await prisma.orderItem.findFirst({ where: { orderId: order.id } });
+  await prisma.orderItem.update({
+    where: { id: item.id },
+    data: { name: '<img src=x onerror=alert(1)>' },
+  });
+  const injected = await buildOrderEmail(order.orderNumber, 'en');
+  check('a product name cannot inject markup', !injected.html.includes('<img src=x onerror='));
+  check('it is escaped rather than dropped', injected.html.includes('&lt;img src=x'));
+  await prisma.orderItem.update({ where: { id: item.id }, data: { name: item.name } });
+}
+
 // ---------------------------------------------------------------- settings
 console.log('\n▸ The password is no longer editable from Settings');
 const settingsSource = readFileSync('src/components/dashboard/settings-manager.tsx', 'utf8');
@@ -216,17 +311,18 @@ const actions = readFileSync('src/app/actions/dashboard.ts', 'utf8');
 check('the change-password action is gone', !actions.includes('changeDashboardPassword'));
 
 // ---------------------------------------------------------------- restore
-process.env.PASSWORD_RESET_EMAIL = previousEmail;
-await prisma.passwordReset.deleteMany({});
-await prisma.siteSettings.update({
-  where: { id: 'singleton' },
-  data: {
-    dashboardPasswordHash: originalHash.dashboardPasswordHash,
-    sessionEpoch: originalHash.sessionEpoch,
-  },
-});
+await restore();
 const leftover = await prisma.passwordReset.count();
 check('the test cleaned up after itself', leftover === 0, leftover);
+check(
+  'the password is back to what it was',
+  (
+    await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { dashboardPasswordHash: true },
+    })
+  )?.dashboardPasswordHash === originalHash.dashboardPasswordHash,
+);
 
 console.log(`\n${fail === 0 ? '✓' : '✗'} ${pass} passed, ${fail} failed\n`);
 await prisma.$disconnect();

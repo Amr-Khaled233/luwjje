@@ -62,6 +62,21 @@ A link lasts 30 minutes, works once, and asking for a new one voids the previous
 bumps `sessionEpoch`, which is baked into every session cookie — so a reset signs out whoever
 was already inside, which is the point of resetting.
 
+### Order confirmations
+
+The same transport sends every shopper a receipt when their order is written: items, quantities,
+line totals, delivery cost, discount, the address it is going to, and a link to order tracking.
+It is written in the language they were shopping in.
+
+**This is where the two transports stop being equivalent.** A reset link only ever goes to your
+own address, so Resend's `onboarding@resend.dev` sender is enough. A confirmation goes to a
+customer, and Resend will not deliver to a third party from an unverified domain. For order
+emails you need either a domain verified in Resend (then set `MAIL_FROM`), or SMTP, which has no
+such restriction.
+
+Sending cannot fail an order: by the time it runs the order is committed and the stock is gone.
+It has a six-second ceiling and swallows its own errors, logging rather than surfacing them.
+
 ### Verify it works
 
 ```bash
@@ -73,10 +88,10 @@ npm run orders       # 45 checks: the order lifecycle end to end
 npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
 npm run i18n         # 101 checks: placeholder substitution, dictionary coverage, every page in both languages
 npm run responsive   # 68 checks: RTL-safe layout, touch targets, motion, phone rendering
-npm run reset        # 42 checks: the emailed password-reset flow end to end
+npm run reset        # 61 checks: the emailed reset flow, and the order confirmation email
 ```
 
-453 checks in total. `features`, `security` and `i18n` need a running server
+472 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.
@@ -139,7 +154,7 @@ if the password is lost.
 | `/shop` | Grid with working `?color= ?category= ?price= ?sort= ?q= ?page=` filters |
 | `/product/[slug]` | Gallery, colour + size selection, quantity, accordions, related products, JSON-LD |
 | `/cart` | Line items, shipping form, sticky summary, promo code, free-shipping meter |
-| `/checkout` | Review → Shipping → Payment, then the order is written |
+| `/checkout` | Review → Shipping → Payment, then the order is written and a receipt is emailed |
 | `/order/[number]` | Receipt — gated by the order-access cookie |
 | `/orders` | Guest order lookup by email — lists every matching order to pick from |
 | `/about`, `/journal`, `/pages/[slug]` | CMS pages edited in Settings → Content Pages |
@@ -371,7 +386,7 @@ every `requireDashboard()` call site stay as they are.
 | `npm run security` | Security checks |
 | `npm run i18n` | Arabic/English coverage checks |
 | `npm run responsive` | Responsive and motion checks |
-| `npm run reset` | Password-recovery checks |
+| `npm run reset` | Password-recovery and email checks |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:reset` | Drop, re-migrate and re-seed |
