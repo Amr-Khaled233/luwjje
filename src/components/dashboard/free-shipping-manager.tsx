@@ -160,6 +160,13 @@ export function FreeShippingManager({
             <tbody>
               {rules.map((rule) => (
                 <tr key={rule.id} className={rule.active ? undefined : 'row-off'}>
+                  <Td>
+                    <span className="flex items-center gap-2">
+                      <Truck className="h-4 w-4 shrink-0 text-secondary" />
+                      {rule.name || d.freeShipping.untitled}
+                    </span>
+                  </Td>
+                  <Td className="text-secondary">{describe(rule)}</Td>
                   <Td align="end">
                     <span className="flex justify-end gap-1">
                       <button

@@ -20,6 +20,20 @@ export interface ProductCardData {
   inStock: boolean;
 }
 
+/**
+ * The price to show struck through, or the selling price when there is nothing
+ * to strike.
+ *
+ * Two things can lower a price: the shop owner typing what it used to cost
+ * ("price before discount"), and a discount campaign. Whichever is higher is
+ * the honest "was" figure — striking through a number lower than the one being
+ * charged would be nonsense, and ignoring compareAtPrice made the field the
+ * owner filled in do nothing at all.
+ */
+function strikeThrough(price: number, compareAt: number | null, selling: number) {
+  return Math.max(price, compareAt ?? 0, selling);
+}
+
 /** The framing half of a ProductImage, safe to hand to a client component. */
 export interface ImageFocus {
   focalX: number;
@@ -50,7 +64,8 @@ function toCard(
 ): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
   const hover = p.images.find((i) => i.isHover) ?? p.images[1] ?? null;
-  const { price, discounted } = applyDiscount(p.price, p.id, p.categoryId, discounts);
+  const { price } = applyDiscount(p.price, p.id, p.categoryId, discounts);
+  const listPrice = strikeThrough(p.price, p.compareAtPrice, price);
 
   // De-duplicate colourways (a colour may span several sizes).
   const colors: { name: string; hex: string }[] = [];
@@ -64,8 +79,8 @@ function toCard(
     slug: p.slug,
     name: pick(locale, p.name, p.nameAr),
     price,
-    listPrice: p.price,
-    discounted,
+    listPrice,
+    discounted: listPrice > price,
     categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
     primaryImage: primary?.url ?? '',
     hoverImage: hover?.url ?? null,
@@ -219,7 +234,7 @@ export async function getProductBySlug(slug: string, locale: Locale) {
   if (!product || product.status !== 'PUBLISHED') return null;
 
   const discounts = await getActiveDiscountMap();
-  const { price, discounted } = applyDiscount(
+  const { price } = applyDiscount(
     product.price,
     product.id,
     product.categoryId,
@@ -236,8 +251,8 @@ export async function getProductBySlug(slug: string, locale: Locale) {
     categorySlug: product.category?.slug ?? null,
     sku: product.sku,
     effectivePrice: price,
-    listPrice: product.price,
-    discounted,
+    listPrice: strikeThrough(product.price, product.compareAtPrice, price),
+    discounted: strikeThrough(product.price, product.compareAtPrice, price) > price,
     images: product.images.map((i) => ({
       url: i.url,
       alt: i.alt || product.name,

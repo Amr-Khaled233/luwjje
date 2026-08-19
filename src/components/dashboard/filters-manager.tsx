@@ -5,7 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff, RefreshCw, Check } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Check,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Checkbox } from '@/components/ui/field';
 import { ColorDot, EmptyState } from '@/components/ui/primitives';
@@ -23,6 +34,8 @@ import {
   savePriceRange,
   deletePriceRange,
   saveFilterVisibility,
+  toggleCategoryVisible,
+  reorderCategory,
 } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
@@ -38,19 +51,29 @@ interface ColorRow extends ColorInput {
 interface RangeRow extends RangeInput {
   id: string;
 }
+interface CategoryRow {
+  id: string;
+  name: string;
+  nameAr: string;
+  visible: boolean;
+  /** Published products behind it — zero means a dead end in the filter. */
+  productCount: number;
+}
 
 const EMPTY_COLOR: ColorInput = { name: '', nameAr: '', hex: '#0b1c30', visible: true };
 const EMPTY_RANGE: RangeInput = { label: '', labelAr: '', min: 0, max: null, visible: true };
 
-const TAB_KEYS = ['controls', 'colours', 'ranges'] as const;
+const TAB_KEYS = ['controls', 'categories', 'colours', 'ranges'] as const;
 type Tab = (typeof TAB_KEYS)[number];
 
 export function FiltersManager({
+  categories,
   colors,
   priceRanges,
   visibility,
   currencySymbol,
 }: {
+  categories: CategoryRow[];
   colors: ColorRow[];
   priceRanges: RangeRow[];
   visibility: VisibilityInput;
@@ -62,6 +85,7 @@ export function FiltersManager({
   const [tab, setTab] = React.useState<Tab>('controls');
   const TAB_LABELS: Record<Tab, string> = {
     controls: d.filters.tabControls,
+    categories: d.nav.categories,
     colours: d.filters.tabColours,
     ranges: d.filters.tabRanges,
   };
@@ -180,6 +204,103 @@ export function FiltersManager({
       )}
 
       {/* ---------------------------------------------------------- colours */}
+      {/*
+        Which categories the shopper is offered, and in what order.
+
+        The same `visible` flag the Categories page edits — one source of
+        truth, reachable from both places. It belongs here too because this is
+        the page you open when you are thinking about the filter bar, and
+        having two of its three dimensions here and the third somewhere else
+        is how a filter ends up offering a category with nothing behind it.
+      */}
+      {tab === 'categories' && (
+        <section className="border border-outline-variant bg-surface-lowest">
+          <header className="border-b border-outline-variant px-4 py-4 md:px-6 md:py-5">
+            <h2 className="font-display text-title-md md:text-headline-sm">{d.nav.categories}</h2>
+            <p className="mt-1.5 text-body-sm text-secondary">{d.filters.categoriesHint}</p>
+          </header>
+
+          {categories.length === 0 ? (
+            <EmptyState
+              title={d.filters.noCategories}
+              body={d.filters.noCategoriesBody}
+              className="border-0"
+            />
+          ) : (
+            <TableWrap>
+              <thead>
+                <tr>
+                  <Th>{d.common.name}</Th>
+                  <Th>{d.common.nameAr}</Th>
+                  <Th>{d.categories.productsCount}</Th>
+                  <Th>{d.common.visible}</Th>
+                  <Th className="text-end">{d.common.actions}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((c, i) => (
+                  <tr
+                    key={c.id}
+                    className={cn(
+                      'transition-colors hover:bg-surface-low',
+                      !c.visible && 'row-off',
+                    )}
+                  >
+                    <Td className="text-label-md">{c.name}</Td>
+                    <Td className="text-secondary">{c.nameAr || '—'}</Td>
+                    <Td>
+                      {c.productCount > 0 ? (
+                        <span className="tabular-nums">{c.productCount}</span>
+                      ) : (
+                        <span className="label-caps text-error">{d.filters.noProducts}</span>
+                      )}
+                    </Td>
+                    <Td>
+                      <button
+                        onClick={() =>
+                          run(
+                            () => toggleCategoryVisible(c.id),
+                            c.visible ? d.categories.hiddenToast : d.categories.shownToast,
+                          )
+                        }
+                        disabled={pending}
+                        aria-label={`${d.common.visible} — ${c.name}`}
+                      >
+                        {c.visible ? (
+                          <Eye className="h-4 w-4 text-navy" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-tertiary" />
+                        )}
+                      </button>
+                    </Td>
+                    <Td>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => run(() => reorderCategory(c.id, 'up'), d.common.saved)}
+                          disabled={pending || i === 0}
+                          aria-label={`${d.products.moveUp} ${c.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => run(() => reorderCategory(c.id, 'down'), d.common.saved)}
+                          disabled={pending || i === categories.length - 1}
+                          aria-label={`${d.products.moveDown} ${c.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          )}
+        </section>
+      )}
+
       {tab === 'colours' && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">

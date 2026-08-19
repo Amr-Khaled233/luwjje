@@ -335,6 +335,11 @@ const en = {
     description:
       'Exactly what the customer can filter by: which controls appear at all, which colours are offered, and the price buckets.',
     tabControls: 'Controls',
+    categoriesHint:
+      'Which categories the shopper can filter by, and the order they appear in. The same switch as on the Categories page.',
+    noCategories: 'No categories yet.',
+    noCategoriesBody: 'Add them from the Categories page and they appear here.',
+    noProducts: 'Empty',
     tabColours: 'Colours',
     tabRanges: 'Price ranges',
     controlsTitle: 'What the customer can filter by',
@@ -867,6 +872,11 @@ const ar: DashboardDictionary = {
     description:
       'بالظبط ما يستطيع الزبون التصفية به: أي أدوات تظهر أصلاً، وأي ألوان تُعرض، وشرائح السعر.',
     tabControls: 'الأدوات',
+    categoriesHint:
+      'الفئات اللي الزبون يقدر يفلتر بيها، وترتيب ظهورها. نفس زر الإظهار الموجود في صفحة الفئات.',
+    noCategories: 'لا توجد فئات بعد.',
+    noCategoriesBody: 'أضِفها من صفحة الفئات وستظهر هنا.',
+    noProducts: 'فارغة',
     tabColours: 'الألوان',
     tabRanges: 'شرائح السعر',
     controlsTitle: 'ما يستطيع الزبون التصفية به',

@@ -125,6 +125,37 @@ export function PromoManager({
                     className={cn('transition-colors hover:bg-surface-low', !c.active && 'row-off')}
                   >
                     <Td>
+                      <p className="font-mono text-label-md tracking-wider">{c.code}</p>
+                      {c.description && (
+                        <p className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
+                      )}
+                    </Td>
+                    <Td className="tabular-nums">
+                      {c.discountType === 'PERCENT'
+                        ? `${c.discountValue}%`
+                        : formatPrice(c.discountValue, currencySymbol)}
+                    </Td>
+                    <Td className="tabular-nums text-secondary">
+                      {c.minOrder > 0 ? formatPrice(c.minOrder, currencySymbol) : '—'}
+                    </Td>
+                    <Td>
+                      <p className="tabular-nums text-body-sm">
+                        {c.usedCount}
+                        {c.maxUses ? ` / ${c.maxUses}` : ' / ∞'}
+                      </p>
+                      {c.maxUses && (
+                        <ProgressBar
+                          value={(c.usedCount / c.maxUses) * 100}
+                          className="mt-2 w-24"
+                        />
+                      )}
+                    </Td>
+                    <Td className="text-body-sm text-secondary">
+                      {c.startsAt || c.expiresAt
+                        ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
+                        : d.promo.always}
+                    </Td>
+                    <Td>
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() =>

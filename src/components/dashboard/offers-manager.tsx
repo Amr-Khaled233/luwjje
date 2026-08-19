@@ -235,11 +235,8 @@ export function OffersManager({
             <h2 className="font-display text-headline-sm">{d.offers.campaigns}</h2>
             <p className="mt-1.5 text-body-sm text-secondary">
               {d.offers.campaignsHint}
-              pick, for the window you set.
             </p>
           </div>
-          <Button size="sm" onClick={() => openDiscount(null)}>
-            <Plus className="h-3.5 w-3.5" />{d.offers.newCampaign}</Button>
         </header>
 
         <div className="p-6">
