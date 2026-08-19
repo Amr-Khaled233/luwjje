@@ -68,7 +68,18 @@ export async function POST(req: Request) {
       ? 'Blob storage refused the upload.'
       : 'Could not write the file. On a serverless host, connect a Blob store.';
 
-    return NextResponse.json({ error: `${context} ${detail}`.trim() }, { status: 500 });
+    // A private store is a configuration mistake with a specific fix, and the
+    // provider's wording ("cannot use public access") describes the symptom
+    // rather than the cure. Product photography has to be readable by any
+    // browser that loads the storefront, so the store itself must be public.
+    const hint = /private (store|access)/i.test(detail)
+      ? ' This store was created with private access. Product images are loaded' +
+        ' directly by shoppers’ browsers, so they need a public store:' +
+        ' create one under Storage → Create → Blob with public access,' +
+        ' then replace BLOB_READ_WRITE_TOKEN and redeploy.'
+      : '';
+
+    return NextResponse.json({ error: `${context} ${detail}${hint}`.trim() }, { status: 500 });
   }
 }
 
