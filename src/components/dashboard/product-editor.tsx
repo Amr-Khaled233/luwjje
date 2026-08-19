@@ -18,7 +18,8 @@ import {
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { productSchema, type ProductInput } from '@/lib/validations';
+import { productFormSchema, type ProductFormInput } from '@/lib/validations';
+import { FormProblems, type FormProblem } from '@/components/dashboard/form-problems';
 import { saveProduct } from '@/app/actions/dashboard';
 import { slugify } from '@/lib/utils';
 import type { AdminCategory } from './products-manager';
@@ -52,7 +53,7 @@ export interface EditableProduct {
   }[];
 }
 
-const EMPTY: ProductInput = {
+const EMPTY: ProductFormInput = {
   name: '',
   nameAr: '',
   slug: '',
@@ -67,9 +68,6 @@ const EMPTY: ProductInput = {
   isBestSeller: false,
   bestSellerOrder: 0,
   images: [],
-  variants: [
-    { colorName: '', colorNameAr: '', colorHex: '#0b1c30', size: '', sku: '', stock: 0, lowStockAt: 5 },
-  ],
 };
 
 export function ProductEditor({
@@ -90,10 +88,21 @@ export function ProductEditor({
   const { d } = useDash();
   const [serverError, setServerError] = React.useState<string | null>(null);
 
-  const form = useForm<ProductInput>({
-    resolver: zodResolver(productSchema),
+  /**
+   * The resolver validates everything except `variants`. The form edits
+   * colourways and flattens them on submit, so validating the variant array
+   * here would fail against a placeholder the form never writes to — and pin
+   * the error to a field that is not on screen, which is exactly how a Create
+   * button ends up doing nothing at all.
+   */
+  const form = useForm<ProductFormInput>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: EMPTY,
   });
+
+  const [problems, setProblems] = React.useState<FormProblem[]>([]);
+  const colourRef = React.useRef<HTMLElement>(null);
+  const imageRef = React.useRef<HTMLElement>(null);
 
   // Colourways live outside the form: the shape the shop owner edits (one
   // colour, many sizes) is not the shape the database stores (one row per
@@ -127,7 +136,6 @@ export function ProductEditor({
           isPrimary: false,
           isHover: false,
         })),
-        variants: product.variants.map((v) => ({ ...v, size: v.size ?? '' })),
       });
 
       // Regroup the stored rows back into one entry per colour.
@@ -155,14 +163,89 @@ export function ProductEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, product?.id]);
 
-  async function onSubmit(values: ProductInput) {
+  /** Walks the person to a field and puts the cursor in it. */
+  const focusField = (name: keyof ProductFormInput) => () => {
+    form.setFocus(name);
+    const el = document.getElementsByName(name)[0];
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const scrollTo = (ref: React.RefObject<HTMLElement>) => () =>
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  /** Everything wrong with the colourways, phrased for the shop owner. */
+  function colourProblems(): FormProblem[] {
+    const found: FormProblem[] = [];
+
+    if (colourways.length === 0) {
+      found.push({ message: d.products.needOneColour, goTo: scrollTo(colourRef) });
+      return found;
+    }
+
+    colourways.forEach((colour, i) => {
+      const where = colour.colorName.trim() || fmt(d.products.colourNumber, { n: i + 1 });
+
+      if (!colour.colorName.trim()) {
+        found.push({
+          message: fmt(d.products.colourNeedsName, { n: i + 1 }),
+          goTo: scrollTo(colourRef),
+        });
+      }
+      if (!/^#[0-9a-fA-F]{6}$/.test(colour.colorHex)) {
+        found.push({
+          message: fmt(d.products.colourBadHex, { colour: where }),
+          goTo: scrollTo(colourRef),
+        });
+      }
+      if (colour.sizes.length === 0) {
+        found.push({
+          message: fmt(d.products.colourNeedsSize, { colour: where }),
+          goTo: scrollTo(colourRef),
+        });
+      }
+      if (colour.sizes.some((s) => !Number.isFinite(s.stock) || s.stock < 0)) {
+        found.push({
+          message: fmt(d.products.colourBadStock, { colour: where }),
+          goTo: scrollTo(colourRef),
+        });
+      }
+    });
+
+    return found;
+  }
+
+  /** Runs when the resolver rejects, so nothing fails silently below the fold. */
+  function onInvalid() {
+    const labels: Partial<Record<keyof ProductFormInput, string>> = {
+      name: d.products.productName,
+      price: d.common.price,
+      compareAtPrice: d.products.compareAt,
+      description: d.common.description,
+      categoryId: d.products.category,
+    };
+
+    const fromForm = Object.entries(form.formState.errors).map(([field, error]) => ({
+      message: `${labels[field as keyof ProductFormInput] ?? field} — ${
+        (error as { message?: string })?.message ?? d.common.checkThisField
+      }`,
+      goTo: focusField(field as keyof ProductFormInput),
+    }));
+
+    setProblems([...fromForm, ...colourProblems()]);
+  }
+
+  async function onSubmit(values: ProductFormInput) {
     setServerError(null);
     setColourError(null);
 
-    if (colourways.some((c) => !c.colorName.trim())) {
-      setColourError(d.products.colourNameRequired);
+    // The colourways are outside the resolver, so they are checked here.
+    const found = colourProblems();
+    if (found.length) {
+      setProblems(found);
+      setColourError(found[0].message);
       return;
     }
+    setProblems([]);
 
     // One database row per colour-and-size, which is what carries stock and
     // what an order line points at.
@@ -187,9 +270,12 @@ export function ProductEditor({
     if (!result.ok) {
       setServerError(result.error ?? d.common.couldNotSave);
       if (result.fieldErrors) {
+        const server: FormProblem[] = [];
         for (const [field, message] of Object.entries(result.fieldErrors)) {
-          form.setError(field as keyof ProductInput, { message });
+          form.setError(field as keyof ProductFormInput, { message });
+          server.push({ message, goTo: focusField(field as keyof ProductFormInput) });
         }
+        setProblems(server);
       }
       return;
     }
@@ -209,7 +295,10 @@ export function ProductEditor({
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={form.formState.isSubmitting}>{d.common.cancel}</Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={form.formState.isSubmitting}>
+          <Button
+            onClick={form.handleSubmit(onSubmit, onInvalid)}
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
@@ -223,7 +312,13 @@ export function ProductEditor({
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex flex-col gap-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        noValidate
+        className="flex flex-col gap-8"
+      >
+        <FormProblems problems={problems} />
+
         {serverError && (
           <p className="border border-error p-3 text-body-sm text-error">{serverError}</p>
         )}
@@ -310,7 +405,7 @@ export function ProductEditor({
         </section>
 
         {/* ------------------------------------------------------- images */}
-        <section>
+        <section ref={imageRef}>
           <Controller
             control={form.control}
             name="images"
@@ -328,11 +423,11 @@ export function ProductEditor({
         </section>
 
         {/* -------------------------------------------------- colourways */}
-        <section>
+        <section ref={colourRef}>
           <ColourwayEditor
             value={colourways}
             onChange={setColourways}
-            errors={colourError ?? form.formState.errors.variants?.message}
+            errors={colourError ?? undefined}
           />
         </section>
 

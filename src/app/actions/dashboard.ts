@@ -783,7 +783,6 @@ export async function saveBanner(input: unknown): Promise<ActionResult> {
       bodyAr: d.bodyAr,
       ctaLabel: d.ctaLabel,
       ctaLabelAr: d.ctaLabelAr,
-      ctaHref: d.ctaHref,
       imageUrl: d.imageUrl,
       badge: d.badge,
       badgeAr: d.badgeAr,

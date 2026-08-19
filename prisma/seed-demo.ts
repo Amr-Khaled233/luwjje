@@ -356,7 +356,6 @@ async function main() {
       bodyAr: 'سبع درجات مستوحاة من الحجر والكتان وضوء الشتاء — تُطرح معاً مرة واحدة في العام.',
       ctaLabel: 'Explore',
       ctaLabelAr: 'استكشف',
-      ctaHref: '/shop?color=Beige',
       imageUrl: makeEditorial('offer-new-neutrals', 'The New Neutrals', '#b3a893'),
       active: true,
       position: 0,

@@ -110,7 +110,8 @@ export async function getActiveBanners(slot: 'HERO' | 'OFFER', locale: Locale) {
       subheading: pick(locale, b.subheading, b.subheadingAr),
       body: pick(locale, b.body, b.bodyAr),
       ctaLabel: pick(locale, b.ctaLabel, b.ctaLabelAr),
-      ctaHref: b.ctaHref,
+      // Always the shop — the label is editable, the destination is not.
+      ctaHref: '/shop',
       imageUrl: b.imageUrl,
       badge: pick(locale, b.badge, b.badgeAr),
       endsAt: b.endsAt,

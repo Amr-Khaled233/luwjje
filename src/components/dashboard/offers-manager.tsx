@@ -46,7 +46,6 @@ const EMPTY_BANNER: BannerInput = {
   bodyAr: '',
   ctaLabel: 'Shop Now',
   ctaLabelAr: '',
-  ctaHref: '/shop',
   imageUrl: '',
   badge: '',
   badgeAr: '',
@@ -157,7 +156,7 @@ export function OffersManager({
           <p className="mt-2 font-display text-headline-sm">{b.heading || d.offers.untitled}</p>
           {b.body && <p className="mt-2 line-clamp-2 text-body-sm text-secondary">{b.body}</p>}
           <p className="mt-3 text-body-sm text-tertiary">
-            {b.ctaLabel} → {b.ctaHref}
+            {b.ctaLabel}
             {(b.startsAt || b.endsAt) && ` · ${b.startsAt || '…'} to ${b.endsAt || '…'}`}
           </p>
         </div>
@@ -520,11 +519,6 @@ export function OffersManager({
                   )}
                 />
               )}
-            />
-            <Input
-              label={d.offers.buttonLink}
-              placeholder="/shop?color=Beige"
-              {...bannerForm.register('ctaHref')}
             />
             <Input
               label={d.common.startsOn}

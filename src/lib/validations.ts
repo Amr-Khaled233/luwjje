@@ -101,8 +101,6 @@ export const productSchema = z.object({
   variants: z.array(variantSchema).min(1, 'Add at least one colourway.'),
 });
 
-export type ProductInput = z.infer<typeof productSchema>;
-
 export const categorySchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(2, 'Category name is required.').max(80),
@@ -249,7 +247,6 @@ export const bannerSchema = z.object({
   bodyAr: z.string().trim().max(1000).default(''),
   ctaLabel: z.string().trim().max(60).default('Shop Now'),
   ctaLabelAr: z.string().trim().max(60).default(''),
-  ctaHref: z.string().trim().max(300).default('/shop'),
   imageUrl: z.string().trim().max(600).default(''),
   badge: z.string().trim().max(60).default(''),
   badgeAr: z.string().trim().max(60).default(''),
@@ -322,3 +319,15 @@ export const pageSchema = z.object({
   showInFooter: z.boolean().default(false),
   position: z.coerce.number().int().min(0).default(0),
 });
+
+/**
+ * What the product form itself validates.
+ *
+ * `variants` is deliberately absent: the form edits colourways (one colour,
+ * many sizes) and flattens them into variants only on submit, so validating
+ * the variant array here would fail against a placeholder the form never
+ * writes to — and pin the error to a field that is not on screen.
+ */
+export const productFormSchema = productSchema.omit({ variants: true });
+
+export type ProductFormInput = z.infer<typeof productFormSchema>;

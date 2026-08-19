@@ -225,3 +225,21 @@
     transform: none;
   }
 }
+
+@layer components {
+  /*
+   * A row for something switched off.
+   *
+   * Replaces a Status column: the state is a property of the row, so it reads
+   * faster as a treatment of the row than as a word in a cell you have to
+   * scan across to. Dimmed rather than hidden — it is still there to be
+   * edited or deleted — and the dimming lifts on hover so it stays readable.
+   */
+  .row-off {
+    @apply opacity-45 transition-opacity duration-200 ease-scandi;
+  }
+  .row-off:hover,
+  .row-off:focus-within {
+    @apply opacity-100;
+  }
+}

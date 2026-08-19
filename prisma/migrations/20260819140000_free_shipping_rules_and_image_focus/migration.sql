@@ -29,21 +29,34 @@ CREATE INDEX IF NOT EXISTS "FreeShippingRule_active_idx" ON "FreeShippingRule"("
 
 -- Carry the old global threshold across as the first rule, so a store that had
 -- "free over 2,000" keeps it instead of silently starting to charge everyone.
-INSERT INTO "FreeShippingRule" ("id", "name", "nameAr", "minOrder", "active", "createdAt")
-SELECT
-  'seed-free-over-threshold',
-  'Free delivery over the old threshold',
-  'شحن مجاني فوق الحد السابق',
-  s."freeShippingOver",
-  true,
-  CURRENT_TIMESTAMP
-FROM "SiteSettings" s
-WHERE EXISTS (
+--
+-- Wrapped in dynamic SQL because a plain statement referencing
+-- s."freeShippingOver" is resolved when the statement is parsed, not when its
+-- WHERE clause runs — so guarding with EXISTS(information_schema) does not
+-- stop it failing once the column has already been dropped. That matters on a
+-- re-run: Prisma records the migration as failed and refuses every migration
+-- after it.
+DO $$
+BEGIN
+  IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'SiteSettings' AND column_name = 'freeShippingOver'
-  )
-  AND NOT EXISTS (SELECT 1 FROM "FreeShippingRule")
-ON CONFLICT ("id") DO NOTHING;
+  ) THEN
+    EXECUTE $sql$
+      INSERT INTO "FreeShippingRule" ("id", "name", "nameAr", "minOrder", "active", "createdAt")
+      SELECT
+        'seed-free-over-threshold',
+        'Free delivery over the old threshold',
+        'شحن مجاني فوق الحد السابق',
+        s."freeShippingOver",
+        true,
+        CURRENT_TIMESTAMP
+      FROM "SiteSettings" s
+      WHERE NOT EXISTS (SELECT 1 FROM "FreeShippingRule")
+      ON CONFLICT ("id") DO NOTHING;
+    $sql$;
+  END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "SiteSettings" DROP COLUMN IF EXISTS "freeShippingOver";

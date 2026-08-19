@@ -63,7 +63,7 @@ export default async function HomePage() {
                 </p>
               )}
               <ButtonLink
-                href={hero.ctaHref || '/shop'}
+                href={hero.ctaHref}
                 size="lg"
                 className="mt-6 w-full sm:w-auto md:mt-8"
               >
@@ -148,7 +148,7 @@ export default async function HomePage() {
                 </p>
               )}
               <ButtonLink
-                href={offer.ctaHref || '/shop'}
+                href={offer.ctaHref}
                 size="lg"
                 className="mt-6 w-full sm:w-fit md:mt-8"
               >

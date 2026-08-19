@@ -344,7 +344,6 @@ model Banner {
   bodyAr       String    @default("")
   ctaLabel     String    @default("Shop Now")
   ctaLabelAr   String    @default("")
-  ctaHref      String    @default("/shop")
   imageUrl     String    @default("")
   badge        String    @default("")
   badgeAr      String    @default("")

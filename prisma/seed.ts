@@ -34,6 +34,7 @@ async function main() {
   await prisma.banner.deleteMany();
   await prisma.page.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
+  await prisma.freeShippingRule.deleteMany();
 
   const dashboardPassword = process.env.DASHBOARD_PASSWORD || 'luwjje-admin';
 
@@ -94,6 +95,17 @@ async function main() {
     })),
   });
 
+  // ------------------------------------------------------------ free delivery
+  console.log('▸ Free delivery…');
+  await prisma.freeShippingRule.create({
+    data: {
+      name: 'Free delivery over EGP 2,000',
+      nameAr: 'شحن مجاني فوق ٢٠٠٠ ج.م',
+      minOrder: 2000,
+      active: true,
+    },
+  });
+
   // ---------------------------------------------------------------- filters
   console.log('▸ Shop filter defaults…');
   await prisma.priceRange.createMany({
@@ -118,7 +130,6 @@ async function main() {
       bodyAr: 'عدّل هذا البانر — نصه وصورته وزره — من لوحة التحكم ← العروض.',
       ctaLabel: 'Shop Now',
       ctaLabelAr: 'تسوّق الآن',
-      ctaHref: '/shop',
       imageUrl: heroImage,
       active: true,
       position: 0,

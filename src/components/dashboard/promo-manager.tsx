@@ -12,6 +12,7 @@ import { StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td, ProgressBar } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
+import { cn } from '@/lib/utils';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
 import { promoSchema } from '@/lib/validations';
@@ -112,7 +113,6 @@ export function PromoManager({
                 <Th>{d.promo.minimum}</Th>
                 <Th>{d.promo.usage}</Th>
                 <Th>{d.promo.window}</Th>
-                <Th>{d.common.status}</Th>
                 <Th className="text-end">{d.common.actions}</Th>
               </tr>
             </thead>
@@ -120,41 +120,10 @@ export function PromoManager({
               {codes.map((c) => {
                 const status = statusOf(c);
                 return (
-                  <tr key={c.id} className="transition-colors hover:bg-surface-low">
-                    <Td>
-                      <p className="font-mono text-label-md tracking-wider">{c.code}</p>
-                      {c.description && (
-                        <p className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
-                      )}
-                    </Td>
-                    <Td className="tabular-nums">
-                      {c.discountType === 'PERCENT'
-                        ? `${c.discountValue}%`
-                        : formatPrice(c.discountValue, currencySymbol)}
-                    </Td>
-                    <Td className="tabular-nums text-secondary">
-                      {c.minOrder > 0 ? formatPrice(c.minOrder, currencySymbol) : '—'}
-                    </Td>
-                    <Td>
-                      <p className="tabular-nums text-body-sm">
-                        {c.usedCount}
-                        {c.maxUses ? ` / ${c.maxUses}` : ' / ∞'}
-                      </p>
-                      {c.maxUses && (
-                        <ProgressBar
-                          value={(c.usedCount / c.maxUses) * 100}
-                          className="mt-2 w-24"
-                        />
-                      )}
-                    </Td>
-                    <Td className="text-body-sm text-secondary">
-                      {c.startsAt || c.expiresAt
-                        ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
-                        : d.promo.always}
-                    </Td>
-                    <Td>
-                      <StatusBadge status={status} />
-                    </Td>
+                  <tr
+                    key={c.id}
+                    className={cn('transition-colors hover:bg-surface-low', !c.active && 'row-off')}
+                  >
                     <Td>
                       <div className="flex justify-end gap-2">
                         <button

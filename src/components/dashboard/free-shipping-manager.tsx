@@ -154,31 +154,12 @@ export function FreeShippingManager({
               <tr>
                 <Th>{d.common.name}</Th>
                 <Th>{d.freeShipping.appliesWhen}</Th>
-                <Th>{d.common.status}</Th>
                 <Th align="end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
               {rules.map((rule) => (
-                <tr key={rule.id}>
-                  <Td>
-                    <span className="flex items-center gap-2">
-                      <Truck className="h-4 w-4 shrink-0 text-secondary" />
-                      {rule.name || d.freeShipping.untitled}
-                    </span>
-                  </Td>
-                  <Td className="text-secondary">{describe(rule)}</Td>
-                  <Td>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        run(() => toggleFreeShippingRule(rule.id), d.common.saved ?? 'Saved')
-                      }
-                      aria-label={d.common.status}
-                    >
-                      <StatusBadge status={rule.active ? 'ACTIVE' : 'DISABLED'} />
-                    </button>
-                  </Td>
+                <tr key={rule.id} className={rule.active ? undefined : 'row-off'}>
                   <Td align="end">
                     <span className="flex justify-end gap-1">
                       <button

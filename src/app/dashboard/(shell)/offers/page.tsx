@@ -39,7 +39,6 @@ export default async function AdminOffersPage() {
           bodyAr: b.bodyAr,
           ctaLabel: b.ctaLabel,
           ctaLabelAr: b.ctaLabelAr,
-          ctaHref: b.ctaHref,
           imageUrl: b.imageUrl,
           badge: b.badge,
           badgeAr: b.badgeAr,
