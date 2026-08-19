@@ -309,7 +309,6 @@ model SiteSettings {
   showCategoryFilter Boolean @default(true)
   showPriceFilter    Boolean @default(true)
   showSortFilter     Boolean @default(true)
-  showSearch         Boolean @default(true)
 
   /// Only the two channels the store actually runs. Adding another means a
   /// column here, a field on the Settings form and an entry in the footer.

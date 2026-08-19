@@ -413,7 +413,11 @@ export function ProductEditor({
               <ImageUploader
                 label={d.common.images}
                 focus
-                value={field.value.map((i) => ({ url: i.url, alt: i.alt }))}
+                // Passed through whole. Rebuilding each entry from url and alt
+                // alone dropped the focal point and the fit on every render, so
+                // the crosshair snapped back to the middle and the Fill/Fit
+                // button looked like it did nothing.
+                value={field.value}
                 onChange={(images) =>
                   field.onChange(images.map((i) => ({ ...i, isPrimary: false, isHover: false })))
                 }

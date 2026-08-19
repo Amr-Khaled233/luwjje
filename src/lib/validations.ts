@@ -143,7 +143,6 @@ export const filterVisibilitySchema = z.object({
   showCategoryFilter: z.boolean(),
   showPriceFilter: z.boolean(),
   showSortFilter: z.boolean(),
-  showSearch: z.boolean(),
 });
 
 // ---------------------------------------------------------------- shipping

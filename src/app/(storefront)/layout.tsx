@@ -13,7 +13,6 @@ export default async function StorefrontLayout({ children }: { children: React.R
         storeName={settings.storeName}
         locale={locale}
         t={t}
-        showSearch={settings.showSearch}
         showLanguageSwitcher={settings.enableArabic}
       />
       <main className="flex-1">{children}</main>

@@ -44,7 +44,6 @@ function fallbackSettings(): Settings {
     showCategoryFilter: true,
     showPriceFilter: true,
     showSortFilter: true,
-    showSearch: true,
     sessionEpoch: 0,
     instagramUrl: '',
     facebookUrl: '',

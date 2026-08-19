@@ -113,7 +113,7 @@ export function PromoManager({
                 <Th>{d.promo.minimum}</Th>
                 <Th>{d.promo.usage}</Th>
                 <Th>{d.promo.window}</Th>
-                <Th className="text-end">{d.common.actions}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -156,7 +156,7 @@ export function PromoManager({
                         : d.promo.always}
                     </Td>
                     <Td>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex gap-2">
                         <button
                           onClick={() =>
                             run(

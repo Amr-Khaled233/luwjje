@@ -129,7 +129,6 @@ export function FiltersManager({
   }
 
   const CONTROLS: { key: keyof VisibilityInput; label: string; hint: string }[] = [
-    { key: 'showSearch', label: d.filters.search, hint: d.filters.searchHint },
     { key: 'showColorFilter', label: d.filters.colourFilter, hint: d.filters.tabColours },
     { key: 'showCategoryFilter', label: d.filters.categoryFilter, hint: d.nav.categories },
     { key: 'showPriceFilter', label: d.filters.priceFilter, hint: d.filters.tabRanges },

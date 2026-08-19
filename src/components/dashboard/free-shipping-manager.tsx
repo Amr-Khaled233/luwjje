@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Truck } from 'lucide-react';
+import { Plus, Pencil, Trash2, Truck, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Checkbox } from '@/components/ui/field';
 import { EmptyState, StatusBadge } from '@/components/ui/primitives';
@@ -13,6 +13,7 @@ import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
+import { cn } from '@/lib/utils';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
 import { freeShippingSchema } from '@/lib/validations';
@@ -121,9 +122,11 @@ export function FreeShippingManager({
 
     const from = day(row.startsAt);
     const to = day(row.endsAt);
-    const when = from && to ? `${from} → ${to}` : from ? `${d.common.startsOn} ${from}` : to ? `${d.common.endsOn} ${to}` : d.freeShipping.always;
+    // No window means no window; saying "always on" alongside a switch that
+    // can turn the rule off reads as a contradiction.
+    const when = from && to ? `${from} → ${to}` : from ? `${d.common.startsOn} ${from}` : to ? `${d.common.endsOn} ${to}` : '';
 
-    return `${spend} · ${when}`;
+    return when ? `${spend} · ${when}` : spend;
   }
 
   return (
@@ -154,7 +157,7 @@ export function FreeShippingManager({
               <tr>
                 <Th>{d.common.name}</Th>
                 <Th>{d.freeShipping.appliesWhen}</Th>
-                <Th align="end">{d.common.actions}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -167,8 +170,26 @@ export function FreeShippingManager({
                     </span>
                   </Td>
                   <Td className="text-secondary">{describe(rule)}</Td>
-                  <Td align="end">
-                    <span className="flex justify-end gap-1">
+                  <Td>
+                    <span className="flex gap-1">
+                      {/* On or off, as a switch rather than a word in a column. */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          run(() => toggleFreeShippingRule(rule.id), d.common.saved)
+                        }
+                        aria-pressed={rule.active}
+                        title={rule.active ? d.freeShipping.turnOff : d.freeShipping.turnOn}
+                        aria-label={rule.active ? d.freeShipping.turnOff : d.freeShipping.turnOn}
+                        className={cn(
+                          'flex h-9 w-9 items-center justify-center border transition-colors',
+                          rule.active
+                            ? 'border-navy bg-navy text-background'
+                            : 'border-outline-variant text-tertiary hover:border-navy',
+                        )}
+                      >
+                        <Power className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => open(rule)}

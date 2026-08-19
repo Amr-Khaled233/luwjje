@@ -66,7 +66,6 @@ async function main() {
       showCategoryFilter: true,
       showPriceFilter: true,
       showSortFilter: true,
-      showSearch: true,
       // The store's real channels. Editable from Settings → Social.
       instagramUrl: 'https://www.instagram.com/luwjje',
       facebookUrl: 'https://www.facebook.com/share/1BY898bngC/',

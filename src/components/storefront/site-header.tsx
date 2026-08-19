@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Search, ShoppingBag, Menu, X, PackageSearch } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { ShoppingBag, Menu, X, PackageSearch } from 'lucide-react';
 import { useCart } from '@/lib/cart-store';
 import { cn } from '@/lib/utils';
 import { useScrollLock, useFocusTrap, useExitAnimation } from '@/components/ui/motion';
@@ -20,20 +20,15 @@ export function SiteHeader({
   storeName,
   locale,
   t,
-  showSearch,
   showLanguageSwitcher,
 }: {
   storeName: string;
   locale: Locale;
   t: Dictionary;
-  showSearch: boolean;
   showLanguageSwitcher: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [searchOpen, setSearchOpen] = React.useState(false);
-  const [query, setQuery] = React.useState('');
 
   const items = useCart((s) => s.items);
   const openCart = useCart((s) => s.openCart);
@@ -57,17 +52,13 @@ export function SiteHeader({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Escape closes whichever overlay is open.
+  // Escape closes the menu.
   React.useEffect(() => {
-    if (!mobileOpen && !searchOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setMobileOpen(false);
-      setSearchOpen(false);
-    };
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMobileOpen(false);
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [mobileOpen, searchOpen]);
+  }, [mobileOpen]);
 
   const NAV = [
     { href: '/shop', label: t.nav.shop },
@@ -75,19 +66,7 @@ export function SiteHeader({
     { href: '/journal', label: t.nav.journal },
   ];
 
-  React.useEffect(() => {
-    setMobileOpen(false);
-    setSearchOpen(false);
-  }, [pathname]);
-
-  function submitSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    router.push(`/shop?q=${encodeURIComponent(q)}`);
-    setSearchOpen(false);
-    setQuery('');
-  }
+  React.useEffect(() => setMobileOpen(false), [pathname]);
 
   return (
     <>
@@ -141,17 +120,6 @@ export function SiteHeader({
               <LanguageSwitcher locale={locale} className="hidden sm:flex" />
             )}
 
-            {showSearch && (
-              <button
-                className="tap-target"
-                onClick={() => setSearchOpen((v) => !v)}
-                aria-label={t.nav.search}
-                aria-expanded={searchOpen}
-              >
-                <Search className="h-5 w-5 transition-opacity hover:opacity-60" />
-              </button>
-            )}
-
             <Link
               href="/orders"
               className="tap-target"
@@ -181,31 +149,6 @@ export function SiteHeader({
           </div>
         </div>
 
-        {searchOpen && (
-          <div className="animate-fade-down border-t border-outline-variant bg-surface-lowest">
-            <form
-              onSubmit={submitSearch}
-              className="container-luwjje flex items-center gap-3 py-4 md:gap-4 md:py-5"
-            >
-              <Search className="h-5 w-5 shrink-0 text-secondary" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t.nav.searchPlaceholder}
-                className="h-8 min-w-0 flex-1 bg-transparent text-body-md outline-none placeholder:text-tertiary md:text-body-lg"
-              />
-              <button
-                type="button"
-                className="tap-target shrink-0"
-                onClick={() => setSearchOpen(false)}
-                aria-label={t.nav.close}
-              >
-                <X className="h-5 w-5 text-secondary" />
-              </button>
-            </form>
-          </div>
-        )}
       </header>
 
       {menu.mounted && (

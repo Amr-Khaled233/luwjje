@@ -179,7 +179,7 @@ export function ImageUploader({
                       alt={img.alt}
                       fill
                       sizes="280px"
-                      className={fit === 'contain' ? 'object-contain' : 'object-cover'}
+                      className={fit === 'contain' ? 'object-contain p-2' : 'object-cover'}
                       style={{ objectPosition: `${focal.x}% ${focal.y}%` }}
                     />
 
@@ -224,10 +224,16 @@ export function ImageUploader({
                         type="button"
                         onClick={() => update(i, { fit: fit === 'cover' ? 'contain' : 'cover' })}
                         title={fit === 'cover' ? d.images.switchToFit : d.images.switchToFill}
+                        aria-pressed={fit === 'contain'}
                         className="label-caps ms-1 inline-flex items-center gap-1.5 border border-outline-variant px-2 py-1 text-secondary transition-colors hover:border-navy hover:text-on-surface"
                       >
-                        {fit === 'cover' ? <Crop className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
-                        {fit === 'cover' ? d.images.fill : d.images.fit}
+                        {/*
+                          Names the action rather than the current state: a
+                          button reading "Fill" while the photo is already
+                          filling reads as a label, not a control.
+                        */}
+                        {fit === 'cover' ? <Maximize2 className="h-3 w-3" /> : <Crop className="h-3 w-3" />}
+                        {fit === 'cover' ? d.images.showWhole : d.images.cropToFill}
                       </button>
                     )}
 

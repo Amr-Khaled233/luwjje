@@ -60,7 +60,6 @@ export default async function DashboardFiltersPage() {
           showCategoryFilter: settings.showCategoryFilter,
           showPriceFilter: settings.showPriceFilter,
           showSortFilter: settings.showSortFilter,
-          showSearch: settings.showSearch,
         }}
         currencySymbol={settings.currencySymbol}
       />

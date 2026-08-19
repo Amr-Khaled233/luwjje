@@ -269,32 +269,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
             </div>
           </section>
 
-          <section className="border border-outline-variant bg-surface-lowest p-6">
-            <h2 className="font-display text-headline-sm">Newsletter &amp; SEO</h2>
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Input label={d.settings.newsletterHeadingLabel} {...settingsForm.register('newsletterHeading')} />
-              <Input label={`${d.settings.newsletterHeadingLabel} (${d.common.arabic})`} dir="rtl" {...settingsForm.register('newsletterHeadingAr')} />
-              <Input label={d.settings.newsletterBodyLabel} {...settingsForm.register('newsletterBody')} />
-              <Input label={`${d.settings.newsletterBodyLabel} (${d.common.arabic})`} dir="rtl" {...settingsForm.register('newsletterBodyAr')} />
-              <Input
-                label={d.settings.metaTitle}
-                hint={d.settings.metaTitleHint}
-                {...settingsForm.register('metaTitle')}
-              />
-              <Input
-                label={d.settings.ogImage}
-                hint={d.settings.ogImageHint}
-                {...settingsForm.register('ogImageUrl')}
-              />
-              <Textarea
-                label={d.settings.metaDescription}
-                rows={3}
-                containerClassName="md:col-span-2"
-                {...settingsForm.register('metaDescription')}
-              />
-            </div>
-          </section>
-
           <div className="flex justify-end">
             <Button type="submit" size="lg" disabled={settingsForm.formState.isSubmitting}>
               {settingsForm.formState.isSubmitting ? (
