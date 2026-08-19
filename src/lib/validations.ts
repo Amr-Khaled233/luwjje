@@ -65,7 +65,8 @@ export const variantSchema = z.object({
     .trim()
     .regex(/^#([0-9a-fA-F]{6})$/, 'Use a 6-digit hex colour.'),
   size: z.string().trim().max(20).nullable().optional(),
-  sku: z.string().trim().min(1, 'SKU is required.').max(60),
+  /** Generated on save. An internal key, never something to type in. */
+  sku: z.string().trim().max(60).optional(),
   stock: z.coerce.number().int().min(0, 'Stock cannot be negative.').max(100000),
   lowStockAt: z.coerce.number().int().min(0).max(10000).default(5),
 });
@@ -74,6 +75,7 @@ export const productSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(2, 'Product name is required.').max(120),
   nameAr: z.string().trim().max(120).default(''),
+  /** Derived from the name on save; the form no longer asks for it. */
   slug: z.string().trim().max(140).optional().or(z.literal('')),
   description: z.string().trim().max(5000).default(''),
   descriptionAr: z.string().trim().max(5000).default(''),

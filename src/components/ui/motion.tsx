@@ -88,26 +88,6 @@ export function Reveal({ delay = 0, as: Tag = 'div', className, style, ...rest }
 }
 
 /**
- * Staggers its children: each direct child gets the next slice of delay.
- * Caps the stagger so a 40-product grid does not take four seconds to appear.
- */
-export function RevealGroup({
-  step = 60,
-  max = 6,
-  className,
-  children,
-  ...rest
-}: React.HTMLAttributes<HTMLDivElement> & { step?: number; max?: number }) {
-  return (
-    <div className={className} {...rest}>
-      {React.Children.map(children, (child, i) => (
-        <Reveal delay={Math.min(i, max) * step}>{child}</Reveal>
-      ))}
-    </div>
-  );
-}
-
-/**
  * Locks background scrolling while a drawer or modal is open, without the
  * page jumping as the scrollbar disappears.
  */

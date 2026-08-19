@@ -84,17 +84,41 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       };
     }
 
-    const skus = data.variants.map((v) => v.sku.trim());
-    if (new Set(skus).size !== skus.length) {
-      return { ok: false, error: 'Each colourway needs its own unique SKU.' };
-    }
-    const skuClash = await prisma.productVariant.findFirst({
-      where: { sku: { in: skus }, ...(data.id ? { productId: { not: data.id } } : {}) },
+    // The SKU is an internal key now — nobody types it, so it is derived from
+    // the product slug plus the colour and size, which are already unique
+    // within a product. A counter disambiguates the rare cross-product clash.
+    const used = new Set<string>();
+    const variants = data.variants.map((v) => {
+      const base = [
+        slug.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'ITEM',
+        v.colorName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'STD',
+        v.size ? v.size.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) : 'OS',
+      ].join('-');
+
+      let sku = v.sku?.trim() || base;
+      let n = 2;
+      while (used.has(sku)) sku = `${base}-${n++}`;
+      used.add(sku);
+      return { ...v, sku };
+    });
+
+    // A generated SKU can still collide with another product's; nudge it until
+    // it does not, rather than refusing a save the shop owner cannot act on.
+    const taken = await prisma.productVariant.findMany({
+      where: {
+        sku: { in: variants.map((v) => v.sku) },
+        ...(data.id ? { productId: { not: data.id } } : {}),
+      },
       select: { sku: true },
     });
-    if (skuClash) {
-      return { ok: false, error: `SKU ${skuClash.sku} is already used by another product.` };
+    if (taken.length) {
+      const clashes = new Set(taken.map((t) => t.sku));
+      for (const v of variants) {
+        if (!clashes.has(v.sku)) continue;
+        v.sku = `${v.sku}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      }
     }
+    data.variants = variants;
 
     // Exactly one primary and at most one hover image.
     const images = data.images.map((img, i) => ({
@@ -146,7 +170,7 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
             colorNameAr: v.colorNameAr,
             colorHex: v.colorHex,
             size: v.size || null,
-            sku: v.sku.trim(),
+            sku: v.sku!,
             stock: v.stock,
             lowStockAt: v.lowStockAt,
             position: i,
@@ -170,7 +194,7 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
               colorNameAr: v.colorNameAr,
               colorHex: v.colorHex,
               size: v.size || null,
-              sku: v.sku.trim(),
+              sku: v.sku!,
               stock: v.stock,
               lowStockAt: v.lowStockAt,
               position: i,

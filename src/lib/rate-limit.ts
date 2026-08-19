@@ -64,8 +64,3 @@ export function requestKey(req: Request, prefix: string) {
     'local';
   return `${prefix}:${ip}`;
 }
-
-/** Test seam — the counters are process-global. */
-export function resetRateLimits() {
-  buckets.clear();
-}

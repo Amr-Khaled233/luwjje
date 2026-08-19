@@ -194,26 +194,6 @@ export async function getCategoryPerformance(days = 90) {
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-export async function getTrafficSources(days = 30) {
-  const start = startOfDay(subDays(new Date(), days - 1));
-
-  const grouped = await prisma.pageView.groupBy({
-    by: ['referrer'],
-    where: { createdAt: { gte: start } },
-    _count: { _all: true },
-    orderBy: { _count: { referrer: 'desc' } },
-    take: 8,
-  });
-
-  const total = grouped.reduce((s, g) => s + g._count._all, 0) || 1;
-
-  return grouped.map((g) => ({
-    source: g.referrer === 'direct' ? 'Direct' : g.referrer,
-    views: g._count._all,
-    share: Math.round((g._count._all / total) * 1000) / 10,
-  }));
-}
-
 export async function getOrderStatusBreakdown() {
   const grouped = await prisma.order.groupBy({ by: ['status'], _count: { _all: true } });
   return grouped.map((g) => ({ status: g.status, count: g._count._all }));

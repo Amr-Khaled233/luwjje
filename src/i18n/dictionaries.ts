@@ -99,7 +99,6 @@ const en = {
     completeDetails: 'Complete the delivery details above to continue.',
     shippingDetails: 'Delivery Details',
     shippingDetailsHint: 'Where should this go? You can review everything before paying.',
-    returnToShop: 'Return to Shop',
     continueShopping: 'Continue shopping',
     viewBag: 'View bag & checkout',
     nothingChosen: 'Nothing chosen yet.',
@@ -190,8 +189,6 @@ const en = {
   common: {
     loading: 'Loading…',
     dismiss: 'Dismiss',
-    notFoundTitle: 'This page does not exist.',
-    notFoundBody: 'The piece may have been retired, or the link may be mistaken.',
     previousPage: 'Previous page',
     nextPage: 'Next page',
   },
@@ -293,7 +290,6 @@ const ar: Dictionary = {
     completeDetails: 'أكمل بيانات التوصيل بالأعلى للمتابعة.',
     shippingDetails: 'بيانات التوصيل',
     shippingDetailsHint: 'إلى أين نرسل الطلب؟ يمكنك مراجعة كل شيء قبل الدفع.',
-    returnToShop: 'العودة للمتجر',
     continueShopping: 'مواصلة التسوّق',
     viewBag: 'عرض الحقيبة وإتمام الطلب',
     nothingChosen: 'لم تختر شيئاً بعد.',
@@ -383,8 +379,6 @@ const ar: Dictionary = {
   common: {
     loading: 'جارٍ التحميل…',
     dismiss: 'إغلاق',
-    notFoundTitle: 'هذه الصفحة غير موجودة.',
-    notFoundBody: 'ربما تم سحب القطعة، أو الرابط غير صحيح.',
     previousPage: 'الصفحة السابقة',
     nextPage: 'الصفحة التالية',
   },

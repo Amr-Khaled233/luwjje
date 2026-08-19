@@ -21,7 +21,8 @@
     "orders": "tsx scripts/order-check.mjs",
     "i18n": "tsx scripts/i18n-check.mjs",
     "responsive": "tsx scripts/responsive-check.mjs",
-    "reset": "tsx scripts/reset-check.mjs"
+    "reset": "tsx scripts/reset-check.mjs",
+    "deadcode": "node scripts/deadcode-check.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

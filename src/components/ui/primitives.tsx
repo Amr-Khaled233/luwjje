@@ -11,24 +11,6 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   );
 }
 
-/** Outline-only tag. No fill, label-caps type. */
-export function Chip({
-  className,
-  active,
-  ...props
-}: React.HTMLAttributes<HTMLSpanElement> & { active?: boolean }) {
-  return (
-    <span
-      className={cn(
-        'label-caps inline-flex items-center border px-3 py-1.5 transition-colors duration-200 ease-scandi',
-        active ? 'border-navy bg-navy text-background' : 'border-outline-variant text-secondary',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 export function SectionHeading({
   eyebrow,
   title,

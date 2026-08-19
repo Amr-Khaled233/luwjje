@@ -14,6 +14,9 @@ login in the whole app is a single password on `/dashboard`.
 **Stack** — Next.js 14 (App Router) · TypeScript · Tailwind · Prisma · Zustand ·
 React Hook Form + Zod · Recharts
 
+**For the shop owner:** [دليل المتجر](./دليل-المتجر.md) — every screen the customer
+sees, and where in the dashboard it is controlled from.
+
 ---
 
 ## Quick start
@@ -89,9 +92,10 @@ npm run security     # 44 checks: headers, forged sessions, tampering, injection
 npm run i18n         # 101 checks: placeholder substitution, dictionary coverage, every page in both languages
 npm run responsive   # 68 checks: RTL-safe layout, touch targets, motion, phone rendering
 npm run reset        # 61 checks: the emailed reset flow, and the order confirmation email
+npm run deadcode     # 7 checks: unused exports, dictionary keys, deps, files, columns
 ```
 
-472 checks in total. `features`, `security` and `i18n` need a running server
+479 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.
@@ -387,6 +391,7 @@ every `requireDashboard()` call site stay as they are.
 | `npm run i18n` | Arabic/English coverage checks |
 | `npm run responsive` | Responsive and motion checks |
 | `npm run reset` | Password-recovery and email checks |
+| `npm run deadcode` | Unused-code audit |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:reset` | Drop, re-migrate and re-seed |

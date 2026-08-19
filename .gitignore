@@ -22,3 +22,6 @@ tsconfig.tsbuildinfo
 # Runtime uploads; production stores these in Vercel Blob
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# Scratch directory for one-off codemods.
+.patch/

@@ -112,7 +112,22 @@ if (knit) {
 
 console.log('\n▸ Per-governorate delivery price');
 const cairo = await prisma.governorate.findFirstOrThrow({ where: { name: 'Cairo' } });
-const variant = await prisma.productVariant.findFirstOrThrow({ where: { stock: { gt: 0 } } });
+
+// The variant has to be cheap enough that delivery is still charged: pick any
+// in-stock one and the basket may clear the free-shipping threshold, which
+// makes this read as a broken governorate rate when it is nothing of the sort.
+const settingsRow = await prisma.siteSettings.findUnique({
+  where: { id: 'singleton' },
+  select: { freeShippingOver: true },
+});
+const threshold = cairo.freeOver ?? settingsRow?.freeShippingOver ?? 0;
+const variant = await prisma.productVariant.findFirstOrThrow({
+  where: {
+    stock: { gt: 0 },
+    ...(threshold > 0 ? { product: { price: { lt: threshold } } } : {}),
+  },
+  orderBy: { product: { price: 'asc' } },
+});
 const price = async (gov) =>
   (await (await fetch(`${BASE}/api/cart/revalidate`, {
     method: 'POST',

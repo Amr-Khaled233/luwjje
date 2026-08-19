@@ -24,13 +24,3 @@ export function resolveDatabaseUrl(env: NodeJS.ProcessEnv = process.env) {
   }
   return { url: undefined, source: undefined };
 }
-
-export function requireDatabaseUrl(env: NodeJS.ProcessEnv = process.env) {
-  const { url, source } = resolveDatabaseUrl(env);
-  if (!url) {
-    throw new Error(
-      `No PostgreSQL connection string found. Set DATABASE_URL (or one of: ${CANDIDATES.slice(1).join(', ')}).`,
-    );
-  }
-  return { url, source: source! };
-}

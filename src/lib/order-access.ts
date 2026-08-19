@@ -37,7 +37,3 @@ export async function grantOrderAccess(orderNumber: string) {
 export async function canViewOrder(orderNumber: string) {
   return (await readList()).includes(orderNumber);
 }
-
-export async function getVisibleOrderNumbers() {
-  return readList();
-}

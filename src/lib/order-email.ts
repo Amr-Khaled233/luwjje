@@ -40,7 +40,10 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
       deliverTo: 'التوصيل إلى',
       notes: 'ملاحظات التوصيل',
       track: 'تتبّع طلبك',
-      trackHint: 'يمكنك متابعة الطلب في أي وقت من صفحة تتبّع الطلبات بإدخال بريدك.',
+      trackTitle: 'تابع طلبك في أي وقت',
+      trackHint:
+        'ادخل على صفحة تتبّع الطلبات في الموقع واكتب بريدك الإلكتروني — ستظهر لك كل طلباتك وحالة كل واحد منها. لا تحتاج حساباً ولا كلمة مرور.',
+      questions: 'لأي استفسار',
       footer: 'إذا لم تطلب هذا، تجاهل الرسالة أو تواصل معنا.',
     };
   }
@@ -60,7 +63,10 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
     deliverTo: 'Delivering to',
     notes: 'Delivery notes',
     track: 'Track your order',
-    trackHint: 'You can check on it any time from the order tracking page using this email address.',
+    trackTitle: 'Follow your order any time',
+    trackHint:
+      'Go to the order tracking page on the site and enter your email address — every order you have placed will be listed with its current status. No account, no password.',
+    questions: 'Any questions',
     footer: 'If you did not place this order, ignore this email or get in touch.',
   };
 }
@@ -86,7 +92,14 @@ export async function buildOrderEmail(
       prisma.order.findUnique({ where: { orderNumber }, include: { items: true } }),
       prisma.siteSettings.findUnique({
         where: { id: 'singleton' },
-        select: { storeName: true, currencySymbol: true, currencySymbolAr: true, supportEmail: true },
+        select: {
+          storeName: true,
+          logoUrl: true,
+          currencySymbol: true,
+          currencySymbolAr: true,
+          supportEmail: true,
+          supportPhone: true,
+        },
       }),
     ]);
 
@@ -137,8 +150,11 @@ export async function buildOrderEmail(
       `${t.deliverTo}: ${order.fullName}, ${address}`,
       order.notes ? `${t.notes}: ${order.notes}` : null,
       '',
-      `${t.track}: ${trackUrl}`,
+      `${t.trackTitle}`,
+      t.trackHint,
+      trackUrl,
       '',
+      settings?.supportEmail ? `${t.questions}: ${settings.supportEmail}` : null,
       t.footer,
     ]
       .filter((line) => line !== null)
@@ -165,53 +181,97 @@ export async function buildOrderEmail(
       <td style="padding:${strong ? '14px 0 0' : '6px 0 0'};text-align:${locale === 'ar' ? 'left' : 'right'};font-size:${strong ? '15px' : '14px'};color:${strong ? '#0b1c30' : '#565e74'};${strong ? 'font-weight:600;border-top:1px solid #c4c7c9' : ''};white-space:nowrap">${escapeHtml(value)}</td>
     </tr>`;
 
-    const html = `<!doctype html><html dir="${dir}"><body style="margin:0;background:#f8f9ff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0b1c30">
-  <div style="max-width:560px;margin:0 auto;padding:40px 24px">
-    <p style="margin:0 0 32px;font-size:24px;font-weight:500;letter-spacing:-0.01em">${escapeHtml(storeName)}</p>
+    // The masthead is the logo when one is set, and the store name otherwise.
+    // A remote image is the one thing a mail client may refuse to load, so the
+    // name is always present underneath it as the fallback identity.
+    const masthead = settings?.logoUrl
+      ? `<img src="${escapeHtml(settings.logoUrl)}" alt="${escapeHtml(storeName)}" width="132" style="display:block;margin:0 auto 10px;max-width:132px;height:auto;border:0">`
+      : '';
 
-    <div style="border:1px solid #c4c7c9;background:#ffffff;padding:32px 28px">
-      <h1 style="margin:0 0 12px;font-size:20px;font-weight:600">${escapeHtml(t.heading)}</h1>
-      <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#565e74">${escapeHtml(t.intro)}</p>
+    const html = `<!doctype html>
+<html dir="${dir}" lang="${locale}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(t.subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f8f9ff;-webkit-font-smoothing:antialiased">
+  <!-- Preheader: the line inboxes show beside the subject. -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(t.intro)}</div>
 
-      <table style="width:100%;border-collapse:collapse;margin-bottom:28px">
-        <tr>
-          <td style="text-align:${align};font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#747879;padding-bottom:4px">${escapeHtml(t.orderNumber)}</td>
-          <td style="text-align:${locale === 'ar' ? 'left' : 'right'};font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#747879;padding-bottom:4px">${escapeHtml(t.placed)}</td>
-        </tr>
-        <tr>
-          <td style="text-align:${align};font-size:15px" dir="ltr">${escapeHtml(order.orderNumber)}</td>
-          <td style="text-align:${locale === 'ar' ? 'left' : 'right'};font-size:15px">${escapeHtml(placed)}</td>
-        </tr>
-      </table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff">
+    <tr>
+      <td align="center" style="padding:40px 16px">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0b1c30">
 
-      <table style="width:100%;border-collapse:collapse">
-        ${rows}
-        ${totalRow(t.subtotal, money(order.subtotal))}
-        ${totalRow(t.shipping, order.shippingCost === 0 ? t.free : money(order.shippingCost))}
-        ${order.discount > 0 ? totalRow(t.discount, `−${money(order.discount)}`) : ''}
-        ${totalRow(t.total, money(order.total), true)}
-      </table>
+          <!-- masthead -->
+          <tr>
+            <td align="center" style="padding:0 0 28px">
+              ${masthead}
+              <div style="font-size:26px;font-weight:500;letter-spacing:-0.01em;color:#0b1c30">${escapeHtml(storeName)}</div>
+            </td>
+          </tr>
 
-      <div style="margin-top:28px;padding-top:24px;border-top:1px solid #e5eeff">
-        <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#747879">${escapeHtml(t.deliverTo)}</p>
-        <p style="margin:0;font-size:15px;line-height:1.6">${escapeHtml(order.fullName)}<br>${escapeHtml(address)}${order.phone ? `<br><span dir="ltr">${escapeHtml(order.phone)}</span>` : ''}</p>
-        ${
-          order.notes
-            ? `<p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#747879">${escapeHtml(t.notes)}: ${escapeHtml(order.notes)}</p>`
-            : ''
-        }
-      </div>
+          <!-- confirmation -->
+          <tr>
+            <td style="background:#ffffff;border:1px solid #c4c7c9;padding:32px 28px">
+              <div style="text-align:${align}">
+                <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#747879;margin-bottom:10px">${escapeHtml(t.orderNumber)} <span dir="ltr">${escapeHtml(order.orderNumber)}</span></div>
+                <h1 style="margin:0 0 10px;font-size:22px;font-weight:600;line-height:1.3">${escapeHtml(t.heading)}</h1>
+                <p style="margin:0 0 26px;font-size:15px;line-height:1.65;color:#565e74">${escapeHtml(t.intro)}</p>
+              </div>
 
-      <a href="${trackUrl}" style="display:inline-block;margin-top:28px;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:14px 28px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">${escapeHtml(t.track)}</a>
-      <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#747879">${escapeHtml(t.trackHint)}</p>
-    </div>
+              <!-- items -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+                <tr>
+                  <td colspan="3" style="padding:0 0 6px;text-align:${align};font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#747879;border-bottom:1px solid #0b1c30">${escapeHtml(t.items)}</td>
+                </tr>
+                ${rows}
+                ${totalRow(t.subtotal, money(order.subtotal))}
+                ${totalRow(t.shipping, order.shippingCost === 0 ? t.free : money(order.shippingCost))}
+                ${order.discount > 0 ? totalRow(t.discount, `−${money(order.discount)}`) : ''}
+                ${totalRow(t.total, money(order.total), true)}
+              </table>
 
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#747879">${escapeHtml(t.footer)}${
-      settings?.supportEmail ? ` — ${escapeHtml(settings.supportEmail)}` : ''
-    }</p>
-  </div>
+              <!-- delivery -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid #e5eeff">
+                <tr>
+                  <td style="padding:22px 0 0;text-align:${align}">
+                    <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#747879;margin-bottom:6px">${escapeHtml(t.deliverTo)}</div>
+                    <div style="font-size:15px;line-height:1.7;color:#0b1c30">
+                      ${escapeHtml(order.fullName)}<br>${escapeHtml(address)}
+                      ${order.phone ? `<br><span dir="ltr">${escapeHtml(order.phone)}</span>` : ''}
+                    </div>
+                    ${order.notes ? `<div style="margin-top:14px;font-size:13px;line-height:1.6;color:#747879">${escapeHtml(t.notes)}: ${escapeHtml(order.notes)}</div>` : ''}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- tracking: how to check on it later, without an account -->
+          <tr>
+            <td style="background:#eff4ff;border:1px solid #c4c7c9;border-top:0;padding:28px;text-align:${align}">
+              <h2 style="margin:0 0 8px;font-size:16px;font-weight:600">${escapeHtml(t.trackTitle)}</h2>
+              <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#565e74">${escapeHtml(t.trackHint)}</p>
+              <a href="${trackUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:14px 30px;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">${escapeHtml(t.track)}</a>
+              <div style="margin-top:14px;font-size:12px;color:#747879;word-break:break-all"><a href="${trackUrl}" style="color:#747879">${trackUrl}</a></div>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td style="padding:24px 4px 0;text-align:${align}">
+              ${settings?.supportEmail ? `<div style="font-size:13px;line-height:1.7;color:#565e74">${escapeHtml(t.questions)}: <a href="mailto:${escapeHtml(settings.supportEmail)}" style="color:#0b1c30">${escapeHtml(settings.supportEmail)}</a>${settings.supportPhone ? ` · <span dir="ltr">${escapeHtml(settings.supportPhone)}</span>` : ''}</div>` : ''}
+              <div style="margin-top:10px;font-size:12px;line-height:1.7;color:#747879">${escapeHtml(t.footer)}</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body></html>`;
-
     return { to: order.email, subject: t.subject, text, html };
   }
 }

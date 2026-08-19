@@ -74,17 +74,6 @@ export async function checkPassword(input: string): Promise<boolean> {
   return safeEqual(input, fallback);
 }
 
-export async function setPassword(newPassword: string) {
-  const bcrypt = (await import('bcryptjs')).default;
-  const hash = await bcrypt.hash(newPassword, 10);
-
-  await prisma.siteSettings.upsert({
-    where: { id: 'singleton' },
-    update: { dashboardPasswordHash: hash },
-    create: { id: 'singleton', dashboardPasswordHash: hash },
-  });
-}
-
 /**
  * Small in-memory throttle. Enough to make guessing impractical on a
  * single-instance deployment; put a WAF or Redis counter in front for more.
