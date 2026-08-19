@@ -15,7 +15,17 @@ export function PageTitle({
 }: {
   section: Extract<
     keyof DashboardDictionary,
-    'orders' | 'products' | 'categories' | 'stock' | 'shipping' | 'filters' | 'promo' | 'offers' | 'analytics' | 'settings'
+    | 'orders'
+    | 'products'
+    | 'categories'
+    | 'stock'
+    | 'shipping'
+    | 'freeShipping'
+    | 'filters'
+    | 'promo'
+    | 'offers'
+    | 'analytics'
+    | 'settings'
   >;
   actions?: React.ReactNode;
 }) {

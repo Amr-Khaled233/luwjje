@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { logout } from '@/app/actions/dashboard-session';
 import {
+  BadgePercent,
   Package,
   Boxes,
   FolderTree,
@@ -33,6 +34,7 @@ const LINKS: { href: string; key: keyof DashboardDictionary['nav']; icon: typeof
   { href: '/dashboard/stock', key: 'stock', icon: Boxes },
   { href: '/dashboard/offers', key: 'offers', icon: Megaphone },
   { href: '/dashboard/shipping', key: 'shipping', icon: Truck },
+  { href: '/dashboard/free-shipping', key: 'freeShipping', icon: BadgePercent },
   { href: '/dashboard/filters', key: 'filters', icon: SlidersHorizontal },
   { href: '/dashboard/promo-codes', key: 'promoCodes', icon: Ticket },
   { href: '/dashboard/analytics', key: 'analytics', icon: BarChart3 },

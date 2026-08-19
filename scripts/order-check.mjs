@@ -11,7 +11,7 @@ import './load-env.ts';
 import { prisma } from '../src/lib/prisma.ts';
 import { createOrder } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
-import { calculateShipping, validatePromoCode } from '../src/lib/commerce.ts';
+import { calculateShipping, validatePromoCode, getFreeShipping } from '../src/lib/commerce.ts';
 
 let pass = 0;
 let fail = 0;
@@ -226,6 +226,83 @@ if (zones[0]) {
   const byArabicName = await calculateShipping(zones[0].nameAr || zones[0].name, 1);
   check('the Arabic governorate name resolves too', byArabicName.cost === zones[0].shippingCost, byArabicName.cost);
 }
+
+// ---------------------------------------------------------------- free shipping
+console.log('\n▸ Free delivery rules');
+const previousRules = await prisma.freeShippingRule.findMany();
+await prisma.freeShippingRule.deleteMany({});
+
+const cheap = variant.product.price;
+
+check('with no rules, delivery is charged', !(await getFreeShipping(cheap * 100)).free);
+
+// A spend threshold.
+const overRule = await prisma.freeShippingRule.create({
+  data: { name: 'over', minOrder: cheap * 2, active: true },
+});
+check('below the threshold still pays', !(await getFreeShipping(cheap)).free);
+check('at the threshold is free', (await getFreeShipping(cheap * 2)).free);
+check('above the threshold is free', (await getFreeShipping(cheap * 5)).free);
+check(
+  'the meter counts towards the threshold',
+  (await getFreeShipping(cheap)).nextThreshold === cheap * 2,
+  (await getFreeShipping(cheap)).nextThreshold,
+);
+
+// Switching a rule off must actually stop it.
+await prisma.freeShippingRule.update({ where: { id: overRule.id }, data: { active: false } });
+check('an inactive rule does not apply', !(await getFreeShipping(cheap * 5)).free);
+await prisma.freeShippingRule.update({ where: { id: overRule.id }, data: { active: true } });
+
+// A date window.
+const past = await prisma.freeShippingRule.create({
+  data: {
+    name: 'finished',
+    startsAt: new Date(Date.now() - 20 * 86400000),
+    endsAt: new Date(Date.now() - 10 * 86400000),
+    active: true,
+  },
+});
+check('a finished campaign does not apply', !(await getFreeShipping(0)).free);
+
+const future = await prisma.freeShippingRule.create({
+  data: { name: 'upcoming', startsAt: new Date(Date.now() + 86400000), active: true },
+});
+check('a campaign that has not started does not apply', !(await getFreeShipping(0)).free);
+
+const now = await prisma.freeShippingRule.create({
+  data: {
+    name: 'running',
+    startsAt: new Date(Date.now() - 86400000),
+    endsAt: new Date(Date.now() + 86400000),
+    active: true,
+  },
+});
+check('a running campaign makes any basket free', (await getFreeShipping(0)).free);
+check('even an empty one', (await getFreeShipping(0)).free);
+
+// Rules stack: the campaign wins even though the spend rule is unmet.
+check('rules add up rather than override', (await getFreeShipping(1)).free);
+
+await prisma.freeShippingRule.deleteMany({
+  where: { id: { in: [overRule.id, past.id, future.id, now.id] } },
+});
+
+// And it reaches the actual delivery price.
+const noRules = await calculateShipping('Cairo', cheap);
+check('with no rule the governorate rate is charged', noRules.cost > 0, noRules.cost);
+const always = await prisma.freeShippingRule.create({ data: { name: 'all', active: true } });
+const waived = await calculateShipping('Cairo', cheap);
+check('a live rule waives the governorate rate', waived.cost === 0 && waived.free);
+await prisma.freeShippingRule.delete({ where: { id: always.id } });
+
+for (const rule of previousRules) {
+  await prisma.freeShippingRule.create({ data: rule });
+}
+check(
+  'the rules table was restored',
+  (await prisma.freeShippingRule.count()) === previousRules.length,
+);
 
 // ---------------------------------------------------------------- lookup
 console.log('\n▸ Order lookup by email');

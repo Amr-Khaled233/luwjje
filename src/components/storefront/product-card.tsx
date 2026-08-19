@@ -64,8 +64,12 @@ export function ProductCard({
               fill
               priority={priority}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              style={{
+                objectPosition: `${product.primaryFocus.focalX}% ${product.primaryFocus.focalY}%`,
+              }}
               className={cn(
-                'object-cover transition-all duration-500 ease-scandi',
+                'transition-all duration-500 ease-scandi',
+                product.primaryFocus.fit === 'contain' ? 'object-contain' : 'object-cover',
                 product.hoverImage
                   ? 'group-hover:scale-[1.02] group-hover:opacity-0'
                   : 'group-hover:scale-[1.02]',
@@ -79,7 +83,13 @@ export function ProductCard({
               aria-hidden
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="scale-[1.02] object-cover opacity-0 transition-opacity duration-500 ease-scandi group-hover:opacity-100"
+              style={{
+                objectPosition: `${product.hoverFocus.focalX}% ${product.hoverFocus.focalY}%`,
+              }}
+              className={cn(
+                'scale-[1.02] opacity-0 transition-opacity duration-500 ease-scandi group-hover:opacity-100',
+                product.hoverFocus.fit === 'contain' ? 'object-contain' : 'object-cover',
+              )}
             />
           )}
 

@@ -31,18 +31,15 @@ const EMPTY: GovernorateInput = {
   name: '',
   nameAr: '',
   shippingCost: 0,
-  freeOver: null,
   estimatedDays: '2-4',
   active: true,
 };
 
 export function ShippingManager({
   governorates,
-  globalFreeOver,
   currencySymbol,
 }: {
   governorates: GovernorateRow[];
-  globalFreeOver: number;
   currencySymbol: string;
 }) {
   const router = useRouter();
@@ -130,18 +127,6 @@ export function ShippingManager({
 
   return (
     <>
-      <div className="border border-outline-variant bg-surface-low p-6">
-        <h2 className="font-display text-headline-sm">{d.shipping.howTitle}</h2>
-        <p className="mt-2 max-w-[75ch] text-body-md text-secondary">
-          The customer picks a governorate at checkout and is charged its price below. Orders above{' '}
-          <strong className="text-on-surface">
-            {currencySymbol} {globalFreeOver.toLocaleString()}
-          </strong>{' '}
-          ship free — set a per-governorate threshold on a row to override that. Switching a
-          governorate off removes it from the checkout dropdown entirely.
-        </p>
-      </div>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="relative w-full sm:min-w-[220px] sm:flex-1">
           <Search className="absolute top-1/2 h-4 w-4 -translate-y-1/2 text-secondary ltr:left-4 rtl:right-4" />
@@ -194,7 +179,6 @@ export function ShippingManager({
                 <Th>{d.shipping.governorate}</Th>
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.shipping.deliveryPrice} ({currencySymbol})</Th>
-                <Th>{d.shipping.freeOver}</Th>
                 <Th>{d.shipping.days}</Th>
                 <Th>{d.shipping.delivering}</Th>
                 <Th className="text-end">{d.common.actions}</Th>
@@ -228,11 +212,6 @@ export function ShippingManager({
                         aria-label={`${d.shipping.deliveryPrice} — ${g.name}`}
                         className="h-10 w-28 border border-outline-variant bg-background px-3 text-body-md tabular-nums transition-colors focus:border-navy focus:outline-none"
                       />
-                    </Td>
-                    <Td className="tabular-nums text-secondary">
-                      {g.freeOver
-                        ? `${currencySymbol} ${g.freeOver.toLocaleString()}`
-                        : `${globalFreeOver.toLocaleString()} (${d.shipping.global})`}
                     </Td>
                     <Td className="text-secondary">{g.estimatedDays}</Td>
                     <Td>
@@ -285,7 +264,7 @@ export function ShippingManager({
               disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(async (values) => {
                 const ok = await run(
-                  () => saveGovernorate({ ...values, freeOver: values.freeOver || null }),
+                  () => saveGovernorate(values),
                   d.shipping.saved,
                 );
                 if (ok) setModal({ open: false, data: null });
@@ -327,15 +306,6 @@ export function ShippingManager({
               required
               error={form.formState.errors.shippingCost?.message}
               {...form.register('shippingCost')}
-            />
-            <Input
-              label={`${d.shipping.freeOver} (${currencySymbol})`}
-              type="number"
-              step="1"
-              min="0"
-              hint={fmt(d.shipping.blankUsesGlobal, { amount: globalFreeOver.toLocaleString() })}
-              error={form.formState.errors.freeOver?.message}
-              {...form.register('freeOver')}
             />
             <Input
               label={d.shipping.estimatedDays}

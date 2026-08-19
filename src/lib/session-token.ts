@@ -42,10 +42,15 @@ export async function verifySessionToken(token: string | undefined): Promise<boo
   return (await readSession(token)) !== null;
 }
 
+/**
+ * No `maxAge` on purpose: this is a session cookie, so the browser drops it
+ * when it closes and the password is asked for again. The signed expiry inside
+ * the token is still the hard ceiling — a browser left open all week does not
+ * keep the dashboard open with it.
+ */
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'lax' as const,
   secure: process.env.NODE_ENV === 'production',
   path: '/',
-  maxAge: MAX_AGE_SECONDS,
 };

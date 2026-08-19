@@ -22,7 +22,6 @@ export default async function CartPage() {
   return (
     <CartView
       governorates={governorates}
-      freeShippingOver={settings.freeShippingOver}
       currencySymbol={symbol}
       locale={locale}
       t={t}

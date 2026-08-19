@@ -7,6 +7,7 @@ import { slugify } from '@/lib/utils';
 import {
   productSchema,
   promoSchema,
+  freeShippingSchema,
   governorateSchema,
   governorateRatesSchema,
   filterColorSchema,
@@ -127,6 +128,9 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       position: i,
       isPrimary: i === 0,
       isHover: i === 1,
+      focalX: img.focalX,
+      focalY: img.focalY,
+      fit: img.fit,
     }));
 
     const base = {
@@ -429,6 +433,58 @@ export async function updateOrderStatus(input: unknown): Promise<ActionResult> {
 
 // ================================================================ promo codes
 
+// ================================================================ free shipping
+
+export async function saveFreeShippingRule(input: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = freeShippingSchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    const d = parsed.data;
+    const payload = {
+      name: d.name,
+      nameAr: d.nameAr,
+      minOrder: d.minOrder ?? null,
+      startsAt: parseDate(d.startsAt),
+      endsAt: parseDate(d.endsAt),
+      active: d.active,
+    };
+
+    if (d.id) await prisma.freeShippingRule.update({ where: { id: d.id }, data: payload });
+    else await prisma.freeShippingRule.create({ data: payload });
+
+    // The cart quotes delivery, so it has to be re-rendered too.
+    revalidateStorefront();
+    revalidatePath('/dashboard/free-shipping');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function deleteFreeShippingRule(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    await prisma.freeShippingRule.delete({ where: { id } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/free-shipping');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+export async function toggleFreeShippingRule(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    const rule = await prisma.freeShippingRule.findUnique({ where: { id } });
+    if (!rule) return { ok: false, error: 'Rule not found.' };
+
+    await prisma.freeShippingRule.update({
+      where: { id },
+      data: { active: !rule.active },
+    });
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/free-shipping');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
 export async function savePromoCode(input: unknown): Promise<ActionResult> {
   return guard(async () => {
     const parsed = promoSchema.safeParse(input);
@@ -498,7 +554,6 @@ export async function saveGovernorate(input: unknown): Promise<ActionResult> {
       name: d.name,
       nameAr: d.nameAr,
       shippingCost: d.shippingCost,
-      freeOver: d.freeOver ?? null,
       estimatedDays: d.estimatedDays,
       active: d.active,
     };

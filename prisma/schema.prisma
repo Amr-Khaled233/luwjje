@@ -77,6 +77,14 @@ model ProductImage {
   /// Second image, revealed on card hover.
   isHover   Boolean @default(false)
 
+  /// Where the subject sits, as a percentage of the frame. Product photos are
+  /// shown in fixed aspect ratios, so a centre crop cuts an off-centre subject
+  /// in half. This is the point that must stay in frame at every size.
+  focalX    Int     @default(50)
+  focalY    Int     @default(50)
+  /// "cover" crops to fill the frame; "contain" fits the whole image inside it.
+  fit       String  @default("cover")
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
@@ -199,6 +207,27 @@ model PromoCode {
   @@index([active])
 }
 
+/// Makes delivery free — above a spend, during a window, or both.
+///
+/// A rule with only `minOrder` is the classic "free over 2,000". A rule with
+/// only dates is a campaign: free delivery all week, whatever the basket. Set
+/// both and it is free over 2,000 during that week only. Any live rule that
+/// matches wins, so rules stack rather than override each other.
+model FreeShippingRule {
+  id        String    @id @default(cuid())
+  name      String    @default("")
+  nameAr    String    @default("")
+  /// Null means any basket qualifies.
+  minOrder  Float?
+  /// Null on either side leaves that end open.
+  startsAt  DateTime?
+  endsAt    DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  @@index([active])
+}
+
 /// Automatic (non-code) discount campaign scoped to products or a category.
 model Discount {
   id            String    @id @default(cuid())
@@ -235,7 +264,6 @@ model Governorate {
   nameAr        String
   shippingCost  Float   @default(0)
   /// Per-governorate free-shipping threshold; null falls back to the global one.
-  freeOver      Float?
   estimatedDays String  @default("2-4")
   active        Boolean @default(true)
   position      Int     @default(0)
@@ -273,7 +301,6 @@ model SiteSettings {
   currencySymbol   String @default("EGP")
   currencySymbolAr String @default("ج.م")
 
-  freeShippingOver    Float @default(2000)
   defaultShippingRate Float @default(75)
   lowStockThreshold   Int   @default(5)
 

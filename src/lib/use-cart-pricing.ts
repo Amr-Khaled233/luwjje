@@ -24,6 +24,8 @@ interface Pricing {
     estimatedDays: string;
   } | null;
   promo: { ok: boolean; message: string; code?: string; discount: number } | null;
+  /** Spend needed for free delivery, or 0 when no rule is within reach. */
+  freeShippingOver: number;
   loading: boolean;
   error: string | null;
 }
@@ -50,6 +52,7 @@ export function useCartPricing({
     total: 0,
     shipping: null,
     promo: null,
+    freeShippingOver: 0,
     loading: true,
     error: null,
   });
@@ -69,6 +72,7 @@ export function useCartPricing({
         total: 0,
         shipping: null,
         promo: null,
+        freeShippingOver: 0,
         loading: false,
         error: null,
       });
@@ -120,6 +124,7 @@ export function useCartPricing({
           total: data.total,
           shipping: data.shipping,
           promo: promoCode ? data.promo : null,
+          freeShippingOver: data.freeShippingOver ?? 0,
           loading: false,
           error: null,
         });

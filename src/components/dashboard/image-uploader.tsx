@@ -2,28 +2,52 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Upload, X, Loader2, GripVertical } from 'lucide-react';
+import { Upload, X, Loader2, Crop, Maximize2 } from 'lucide-react';
 import { FieldLabel, FieldHint } from '@/components/ui/field';
+import { useDash } from './dashboard-i18n';
 import { cn } from '@/lib/utils';
 
 export interface UploadedImage {
   url: string;
   alt: string;
+  /**
+   * The point that must stay in frame, as a percentage of the image.
+   * Optional because the logo and the banners are single images that are not
+   * stored with a focal point — see the `focus` prop.
+   */
+  focalX?: number;
+  focalY?: number;
+  fit?: 'cover' | 'contain';
 }
 
 /**
  * Multi-image uploader. Position 1 is the card's primary shot, position 2 the
  * lifestyle image revealed on hover — the order here is the order shown.
+ *
+ * Every place a product photo appears is a fixed aspect ratio: 3:4 on the card
+ * and the detail page, a square in the cart, a strip in the emailed receipt.
+ * A centre crop therefore cuts an off-centre subject in half. Rather than a
+ * crop tool that would have to be redone per ratio, each image carries a focal
+ * point: click the part that matters and it stays in frame everywhere. For a
+ * photo that should not be cropped at all, switch it to Fit.
  */
 export function ImageUploader({
   value,
   onChange,
-  label = 'Images',
+  label,
+  focus = false,
 }: {
   value: UploadedImage[];
   onChange: (images: UploadedImage[]) => void;
   label?: string;
+  /**
+   * Offer the focal-point and fit controls. Off by default: only product
+   * images persist them, and a control that silently does nothing is worse
+   * than no control.
+   */
+  focus?: boolean;
 }) {
+  const { d } = useDash();
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -40,15 +64,30 @@ export function ImageUploader({
     try {
       const res = await fetch('/api/dashboard/upload', { method: 'POST', body });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed.');
-      onChange([...value, ...data.urls.map((url: string) => ({ url, alt: '' }))]);
+      if (!res.ok) throw new Error(data.error ?? d.images.uploadFailed);
+      onChange([
+        ...value,
+        ...data.urls.map((url: string) => ({
+          url,
+          alt: '',
+          focalX: 50,
+          focalY: 50,
+          fit: 'cover' as const,
+        })),
+      ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.');
+      setError(err instanceof Error ? err.message : d.images.uploadFailed);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
     }
   }
+
+  const update = (index: number, patch: Partial<UploadedImage>) =>
+    onChange(value.map((img, i) => (i === index ? { ...img, ...patch } : img)));
+
+  const focalOf = (img: UploadedImage) => ({ x: img.focalX ?? 50, y: img.focalY ?? 50 });
+  const fitOf = (img: UploadedImage) => img.fit ?? 'cover';
 
   function move(from: number, to: number) {
     if (to < 0 || to >= value.length) return;
@@ -58,9 +97,20 @@ export function ImageUploader({
     onChange(next);
   }
 
+  /** Turns a click anywhere on the preview into a focal percentage. */
+  function setFocal(index: number, event: React.MouseEvent<HTMLElement>) {
+    const box = event.currentTarget.getBoundingClientRect();
+    const focalX = Math.round(((event.clientX - box.left) / box.width) * 100);
+    const focalY = Math.round(((event.clientY - box.top) / box.height) * 100);
+    update(index, {
+      focalX: Math.min(100, Math.max(0, focalX)),
+      focalY: Math.min(100, Math.max(0, focalY)),
+    });
+  }
+
   return (
     <div>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel>{label ?? d.common.images}</FieldLabel>
 
       <div
         onDragOver={(e) => {
@@ -85,9 +135,9 @@ export function ImageUploader({
           <Upload className="h-5 w-5 text-secondary" />
         )}
         <p className="mt-3 text-body-sm text-secondary">
-          {uploading ? 'Uploading…' : 'Drop images here, or click to choose'}
+          {uploading ? d.images.uploading : d.images.drop}
         </p>
-        <p className="mt-1 text-body-sm text-tertiary">JPG, PNG, WebP or AVIF · max 8MB each</p>
+        <p className="mt-1 text-body-sm text-tertiary">{d.images.formats}</p>
         <input
           ref={inputRef}
           type="file"
@@ -102,64 +152,111 @@ export function ImageUploader({
 
       {value.length > 0 && (
         <>
-          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {value.map((img, i) => (
-              <li key={img.url + i} className="border border-outline-variant bg-surface-lowest">
-                <div className="relative aspect-[3/4] w-full bg-surface-low">
-                  <Image src={img.url} alt={img.alt} fill sizes="200px" className="object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => onChange(value.filter((_, j) => j !== i))}
-                    aria-label="Remove image"
-                    className="absolute end-1.5 top-1.5 flex h-7 w-7 items-center justify-center border border-navy bg-background transition-colors hover:bg-error hover:text-background"
+          <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {value.map((img, i) => {
+              const focal = focalOf(img);
+              const fit = fitOf(img);
+
+              return (
+                <li key={img.url + i} className="border border-outline-variant bg-surface-lowest">
+                  {/*
+                    The preview is the real 3:4 frame with the real fit and
+                    focal point applied, so it is not a guess at what the
+                    product card will end up showing.
+                  */}
+                  <div
+                    role={focus ? 'button' : undefined}
+                    tabIndex={focus ? 0 : undefined}
+                    onClick={focus ? (e) => setFocal(i, e) : undefined}
+                    aria-label={focus ? d.images.setFocal : undefined}
+                    className={cn(
+                      'group relative block aspect-[3/4] w-full overflow-hidden bg-surface-low',
+                      focus && fit === 'cover' && 'cursor-crosshair',
+                    )}
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                  {i === 0 && (
-                    <span className="label-caps absolute bottom-1.5 start-1.5 border border-navy bg-navy px-2 py-0.5 text-background">
-                      Primary
+                    <Image
+                      src={img.url}
+                      alt={img.alt}
+                      fill
+                      sizes="280px"
+                      className={fit === 'contain' ? 'object-contain' : 'object-cover'}
+                      style={{ objectPosition: `${focal.x}% ${focal.y}%` }}
+                    />
+
+                    {focus && fit === 'cover' && (
+                      <>
+                        <span
+                          aria-hidden
+                          style={{ left: `${focal.x}%`, top: `${focal.y}%` }}
+                          className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background opacity-70 transition-opacity group-hover:opacity-100"
+                        >
+                          <span className="absolute inset-[5px] rounded-full bg-navy" />
+                        </span>
+                        <span className="label-caps pointer-events-none absolute inset-x-0 bottom-0 bg-navy/85 py-1.5 text-center text-background opacity-0 transition-opacity group-hover:opacity-100">
+                          {d.images.clickToFocus}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 border-t border-outline-variant p-2">
+                    <button
+                      type="button"
+                      onClick={() => move(i, i - 1)}
+                      disabled={i === 0}
+                      aria-label={d.images.moveEarlier}
+                      className="label-caps px-1.5 text-secondary disabled:opacity-30"
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(i, i + 1)}
+                      disabled={i === value.length - 1}
+                      aria-label={d.images.moveLater}
+                      className="label-caps px-1.5 text-secondary disabled:opacity-30"
+                    >
+                      →
+                    </button>
+
+                    {focus && (
+                      <button
+                        type="button"
+                        onClick={() => update(i, { fit: fit === 'cover' ? 'contain' : 'cover' })}
+                        title={fit === 'cover' ? d.images.switchToFit : d.images.switchToFill}
+                        className="label-caps ms-1 inline-flex items-center gap-1.5 border border-outline-variant px-2 py-1 text-secondary transition-colors hover:border-navy hover:text-on-surface"
+                      >
+                        {fit === 'cover' ? <Crop className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+                        {fit === 'cover' ? d.images.fill : d.images.fit}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => onChange(value.filter((_, j) => j !== i))}
+                      aria-label={d.common.remove}
+                      className="ms-auto flex h-7 w-7 items-center justify-center text-tertiary transition-colors hover:text-error"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 border-t border-outline-variant px-2 py-1.5">
+                    <span className="label-caps shrink-0 text-tertiary">
+                      {i === 0 ? d.images.primary : i === 1 ? d.images.hover : `#${i + 1}`}
                     </span>
-                  )}
-                  {i === 1 && (
-                    <span className="label-caps absolute bottom-1.5 start-1.5 border border-navy bg-background px-2 py-0.5">
-                      Hover
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 border-t border-outline-variant p-2">
-                  <GripVertical className="h-3.5 w-3.5 shrink-0 text-tertiary" />
-                  <button
-                    type="button"
-                    onClick={() => move(i, i - 1)}
-                    disabled={i === 0}
-                    className="label-caps px-1.5 text-secondary disabled:opacity-30"
-                  >
-                    ←
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => move(i, i + 1)}
-                    disabled={i === value.length - 1}
-                    className="label-caps px-1.5 text-secondary disabled:opacity-30"
-                  >
-                    →
-                  </button>
-                  <input
-                    value={img.alt}
-                    onChange={(e) =>
-                      onChange(value.map((v, j) => (j === i ? { ...v, alt: e.target.value } : v)))
-                    }
-                    placeholder="Alt text"
-                    className="min-w-0 flex-1 border-0 bg-transparent px-1 text-body-sm outline-none placeholder:text-tertiary"
-                  />
-                </div>
-              </li>
-            ))}
+                    <input
+                      value={img.alt}
+                      onChange={(e) => update(i, { alt: e.target.value })}
+                      placeholder={d.images.altText}
+                      className="min-w-0 flex-1 border-0 bg-transparent px-1 text-body-sm outline-none placeholder:text-tertiary"
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
-          <FieldHint>
-            The first image is the product card&rsquo;s primary shot; the second is revealed on
-            hover. Use the arrows to reorder.
-          </FieldHint>
+          {focus && <FieldHint>{d.images.hint}</FieldHint>}
         </>
       )}
     </div>

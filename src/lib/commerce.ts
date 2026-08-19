@@ -193,8 +193,39 @@ export async function validatePromoCode(
 }
 
 /**
- * Delivery cost for a governorate. Each governorate carries its own price and
- * may override the global free-shipping threshold.
+ * Whether delivery is free right now, and what the shopper would have to spend
+ * for it to become free.
+ *
+ * Rules stack rather than override: any live rule the basket satisfies makes
+ * delivery free. `nextThreshold` is the cheapest one still out of reach, which
+ * is what the cart's progress meter counts towards — showing the highest, or
+ * the first, would tell the shopper to spend more than they need to.
+ */
+export async function getFreeShipping(subtotal: number) {
+  const now = new Date();
+
+  const live = await prisma.freeShippingRule.findMany({
+    where: {
+      active: true,
+      AND: [
+        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+      ],
+    },
+  });
+
+  const free = live.some((rule) => subtotal >= (rule.minOrder ?? 0));
+
+  const pending = live
+    .map((rule) => rule.minOrder ?? 0)
+    .filter((minimum) => minimum > subtotal);
+
+  return { free, nextThreshold: pending.length ? Math.min(...pending) : 0 };
+}
+
+/**
+ * Delivery cost for a governorate. Each governorate carries its own price;
+ * whether that price is waived is decided by the free-shipping rules.
  */
 export async function calculateShipping(governorateName: string, subtotal: number) {
   const settings = await getSettings();
@@ -209,13 +240,12 @@ export async function calculateShipping(governorateName: string, subtotal: numbe
   });
 
   const rate = governorate?.shippingCost ?? settings.defaultShippingRate;
-  const threshold = governorate?.freeOver ?? settings.freeShippingOver;
-  const free = threshold > 0 && subtotal >= threshold;
+  const { free, nextThreshold } = await getFreeShipping(subtotal);
 
   return {
     cost: free ? 0 : rate,
     rate,
-    threshold,
+    threshold: nextThreshold,
     free,
     governorateId: governorate?.id ?? null,
     zoneName: governorate?.name ?? 'Standard',

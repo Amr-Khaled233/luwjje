@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { resolveCartLines, calculateShipping, validatePromoCode } from '@/lib/commerce';
+import {
+  resolveCartLines,
+  calculateShipping,
+  validatePromoCode,
+  getFreeShipping,
+} from '@/lib/commerce';
 import { getSettings, getCurrencySymbol } from '@/lib/settings';
 import { getLocale } from '@/i18n/server';
 
@@ -32,11 +37,12 @@ export async function POST(req: Request) {
   const subtotal = Math.round(lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0) * 100) / 100;
 
   // An empty (or fully-unavailable) cart is never charged for delivery.
+  const freeShipping = await getFreeShipping(subtotal);
   const shipping = lines.length === 0
     ? {
         cost: 0,
         rate: 0,
-        threshold: settings.freeShippingOver,
+        threshold: freeShipping.nextThreshold,
         free: true,
         governorateId: null,
         zoneName: 'Standard',
@@ -46,10 +52,12 @@ export async function POST(req: Request) {
     : governorate
     ? await calculateShipping(governorate, subtotal)
     : {
-        cost: subtotal >= settings.freeShippingOver ? 0 : settings.defaultShippingRate,
+        // No governorate chosen yet: quote the default rate so the shopper
+        // sees a number, and let the rules decide whether it is waived.
+        cost: freeShipping.free ? 0 : settings.defaultShippingRate,
         rate: settings.defaultShippingRate,
-        threshold: settings.freeShippingOver,
-        free: subtotal >= settings.freeShippingOver,
+        threshold: freeShipping.nextThreshold,
+        free: freeShipping.free,
         governorateId: null,
         zoneName: 'Standard',
         zoneNameAr: '',

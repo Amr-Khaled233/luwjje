@@ -39,7 +39,7 @@ export interface EditableProduct {
   isBestSeller: boolean;
   bestSellerOrder: number;
   soldCount: number;
-  images: { url: string; alt: string }[];
+  images: { url: string; alt: string; focalX: number; focalY: number; fit: string }[];
   variants: {
     id?: string;
     colorName: string;
@@ -121,7 +121,12 @@ export function ProductEditor({
         status: product.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
         isBestSeller: product.isBestSeller,
         bestSellerOrder: product.bestSellerOrder,
-        images: product.images.map((i) => ({ ...i, isPrimary: false, isHover: false })),
+        images: product.images.map((i) => ({
+          ...i,
+          fit: i.fit === 'contain' ? ('contain' as const) : ('cover' as const),
+          isPrimary: false,
+          isHover: false,
+        })),
         variants: product.variants.map((v) => ({ ...v, size: v.size ?? '' })),
       });
 
@@ -312,6 +317,7 @@ export function ProductEditor({
             render={({ field }) => (
               <ImageUploader
                 label={d.common.images}
+                focus
                 value={field.value.map((i) => ({ url: i.url, alt: i.alt }))}
                 onChange={(images) =>
                   field.onChange(images.map((i) => ({ ...i, isPrimary: false, isHover: false })))

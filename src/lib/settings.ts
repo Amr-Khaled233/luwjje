@@ -38,7 +38,6 @@ function fallbackSettings(): Settings {
     currencyCode: 'EGP',
     currencySymbol: 'EGP',
     currencySymbolAr: 'ج.م',
-    freeShippingOver: 0,
     defaultShippingRate: 0,
     lowStockThreshold: 5,
     showColorFilter: true,

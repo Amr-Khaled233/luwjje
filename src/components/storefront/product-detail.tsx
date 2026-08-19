@@ -29,7 +29,7 @@ interface DetailProduct {
   listPrice: number;
   discounted: boolean;
   categoryName: string | null;
-  images: { url: string; alt: string }[];
+  images: { url: string; alt: string; focalX: number; focalY: number; fit: 'cover' | 'contain' }[];
   variants: Variant[];
 }
 
@@ -117,6 +117,24 @@ export function ProductDetail({
   const [activeImage, setActiveImage] = React.useState(0);
   const [added, setAdded] = React.useState(false);
 
+  // The gallery is a scroller, so "which image" is wherever it has been
+  // scrolled to. Clicking a thumbnail scrolls it; swiping updates the state.
+  const stripRef = React.useRef<HTMLDivElement>(null);
+
+  function show(index: number) {
+    setActiveImage(index);
+    const strip = stripRef.current;
+    if (!strip) return;
+    strip.scrollTo({ left: strip.clientWidth * index, behavior: 'smooth' });
+  }
+
+  function onStripScroll(event: React.UIEvent<HTMLDivElement>) {
+    const strip = event.currentTarget;
+    if (strip.clientWidth === 0) return;
+    const index = Math.round(strip.scrollLeft / strip.clientWidth);
+    setActiveImage(Math.min(product.images.length - 1, Math.max(0, index)));
+  }
+
   React.useEffect(() => setQuantity(1), [selected?.id]);
 
   // The sticky phone buy bar appears only once the real button is off screen.
@@ -169,32 +187,73 @@ export function ProductDetail({
             {product.images.map((img, i) => (
               <button
                 key={img.url + i}
-                onClick={() => setActiveImage(i)}
-                aria-label={`View image ${i + 1}`}
+                onClick={() => show(i)}
+                aria-label={fmt(t.product.viewImage, { n: i + 1 })}
+                aria-current={i === activeImage}
                 className={cn(
                   'relative h-24 w-[72px] shrink-0 overflow-hidden border transition-colors',
                   i === activeImage ? 'border-navy' : 'border-outline-variant hover:border-outline',
                 )}
               >
-                <Image src={img.url} alt={img.alt} fill sizes="72px" className="object-cover" />
+                <Image
+                  src={img.url}
+                  alt={img.alt}
+                  fill
+                  sizes="72px"
+                  style={{ objectPosition: `${img.focalX}% ${img.focalY}%` }}
+                  className={img.fit === 'contain' ? 'object-contain' : 'object-cover'}
+                />
               </button>
             ))}
           </div>
         )}
 
-        <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-low">
-          {product.images[activeImage] && (
-            <Image
-              // Re-keying on the index restarts the fade, so switching
-              // thumbnails cross-dissolves instead of snapping.
-              key={activeImage}
-              src={product.images[activeImage].url}
-              alt={product.images[activeImage].alt || product.name}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 45vw"
-              className="animate-fade-in object-cover"
-            />
+        <div className="min-w-0 flex-1">
+          {/*
+            One scroller for every image rather than a single swapped frame:
+            on a phone that gives real swiping, with the browser doing the
+            snapping. On a pointer device the thumbnails drive it and the
+            scroller is just a container.
+          */}
+          <div
+            ref={stripRef}
+            onScroll={onStripScroll}
+            className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain md:overflow-hidden"
+          >
+            {product.images.map((img, i) => (
+              <div
+                key={img.url + i}
+                className="relative aspect-[3/4] w-full shrink-0 snap-center overflow-hidden bg-surface-low"
+              >
+                <Image
+                  src={img.url}
+                  alt={img.alt || product.name}
+                  fill
+                  priority={i === 0}
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  style={{ objectPosition: `${img.focalX}% ${img.focalY}%` }}
+                  className={img.fit === 'contain' ? 'object-contain' : 'object-cover'}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Where you are in the set — only worth showing on touch. */}
+          {product.images.length > 1 && (
+            <div className="mt-3 flex justify-center gap-1.5 md:hidden">
+              {product.images.map((img, i) => (
+                <button
+                  key={img.url + i}
+                  onClick={() => show(i)}
+                  aria-label={fmt(t.product.viewImage, { n: i + 1 })}
+                  aria-current={i === activeImage}
+                  className={cn(
+                    'h-1.5 rounded-full transition-all duration-300 ease-scandi',
+                    i === activeImage ? 'w-5 bg-navy' : 'w-1.5 bg-outline-variant',
+                  )}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>

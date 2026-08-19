@@ -228,16 +228,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
                 {...settingsForm.register('currencyCode')}
               />
               <Input
-                label={d.settings.freeShippingOver}
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                hint={d.settings.freeShippingOver}
-                error={settingsForm.formState.errors.freeShippingOver?.message}
-                {...settingsForm.register('freeShippingOver')}
-              />
-              <Input
                 label={d.settings.defaultRate}
                 type="number"
                 step="0.01"

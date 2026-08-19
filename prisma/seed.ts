@@ -59,7 +59,6 @@ async function main() {
       currencyCode: 'EGP',
       currencySymbol: 'EGP',
       currencySymbolAr: 'ج.م',
-      freeShippingOver: 2000,
       defaultShippingRate: 75,
       lowStockThreshold: 5,
       showColorFilter: true,

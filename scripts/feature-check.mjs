@@ -114,13 +114,11 @@ console.log('\n▸ Per-governorate delivery price');
 const cairo = await prisma.governorate.findFirstOrThrow({ where: { name: 'Cairo' } });
 
 // The variant has to be cheap enough that delivery is still charged: pick any
-// in-stock one and the basket may clear the free-shipping threshold, which
-// makes this read as a broken governorate rate when it is nothing of the sort.
-const settingsRow = await prisma.siteSettings.findUnique({
-  where: { id: 'singleton' },
-  select: { freeShippingOver: true },
-});
-const threshold = cairo.freeOver ?? settingsRow?.freeShippingOver ?? 0;
+// in-stock one and the basket may satisfy a free-shipping rule, which makes
+// this read as a broken governorate rate when it is nothing of the sort.
+const liveRules = await prisma.freeShippingRule.findMany({ where: { active: true } });
+const thresholds = liveRules.map((r) => r.minOrder ?? 0);
+const threshold = thresholds.length ? Math.min(...thresholds) : 0;
 const variant = await prisma.productVariant.findFirstOrThrow({
   where: {
     stock: { gt: 0 },

@@ -27,13 +27,11 @@ export interface GovernorateOption {
 
 export function CartView({
   governorates,
-  freeShippingOver,
   currencySymbol,
   locale,
   t,
 }: {
   governorates: GovernorateOption[];
-  freeShippingOver: number;
   currencySymbol: string;
   locale: Locale;
   t: Dictionary;
@@ -95,6 +93,9 @@ export function CartView({
     );
   }
 
+  // The threshold comes back with the priced cart, because which rule applies
+  // depends on the basket and on the date.
+  const freeShippingOver = pricing.freeShippingOver ?? 0;
   const remainingForFree = Math.max(0, freeShippingOver - pricing.subtotal);
 
   return (

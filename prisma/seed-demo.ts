@@ -416,7 +416,8 @@ async function main() {
       }));
 
       const subtotal = items.reduce((s, { p, qty }) => s + p.price * qty, 0);
-      const shippingCost = subtotal >= settings.freeShippingOver ? 0 : gov.shippingCost;
+      // The demo seed predates any free-shipping rule, so every order pays.
+      const shippingCost = gov.shippingCost;
       const usedPromo = Math.random() > 0.82;
       const discount = usedPromo ? Math.round(subtotal * 0.1 * 100) / 100 : 0;
       const status = Math.random() > 0.94 ? 'CANCELLED' : statusFor(daysAgo);

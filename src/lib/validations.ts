@@ -87,7 +87,16 @@ export const productSchema = z.object({
   isBestSeller: z.boolean().default(false),
   bestSellerOrder: z.coerce.number().int().min(0).max(999).default(0),
   images: z
-    .array(z.object({ url: z.string().min(1), alt: z.string().max(160).default('') }))
+    .array(
+      z.object({
+        url: z.string().min(1),
+        alt: z.string().max(160).default(''),
+        /// The point that must stay in frame when the image is cropped.
+        focalX: z.coerce.number().int().min(0).max(100).default(50),
+        focalY: z.coerce.number().int().min(0).max(100).default(50),
+        fit: z.enum(['cover', 'contain']).default('cover'),
+      }),
+    )
     .default([]),
   variants: z.array(variantSchema).min(1, 'Add at least one colourway.'),
 });
@@ -146,7 +155,6 @@ export const governorateSchema = z.object({
   name: z.string().trim().min(2, 'Name is required.').max(80),
   nameAr: z.string().trim().min(1, 'Arabic name is required.').max(80),
   shippingCost: z.coerce.number().min(0, 'Cannot be negative.').max(100000),
-  freeOver: z.coerce.number().min(0).max(10000000).optional().nullable(),
   estimatedDays: z.string().trim().max(40).default('2-4'),
   active: z.boolean().default(true),
 });
@@ -190,6 +198,27 @@ export const promoSchema = z
     message: 'A percentage discount cannot exceed 100.',
     path: ['discountValue'],
   });
+
+/**
+ * A free-delivery rule. Both halves are optional and mean different things
+ * when omitted: no `minOrder` is "any basket", no dates is "always". A rule
+ * with neither makes delivery free outright, which is a legitimate thing to
+ * want and so is allowed rather than rejected.
+ */
+export const freeShippingSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().trim().max(80).default(''),
+    nameAr: z.string().trim().max(80).default(''),
+    minOrder: z.coerce.number().min(0).max(10000000).optional().nullable(),
+    startsAt: z.string().optional().or(z.literal('')),
+    endsAt: z.string().optional().or(z.literal('')),
+    active: z.boolean().default(true),
+  })
+  .refine(
+    (d) => !d.startsAt || !d.endsAt || new Date(d.endsAt) >= new Date(d.startsAt),
+    { message: 'The end date cannot be before the start date.', path: ['endsAt'] },
+  );
 
 export const discountSchema = z.object({
   id: z.string().optional(),
@@ -258,7 +287,6 @@ export const settingsSchema = z.object({
   currencyCode: z.string().trim().min(1).max(8).default('EGP'),
   currencySymbol: z.string().trim().min(1).max(8).default('EGP'),
   currencySymbolAr: z.string().trim().min(1).max(8).default('ج.م'),
-  freeShippingOver: z.coerce.number().min(0),
   defaultShippingRate: z.coerce.number().min(0),
   lowStockThreshold: z.coerce.number().int().min(0).max(1000),
   instagramUrl: socialUrl,

@@ -99,14 +99,20 @@ check(`no unconditional width over ${NARROW}px`, wide.length === 0, wide.join(' 
 
 console.log('\n▸ Touch');
 // A control that only appears on hover is unreachable on a phone. Decorative
-// elements (an image that swaps under the cursor) and anything that is itself
-// pointer-only are fine — it is interactive controls that must have a twin.
+// elements — an image that swaps under the cursor, a crosshair drawn over a
+// preview — are fine; it is interactive controls that must have a touch twin.
+//
+// Judged over the surrounding lines rather than the matching one: a className
+// is routinely split across a `cn()` call, so the marker that makes it
+// harmless often sits a dozen lines above the hover class itself.
 const hoverOnly = [];
 for (const { path, source } of files) {
-  for (const line of source.split('\n')) {
+  const lines = source.split('\n');
+  for (const [i, line] of lines.entries()) {
     if (!/group-hover:opacity-100/.test(line)) continue;
-    if (/\bmd:(flex|inline|block)\b|aria-hidden|object-cover/.test(line)) continue;
-    hoverOnly.push(path);
+    const around = lines.slice(Math.max(0, i - 12), i + 7).join('\n');
+    if (/\bmd:(flex|inline|block)\b|aria-hidden|pointer-events-none|<Image/.test(around)) continue;
+    hoverOnly.push(`${path}:${i + 1}`);
   }
 }
 check(

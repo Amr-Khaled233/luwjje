@@ -10,7 +10,12 @@
  */
 import './load-env';
 import { prisma } from '../src/lib/prisma';
-import { resolveCartLines, validatePromoCode, calculateShipping } from '../src/lib/commerce';
+import {
+  resolveCartLines,
+  validatePromoCode,
+  calculateShipping,
+  getFreeShipping,
+} from '../src/lib/commerce';
 import { createOrder } from '../src/lib/orders';
 import { getOverviewStats, getRevenueSeries, getLowStockVariants } from '../src/lib/analytics';
 
@@ -132,7 +137,7 @@ async function main() {
 
   const price = variant.product.price;
   const settings = await prisma.siteSettings.findUniqueOrThrow({ where: { id: 'singleton' } });
-  const freeExpected = order.subtotal >= settings.freeShippingOver;
+  const { free: freeExpected } = await getFreeShipping(order.subtotal);
 
   check('subtotal recomputed server-side', order.subtotal === price * 2, order.subtotal);
   check(
@@ -140,7 +145,7 @@ async function main() {
       ? 'free shipping applied above the threshold'
       : 'governorate delivery price charged',
     order.shippingCost === (freeExpected ? 0 : eg.cost),
-    { charged: order.shippingCost, cairo: eg.cost, threshold: settings.freeShippingOver },
+    { charged: order.shippingCost, cairo: eg.cost, free: freeExpected },
   );
   check('promo discount applied', order.discount === Math.round(price * 2 * 0.1 * 100) / 100, order.discount);
   check('total = subtotal + shipping − discount', order.total === order.subtotal + order.shippingCost - order.discount, order.total);

@@ -13,8 +13,26 @@ export interface ProductCardData {
   categoryName: string | null;
   primaryImage: string;
   hoverImage: string | null;
+  /** How the card should frame each shot — see ProductImage.focalX. */
+  primaryFocus: ImageFocus;
+  hoverFocus: ImageFocus;
   colors: { name: string; hex: string }[];
   inStock: boolean;
+}
+
+/** The framing half of a ProductImage, safe to hand to a client component. */
+export interface ImageFocus {
+  focalX: number;
+  focalY: number;
+  fit: 'cover' | 'contain';
+}
+
+function toFocus(image: { focalX: number; focalY: number; fit: string } | null | undefined): ImageFocus {
+  return {
+    focalX: image?.focalX ?? 50,
+    focalY: image?.focalY ?? 50,
+    fit: image?.fit === 'contain' ? 'contain' : 'cover',
+  };
 }
 
 const cardInclude = {
@@ -51,6 +69,8 @@ function toCard(
     categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
     primaryImage: primary?.url ?? '',
     hoverImage: hover?.url ?? null,
+    primaryFocus: toFocus(primary),
+    hoverFocus: toFocus(hover),
     colors,
     inStock: p.variants.some((v) => v.stock > 0),
   };
@@ -218,7 +238,11 @@ export async function getProductBySlug(slug: string, locale: Locale) {
     effectivePrice: price,
     listPrice: product.price,
     discounted,
-    images: product.images.map((i) => ({ url: i.url, alt: i.alt || product.name })),
+    images: product.images.map((i) => ({
+      url: i.url,
+      alt: i.alt || product.name,
+      ...toFocus(i),
+    })),
     variants: product.variants.map((v) => ({
       id: v.id,
       colorName: pick(locale, v.colorName, v.colorNameAr),

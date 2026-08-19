@@ -28,7 +28,6 @@ export default async function DashboardSettingsPage() {
           currencyCode: settings.currencyCode,
           currencySymbol: settings.currencySymbol,
           currencySymbolAr: settings.currencySymbolAr,
-          freeShippingOver: settings.freeShippingOver,
           defaultShippingRate: settings.defaultShippingRate,
           lowStockThreshold: settings.lowStockThreshold,
           instagramUrl: settings.instagramUrl,
