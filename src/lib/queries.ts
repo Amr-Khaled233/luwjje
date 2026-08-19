@@ -39,13 +39,21 @@ export interface ImageFocus {
   focalX: number;
   focalY: number;
   fit: 'cover' | 'contain';
+  /** The photo's own shape as a CSS `aspect-ratio`, or null if unknown. */
+  ratio: string | null;
 }
 
-function toFocus(image: { focalX: number; focalY: number; fit: string } | null | undefined): ImageFocus {
+function toFocus(
+  image:
+    | { focalX: number; focalY: number; fit: string; width: number | null; height: number | null }
+    | null
+    | undefined,
+): ImageFocus {
   return {
     focalX: image?.focalX ?? 50,
     focalY: image?.focalY ?? 50,
     fit: image?.fit === 'contain' ? 'contain' : 'cover',
+    ratio: image?.width && image?.height ? `${image.width} / ${image.height}` : null,
   };
 }
 

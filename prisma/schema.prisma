@@ -85,6 +85,12 @@ model ProductImage {
   /// "cover" crops to fill the frame; "contain" fits the whole image inside it.
   fit       String  @default("cover")
 
+  /// The photo's own dimensions, measured when it is uploaded. The product
+  /// page sizes its frame from these so the whole image shows at its own
+  /// shape — no crop, and no empty band from letterboxing it into a fixed one.
+  width     Int?
+  height    Int?
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])

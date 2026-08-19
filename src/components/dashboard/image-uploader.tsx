@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Upload, X, Loader2, Crop, Maximize2 } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { FieldLabel, FieldHint } from '@/components/ui/field';
 import { useDash } from './dashboard-i18n';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,9 @@ import { cn } from '@/lib/utils';
 export interface UploadedImage {
   url: string;
   alt: string;
+  /** The photo's own dimensions, so a frame can be sized to match it. */
+  width?: number | null;
+  height?: number | null;
   /**
    * The point that must stay in frame, as a percentage of the image.
    * Optional because the logo and the banners are single images that are not
@@ -65,16 +68,35 @@ export function ImageUploader({
       const res = await fetch('/api/dashboard/upload', { method: 'POST', body });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? d.images.uploadFailed);
-      onChange([
-        ...value,
-        ...data.urls.map((url: string) => ({
-          url,
-          alt: '',
-          focalX: 50,
-          focalY: 50,
-          fit: 'cover' as const,
-        })),
-      ]);
+
+      // Measured here rather than on the server: the browser has already
+      // decoded the file, and reading it back covers every format the input
+      // accepts without teaching the server to parse image headers.
+      const measured = await Promise.all(
+        data.urls.map(
+          (url: string) =>
+            new Promise<UploadedImage>((resolve) => {
+              const probe = new window.Image();
+              probe.onload = () =>
+                resolve({
+                  url,
+                  alt: '',
+                  focalX: 50,
+                  focalY: 50,
+                  fit: 'cover' as const,
+                  width: probe.naturalWidth || null,
+                  height: probe.naturalHeight || null,
+                });
+              // A photo that will not decode still uploads; it simply has no
+              // measured shape and falls back to the standard frame.
+              probe.onerror = () =>
+                resolve({ url, alt: '', focalX: 50, focalY: 50, fit: 'cover' as const });
+              probe.src = url;
+            }),
+        ),
+      );
+
+      onChange([...value, ...measured]);
     } catch (err) {
       setError(err instanceof Error ? err.message : d.images.uploadFailed);
     } finally {
@@ -88,6 +110,13 @@ export function ImageUploader({
 
   const focalOf = (img: UploadedImage) => ({ x: img.focalX ?? 50, y: img.focalY ?? 50 });
   const fitOf = (img: UploadedImage) => img.fit ?? 'cover';
+
+  /**
+   * The photo's own shape. Falls back to the card's 3:4 for anything uploaded
+   * before dimensions were recorded, or that would not decode.
+   */
+  const ratioOf = (img: UploadedImage) =>
+    img.width && img.height ? `${img.width} / ${img.height}` : '3 / 4';
 
   function move(from: number, to: number) {
     if (to < 0 || to >= value.length) return;
@@ -169,9 +198,10 @@ export function ImageUploader({
                     tabIndex={focus ? 0 : undefined}
                     onClick={focus ? (e) => setFocal(i, e) : undefined}
                     aria-label={focus ? d.images.setFocal : undefined}
+                    style={{ aspectRatio: ratioOf(img) }}
                     className={cn(
-                      'group relative block aspect-[3/4] w-full overflow-hidden bg-surface-low',
-                      focus && fit === 'cover' && 'cursor-crosshair',
+                      'group relative block w-full overflow-hidden bg-surface-low',
+                      focus && 'cursor-crosshair',
                     )}
                   >
                     <Image
@@ -179,11 +209,11 @@ export function ImageUploader({
                       alt={img.alt}
                       fill
                       sizes="280px"
-                      className={fit === 'contain' ? 'object-contain p-2' : 'object-cover'}
+                      className="object-cover"
                       style={{ objectPosition: `${focal.x}% ${focal.y}%` }}
                     />
 
-                    {focus && fit === 'cover' && (
+                    {focus && (
                       <>
                         <span
                           aria-hidden
@@ -218,24 +248,6 @@ export function ImageUploader({
                     >
                       →
                     </button>
-
-                    {focus && (
-                      <button
-                        type="button"
-                        onClick={() => update(i, { fit: fit === 'cover' ? 'contain' : 'cover' })}
-                        title={fit === 'cover' ? d.images.switchToFit : d.images.switchToFill}
-                        aria-pressed={fit === 'contain'}
-                        className="label-caps ms-1 inline-flex items-center gap-1.5 border border-outline-variant px-2 py-1 text-secondary transition-colors hover:border-navy hover:text-on-surface"
-                      >
-                        {/*
-                          Names the action rather than the current state: a
-                          button reading "Fill" while the photo is already
-                          filling reads as a label, not a control.
-                        */}
-                        {fit === 'cover' ? <Maximize2 className="h-3 w-3" /> : <Crop className="h-3 w-3" />}
-                        {fit === 'cover' ? d.images.showWhole : d.images.cropToFill}
-                      </button>
-                    )}
 
                     <button
                       type="button"

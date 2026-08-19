@@ -29,7 +29,15 @@ interface DetailProduct {
   listPrice: number;
   discounted: boolean;
   categoryName: string | null;
-  images: { url: string; alt: string; focalX: number; focalY: number; fit: 'cover' | 'contain' }[];
+  images: {
+    url: string;
+    alt: string;
+    focalX: number;
+    focalY: number;
+    fit: 'cover' | 'contain';
+    /** The photo's own shape; the frame takes it so nothing is cropped. */
+    ratio: string | null;
+  }[];
   variants: Variant[];
 }
 
@@ -221,9 +229,13 @@ export function ProductDetail({
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain md:overflow-hidden"
           >
             {product.images.map((img, i) => (
+              // The frame takes the photo's own shape, so the whole photo is
+              // visible without cropping it or padding it out to a fixed one.
+              // Anything uploaded before dimensions were recorded keeps 3:4.
               <div
                 key={img.url + i}
-                className="relative aspect-[3/4] w-full shrink-0 snap-center overflow-hidden bg-surface-low"
+                style={{ aspectRatio: img.ratio ?? '3 / 4' }}
+                className="relative w-full shrink-0 snap-center overflow-hidden bg-surface-low"
               >
                 <Image
                   src={img.url}
@@ -232,7 +244,7 @@ export function ProductDetail({
                   priority={i === 0}
                   sizes="(max-width: 1024px) 100vw, 45vw"
                   style={{ objectPosition: `${img.focalX}% ${img.focalY}%` }}
-                  className={img.fit === 'contain' ? 'object-contain' : 'object-cover'}
+                  className={img.ratio ? 'object-cover' : 'object-contain'}
                 />
               </div>
             ))}

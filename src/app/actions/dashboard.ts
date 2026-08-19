@@ -131,6 +131,8 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       focalX: img.focalX,
       focalY: img.focalY,
       fit: img.fit,
+      width: img.width ?? null,
+      height: img.height ?? null,
     }));
 
     const base = {

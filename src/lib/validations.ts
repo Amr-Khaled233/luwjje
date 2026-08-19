@@ -95,6 +95,9 @@ export const productSchema = z.object({
         focalX: z.coerce.number().int().min(0).max(100).default(50),
         focalY: z.coerce.number().int().min(0).max(100).default(50),
         fit: z.enum(['cover', 'contain']).default('cover'),
+        /// Measured in the browser when the file is chosen.
+        width: z.coerce.number().int().positive().max(20000).optional().nullable(),
+        height: z.coerce.number().int().positive().max(20000).optional().nullable(),
       }),
     )
     .default([]),
