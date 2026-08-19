@@ -13,9 +13,6 @@ export interface ProductCardData {
   categoryName: string | null;
   primaryImage: string;
   hoverImage: string | null;
-  /** How the card should frame each shot — see ProductImage.focalX. */
-  primaryFocus: ImageFocus;
-  hoverFocus: ImageFocus;
   colors: { name: string; hex: string }[];
   inStock: boolean;
 }
@@ -32,29 +29,6 @@ export interface ProductCardData {
  */
 function strikeThrough(price: number, compareAt: number | null, selling: number) {
   return Math.max(price, compareAt ?? 0, selling);
-}
-
-/** The framing half of a ProductImage, safe to hand to a client component. */
-export interface ImageFocus {
-  focalX: number;
-  focalY: number;
-  fit: 'cover' | 'contain';
-  /** The photo's own shape as a CSS `aspect-ratio`, or null if unknown. */
-  ratio: string | null;
-}
-
-function toFocus(
-  image:
-    | { focalX: number; focalY: number; fit: string; width: number | null; height: number | null }
-    | null
-    | undefined,
-): ImageFocus {
-  return {
-    focalX: image?.focalX ?? 50,
-    focalY: image?.focalY ?? 50,
-    fit: image?.fit === 'contain' ? 'contain' : 'cover',
-    ratio: image?.width && image?.height ? `${image.width} / ${image.height}` : null,
-  };
 }
 
 const cardInclude = {
@@ -92,8 +66,6 @@ function toCard(
     categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
     primaryImage: primary?.url ?? '',
     hoverImage: hover?.url ?? null,
-    primaryFocus: toFocus(primary),
-    hoverFocus: toFocus(hover),
     colors,
     inStock: p.variants.some((v) => v.stock > 0),
   };
@@ -261,11 +233,7 @@ export async function getProductBySlug(slug: string, locale: Locale) {
     effectivePrice: price,
     listPrice: strikeThrough(product.price, product.compareAtPrice, price),
     discounted: strikeThrough(product.price, product.compareAtPrice, price) > price,
-    images: product.images.map((i) => ({
-      url: i.url,
-      alt: i.alt || product.name,
-      ...toFocus(i),
-    })),
+    images: product.images.map((i) => ({ url: i.url, alt: i.alt || product.name })),
     variants: product.variants.map((v) => ({
       id: v.id,
       colorName: pick(locale, v.colorName, v.colorNameAr),

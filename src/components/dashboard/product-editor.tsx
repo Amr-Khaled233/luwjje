@@ -40,7 +40,7 @@ export interface EditableProduct {
   isBestSeller: boolean;
   bestSellerOrder: number;
   soldCount: number;
-  images: { url: string; alt: string; focalX: number; focalY: number; fit: string }[];
+  images: { url: string; alt: string }[];
   variants: {
     id?: string;
     colorName: string;
@@ -130,12 +130,7 @@ export function ProductEditor({
         status: product.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
         isBestSeller: product.isBestSeller,
         bestSellerOrder: product.bestSellerOrder,
-        images: product.images.map((i) => ({
-          ...i,
-          fit: i.fit === 'contain' ? ('contain' as const) : ('cover' as const),
-          isPrimary: false,
-          isHover: false,
-        })),
+        images: product.images.map((i) => ({ url: i.url, alt: i.alt })),
       });
 
       // Regroup the stored rows back into one entry per colour.
@@ -412,11 +407,6 @@ export function ProductEditor({
             render={({ field }) => (
               <ImageUploader
                 label={d.common.images}
-                focus
-                // Passed through whole. Rebuilding each entry from url and alt
-                // alone dropped the focal point and the fit on every render, so
-                // the crosshair snapped back to the middle and the Fill/Fit
-                // button looked like it did nothing.
                 value={field.value}
                 onChange={(images) =>
                   field.onChange(images.map((i) => ({ ...i, isPrimary: false, isHover: false })))

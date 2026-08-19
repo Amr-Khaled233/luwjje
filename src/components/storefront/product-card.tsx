@@ -56,40 +56,38 @@ export function ProductCard({
   return (
     <article className={cn('group', className)}>
       <Link href={`/product/${product.slug}`} className="block">
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-low">
+        {/*
+          The photo sets the height. `width`/`height` of 0 with `sizes` is
+          next/image's form for "dimensions unknown" — it still builds the
+          responsive srcset, and the CSS below lays the image out at whatever
+          shape it actually is. Nothing is cropped, so nothing has to be
+          chosen: the photo appears exactly as it was uploaded.
+        */}
+        <div className="relative w-full overflow-hidden bg-surface-low">
           {product.primaryImage && (
             <Image
               src={product.primaryImage}
               alt={product.name}
-              fill
+              width={0}
+              height={0}
               priority={priority}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              style={{
-                objectPosition: `${product.primaryFocus.focalX}% ${product.primaryFocus.focalY}%`,
-              }}
               className={cn(
-                'transition-all duration-500 ease-scandi',
-                product.primaryFocus.fit === 'contain' ? 'object-contain' : 'object-cover',
-                product.hoverImage
-                  ? 'group-hover:scale-[1.02] group-hover:opacity-0'
-                  : 'group-hover:scale-[1.02]',
+                'block h-auto w-full transition-transform duration-500 ease-scandi',
+                product.hoverImage && 'group-hover:opacity-0',
+                'group-hover:scale-[1.02]',
               )}
             />
           )}
           {product.hoverImage && (
+            // Sits over the first, so the card keeps the first photo's height.
             <Image
               src={product.hoverImage}
               alt=""
               aria-hidden
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              style={{
-                objectPosition: `${product.hoverFocus.focalX}% ${product.hoverFocus.focalY}%`,
-              }}
-              className={cn(
-                'scale-[1.02] opacity-0 transition-opacity duration-500 ease-scandi group-hover:opacity-100',
-                product.hoverFocus.fit === 'contain' ? 'object-contain' : 'object-cover',
-              )}
+              className="scale-[1.02] object-contain opacity-0 transition-opacity duration-500 ease-scandi group-hover:opacity-100"
             />
           )}
 

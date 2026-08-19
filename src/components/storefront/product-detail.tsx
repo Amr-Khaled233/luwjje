@@ -29,15 +29,7 @@ interface DetailProduct {
   listPrice: number;
   discounted: boolean;
   categoryName: string | null;
-  images: {
-    url: string;
-    alt: string;
-    focalX: number;
-    focalY: number;
-    fit: 'cover' | 'contain';
-    /** The photo's own shape; the frame takes it so nothing is cropped. */
-    ratio: string | null;
-  }[];
+  images: { url: string; alt: string }[];
   variants: Variant[];
 }
 
@@ -203,14 +195,7 @@ export function ProductDetail({
                   i === activeImage ? 'border-navy' : 'border-outline-variant hover:border-outline',
                 )}
               >
-                <Image
-                  src={img.url}
-                  alt={img.alt}
-                  fill
-                  sizes="72px"
-                  style={{ objectPosition: `${img.focalX}% ${img.focalY}%` }}
-                  className={img.fit === 'contain' ? 'object-contain' : 'object-cover'}
-                />
+                <Image src={img.url} alt={img.alt} fill sizes="72px" className="object-contain" />
               </button>
             ))}
           </div>
@@ -229,22 +214,20 @@ export function ProductDetail({
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain md:overflow-hidden"
           >
             {product.images.map((img, i) => (
-              // The frame takes the photo's own shape, so the whole photo is
-              // visible without cropping it or padding it out to a fixed one.
-              // Anything uploaded before dimensions were recorded keeps 3:4.
+              // No frame at all: the photo lays itself out at its own shape,
+              // so it is shown exactly as it was uploaded.
               <div
                 key={img.url + i}
-                style={{ aspectRatio: img.ratio ?? '3 / 4' }}
-                className="relative w-full shrink-0 snap-center overflow-hidden bg-surface-low"
+                className="w-full shrink-0 snap-center self-start overflow-hidden bg-surface-low"
               >
                 <Image
                   src={img.url}
                   alt={img.alt || product.name}
-                  fill
+                  width={0}
+                  height={0}
                   priority={i === 0}
                   sizes="(max-width: 1024px) 100vw, 45vw"
-                  style={{ objectPosition: `${img.focalX}% ${img.focalY}%` }}
-                  className={img.ratio ? 'object-cover' : 'object-contain'}
+                  className="block h-auto w-full"
                 />
               </div>
             ))}

@@ -40,13 +40,7 @@ export default async function AdminProductsPage() {
           isBestSeller: p.isBestSeller,
           bestSellerOrder: p.bestSellerOrder,
           soldCount: p.soldCount,
-          images: p.images.map((i) => ({
-            url: i.url,
-            alt: i.alt,
-            focalX: i.focalX,
-            focalY: i.focalY,
-            fit: i.fit,
-          })),
+          images: p.images.map((i) => ({ url: i.url, alt: i.alt })),
           variants: p.variants.map((v) => ({
             id: v.id,
             colorName: v.colorName,

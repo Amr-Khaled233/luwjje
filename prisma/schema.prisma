@@ -77,19 +77,6 @@ model ProductImage {
   /// Second image, revealed on card hover.
   isHover   Boolean @default(false)
 
-  /// Where the subject sits, as a percentage of the frame. Product photos are
-  /// shown in fixed aspect ratios, so a centre crop cuts an off-centre subject
-  /// in half. This is the point that must stay in frame at every size.
-  focalX    Int     @default(50)
-  focalY    Int     @default(50)
-  /// "cover" crops to fill the frame; "contain" fits the whole image inside it.
-  fit       String  @default("cover")
-
-  /// The photo's own dimensions, measured when it is uploaded. The product
-  /// page sizes its frame from these so the whole image shows at its own
-  /// shape — no crop, and no empty band from letterboxing it into a fixed one.
-  width     Int?
-  height    Int?
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 

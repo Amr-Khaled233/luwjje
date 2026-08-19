@@ -87,19 +87,7 @@ export const productSchema = z.object({
   isBestSeller: z.boolean().default(false),
   bestSellerOrder: z.coerce.number().int().min(0).max(999).default(0),
   images: z
-    .array(
-      z.object({
-        url: z.string().min(1),
-        alt: z.string().max(160).default(''),
-        /// The point that must stay in frame when the image is cropped.
-        focalX: z.coerce.number().int().min(0).max(100).default(50),
-        focalY: z.coerce.number().int().min(0).max(100).default(50),
-        fit: z.enum(['cover', 'contain']).default('cover'),
-        /// Measured in the browser when the file is chosen.
-        width: z.coerce.number().int().positive().max(20000).optional().nullable(),
-        height: z.coerce.number().int().positive().max(20000).optional().nullable(),
-      }),
-    )
+    .array(z.object({ url: z.string().min(1), alt: z.string().max(160).default('') }))
     .default([]),
   variants: z.array(variantSchema).min(1, 'Add at least one colourway.'),
 });

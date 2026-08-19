@@ -128,11 +128,6 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       position: i,
       isPrimary: i === 0,
       isHover: i === 1,
-      focalX: img.focalX,
-      focalY: img.focalY,
-      fit: img.fit,
-      width: img.width ?? null,
-      height: img.height ?? null,
     }));
 
     const base = {
