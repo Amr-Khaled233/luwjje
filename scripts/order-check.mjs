@@ -9,7 +9,7 @@
  */
 import './load-env.ts';
 import { prisma } from '../src/lib/prisma.ts';
-import { createOrder } from '../src/lib/orders.ts';
+import { createOrder, applyOrderEdit } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
 import { calculateShipping, validatePromoCode, getFreeShipping } from '../src/lib/commerce.ts';
 
@@ -412,6 +412,156 @@ check(
   Math.abs((revenue._sum.total ?? 0) - manual) < 0.01,
   `${revenue._sum.total} vs ${manual}`,
 );
+
+// ---------------------------------------------------------------- editing
+console.log('\n▸ Editing a placed order');
+await cleanup();
+await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 3 }] });
+
+let edited = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
+const editLine = edited.items[0];
+const shelf = async () =>
+  (await prisma.productVariant.findUnique({ where: { id: variant.id } })).stock;
+const atPlacing = await shelf();
+
+const edit = {
+  fullName: shipping.fullName,
+  phone: shipping.phone,
+  street: shipping.street,
+  area: shipping.area,
+  governorate: shipping.governorate,
+  notes: '',
+  status: 'PAID',
+  paymentStatus: 'PAID',
+};
+
+let edit1 = await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: editLine.id, quantity: 1, unitPrice: editLine.unitPrice }],
+  shippingCost: edited.shippingCost,
+  discount: 0,
+  total: editLine.unitPrice + edited.shippingCost,
+});
+check('reducing a quantity is accepted', edit1.ok, edit1.error);
+check('and the difference goes back on the shelf', (await shelf()) === atPlacing + 2, await shelf());
+
+edited = await prisma.order.findUnique({ where: { id: edited.id }, include: { items: true } });
+check('the line records the new quantity', edited.items[0].quantity === 1);
+check('the subtotal is recomputed from the lines', edited.subtotal === editLine.unitPrice);
+
+edit1 = await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: editLine.id, quantity: 4, unitPrice: editLine.unitPrice }],
+  shippingCost: edited.shippingCost,
+  discount: 0,
+  total: 1,
+});
+check('raising a quantity takes more stock', (await shelf()) === atPlacing - 1, await shelf());
+
+const spare = await shelf();
+const overEdit = await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: editLine.id, quantity: 4 + spare + 5, unitPrice: editLine.unitPrice }],
+  shippingCost: 0,
+  discount: 0,
+  total: 1,
+});
+check('an edit beyond stock is refused', !overEdit.ok);
+check('the refusal says how many are left', /Only \d+ left/.test(overEdit.error ?? ''), overEdit.error);
+check('and nothing moved', (await shelf()) === spare, await shelf());
+
+await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: editLine.id, quantity: 4, unitPrice: 100 }],
+  shippingCost: 25,
+  discount: 10,
+  total: 415,
+});
+edited = await prisma.order.findUnique({ where: { id: edited.id }, include: { items: true } });
+check('an edited unit price is stored', edited.items[0].unitPrice === 100, edited.items[0].unitPrice);
+check('the subtotal follows the new price', edited.subtotal === 400, edited.subtotal);
+check('delivery is stored as entered', edited.shippingCost === 25);
+check('the discount is stored as entered', edited.discount === 10);
+check('the total is stored as entered', edited.total === 415, edited.total);
+
+// The total is the shop owner's to set, even against the arithmetic.
+await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: editLine.id, quantity: 4, unitPrice: 100 }],
+  shippingCost: 25,
+  discount: 10,
+  total: 300,
+});
+edited = await prisma.order.findUnique({ where: { id: edited.id } });
+check('an agreed total overrides the arithmetic', edited.total === 300, edited.total);
+
+await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  fullName: 'Someone Else',
+  governorate: 'Giza',
+  notes: 'Leave with the doorman',
+  lines: [{ id: editLine.id, quantity: 4, unitPrice: 100 }],
+  shippingCost: 25,
+  discount: 10,
+  total: 415,
+});
+edited = await prisma.order.findUnique({ where: { id: edited.id } });
+check('the delivery details are updated', edited.fullName === 'Someone Else' && edited.governorate === 'Giza');
+check('the notes are updated', edited.notes === 'Leave with the doorman');
+
+const beforeCancel = await shelf();
+const cancelled = await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  status: 'CANCELLED',
+  lines: [{ id: editLine.id, quantity: 4, unitPrice: 100 }],
+  shippingCost: 25,
+  discount: 10,
+  total: 415,
+});
+check('cancelling from the editor is accepted', cancelled.ok, cancelled.error);
+check('and returns the whole order to stock', (await shelf()) === beforeCancel + 4, await shelf());
+
+// A line taken to zero leaves the order.
+await cleanup();
+await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 2 }] });
+edited = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
+const beforeRemoval = await shelf();
+await applyOrderEdit({
+  ...edit,
+  orderId: edited.id,
+  lines: [{ id: edited.items[0].id, quantity: 0, unitPrice: edited.items[0].unitPrice }],
+  shippingCost: 0,
+  discount: 0,
+  total: 0,
+});
+edited = await prisma.order.findUnique({ where: { id: edited.id }, include: { items: true } });
+check('a line taken to zero is removed', edited.items.length === 0, edited.items.length);
+check('and its stock comes back', (await shelf()) === beforeRemoval + 2, await shelf());
+
+// An order cannot be edited using another order's line.
+await cleanup();
+await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 1 }] });
+const mine = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
+const foreign = await prisma.orderItem.findFirst({ where: { orderId: { not: mine.id } } });
+if (foreign) {
+  const stolen = await applyOrderEdit({
+    ...edit,
+    orderId: mine.id,
+    lines: [{ id: foreign.id, quantity: 1, unitPrice: 1 }],
+    shippingCost: 0,
+    discount: 0,
+    total: 1,
+  });
+  check('a line from another order is refused', !stolen.ok);
+}
+await cleanup();
 
 // ---------------------------------------------------------------- tidy up
 await prisma.productVariant.update({ where: { id: last.id }, data: { stock: 25 } });

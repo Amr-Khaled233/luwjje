@@ -23,12 +23,12 @@ export const dynamic = 'force-dynamic';
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams: { days?: string; from?: string; to?: string };
+  searchParams: { from?: string; to?: string };
 }) {
   const d = getDashboardDictionary(await getLocale());
 
-  // A period of your own wins over a preset; anything malformed falls back to
-  // the last 30 days rather than showing an empty page.
+  // No period asked for, or one that will not parse, opens on the last thirty
+  // days rather than on an empty page.
   const day = (value?: string) =>
     value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : null;
 
@@ -36,15 +36,11 @@ export default async function AdminAnalyticsPage({
   const toDate = day(searchParams.to);
 
   let period: Period;
-  let presetDays: number | null;
-
   if (fromDate && toDate && !Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
     const [a, b] = fromDate <= toDate ? [fromDate, toDate] : [toDate, fromDate];
     period = { start: startOfDay(a), end: endOfDay(b) };
-    presetDays = null;
   } else {
-    presetDays = [7, 30, 90].includes(Number(searchParams.days)) ? Number(searchParams.days) : 30;
-    period = periodFromDays(presetDays);
+    period = periodFromDays(30);
   }
 
   const days = differenceInCalendarDays(period.end, period.start) + 1;
@@ -66,7 +62,6 @@ export default async function AdminAnalyticsPage({
         range={{
           from: format(period.start, 'yyyy-MM-dd'),
           to: format(period.end, 'yyyy-MM-dd'),
-          days: presetDays,
         }}
       />
 

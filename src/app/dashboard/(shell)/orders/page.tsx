@@ -15,13 +15,18 @@ export default async function AdminOrdersPage({
   searchParams: { status?: string };
 }) {
   const d = getDashboardDictionary(await getLocale());
-  const [orders, settings] = await Promise.all([
+  const [orders, settings, governorates] = await Promise.all([
     prisma.order.findMany({
       include: { items: true },
       orderBy: { createdAt: 'desc' },
       take: 300,
     }),
     getSettings(),
+    prisma.governorate.findMany({
+      where: { active: true },
+      orderBy: { position: 'asc' },
+      select: { name: true, nameAr: true },
+    }),
   ]);
 
   const active = orders.filter((o) => ['PENDING', 'PAID', 'SHIPPED'].includes(o.status)).length;
@@ -49,6 +54,7 @@ export default async function AdminOrdersPage({
       </div>
 
       <OrdersManager
+        governorates={governorates.map((g) => ({ name: g.name, nameAr: g.nameAr }))}
         orders={orders.map((o) => ({
           id: o.id,
           orderNumber: o.orderNumber,

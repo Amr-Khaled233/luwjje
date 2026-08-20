@@ -106,12 +106,12 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
           <TableWrap>
             <thead>
               <tr>
-                <Th>{d.common.actions}</Th>
                 <Th className="w-16">{d.categories.order}</Th>
                 <Th>{d.common.name}</Th>
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.categories.productsCount}</Th>
                 <Th>{d.categories.inFilter}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -120,35 +120,6 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                   key={c.id}
                   className={cn('transition-colors hover:bg-surface-low', !c.visible && 'opacity-60')}
                 >
-                  <Td>
-                    <div className="flex justify-start gap-2">
-                      <Link
-                        href={`/shop?category=${c.slug}`}
-                        target="_blank"
-                        aria-label={`View ${c.name} on the storefront`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Link>
-                      <button
-                        onClick={() => {
-                          form.reset(c);
-                          setModal({ open: true, data: c });
-                        }}
-                        aria-label={`Edit ${c.name}`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setConfirm(c)}
-                        aria-label={`Delete ${c.name}`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </Td>
                   <Td>
                     <div className="flex items-center gap-1">
                       <button
@@ -196,6 +167,35 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                       )}
                       <StatusBadge status={c.visible ? 'ACTIVE' : 'DISABLED'} />
                     </button>
+                  </Td>
+                  <Td>
+                    <div className="flex justify-start gap-2">
+                      <Link
+                        href={`/shop?category=${c.slug}`}
+                        target="_blank"
+                        aria-label={`View ${c.name} on the storefront`}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          form.reset(c);
+                          setModal({ open: true, data: c });
+                        }}
+                        aria-label={`Edit ${c.name}`}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirm(c)}
+                        aria-label={`Delete ${c.name}`}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               ))}

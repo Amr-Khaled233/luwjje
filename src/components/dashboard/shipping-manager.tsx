@@ -165,12 +165,12 @@ export function ShippingManager({
           <TableWrap>
             <thead>
               <tr>
-                <Th>{d.common.actions}</Th>
                 <Th>{d.shipping.governorate}</Th>
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.shipping.deliveryPrice} ({currencySymbol})</Th>
                 <Th>{d.shipping.days}</Th>
                 <Th>{d.shipping.delivering}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -183,27 +183,6 @@ export function ShippingManager({
                     key={g.id}
                     className={cn('transition-colors hover:bg-surface-low', changed && 'bg-surface-low')}
                   >
-                    <Td>
-                      <div className="flex justify-start gap-2">
-                        <button
-                          onClick={() => {
-                            form.reset(g);
-                            setModal({ open: true, data: g });
-                          }}
-                          aria-label={`${d.common.edit} ${g.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setConfirm(g.id)}
-                          aria-label={`${d.common.delete} ${g.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </Td>
                     <Td>
                       <span className="text-label-md">{g.name}</span>
                     </Td>
@@ -232,6 +211,27 @@ export function ShippingManager({
                         }
                         aria-label={`${d.shipping.deliveringLabel} — ${g.name}`}
                       />
+                    </Td>
+                    <Td>
+                      <div className="flex justify-start gap-2">
+                        <button
+                          onClick={() => {
+                            form.reset(g);
+                            setModal({ open: true, data: g });
+                          }}
+                          aria-label={`${d.common.edit} ${g.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setConfirm(g.id)}
+                          aria-label={`${d.common.delete} ${g.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </Td>
                   </tr>
                 );

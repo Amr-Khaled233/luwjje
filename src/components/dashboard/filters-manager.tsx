@@ -207,11 +207,11 @@ export function FiltersManager({
             <TableWrap>
               <thead>
                 <tr>
-                  <Th>{d.common.actions}</Th>
                   <Th>{d.common.name}</Th>
                   <Th>{d.common.nameAr}</Th>
                   <Th>{d.categories.productsCount}</Th>
                   <Th>{d.common.visible}</Th>
+                  <Th>{d.common.actions}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -223,26 +223,6 @@ export function FiltersManager({
                       !c.visible && 'row-off',
                     )}
                   >
-                    <Td>
-                      <div className="flex justify-start gap-2">
-                        <button
-                          onClick={() => run(() => reorderCategory(c.id, 'up'), d.common.saved)}
-                          disabled={pending || i === 0}
-                          aria-label={`${d.products.moveUp} ${c.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => run(() => reorderCategory(c.id, 'down'), d.common.saved)}
-                          disabled={pending || i === categories.length - 1}
-                          aria-label={`${d.products.moveDown} ${c.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </Td>
                     <Td className="text-label-md">{c.name}</Td>
                     <Td className="text-secondary">{c.nameAr || '—'}</Td>
                     <Td>
@@ -269,6 +249,26 @@ export function FiltersManager({
                           <EyeOff className="h-4 w-4 text-tertiary" />
                         )}
                       </button>
+                    </Td>
+                    <Td>
+                      <div className="flex justify-start gap-2">
+                        <button
+                          onClick={() => run(() => reorderCategory(c.id, 'up'), d.common.saved)}
+                          disabled={pending || i === 0}
+                          aria-label={`${d.products.moveUp} ${c.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => run(() => reorderCategory(c.id, 'down'), d.common.saved)}
+                          disabled={pending || i === categories.length - 1}
+                          aria-label={`${d.products.moveDown} ${c.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </Td>
                   </tr>
                 ))}
@@ -305,12 +305,12 @@ export function FiltersManager({
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>{d.common.actions}</Th>
                     <Th>{d.filters.label}</Th>
                     <Th>Arabic label</Th>
                     <Th>{d.filters.from}</Th>
                     <Th>{d.filters.to}</Th>
                     <Th>{d.common.visible}</Th>
+                    <Th>{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -322,6 +322,25 @@ export function FiltersManager({
                         !r.visible && 'row-off',
                       )}
                     >
+                      <Td>
+                        <span className="text-label-md">{r.label}</span>
+                      </Td>
+                      <Td className="text-secondary">{r.labelAr || '—'}</Td>
+                      <Td className="tabular-nums">
+                        {currencySymbol} {r.min.toLocaleString()}
+                      </Td>
+                      <Td className="tabular-nums">
+                        {r.max === null || r.max === undefined
+                          ? '∞'
+                          : `${currencySymbol} ${r.max.toLocaleString()}`}
+                      </Td>
+                      <Td>
+                        {r.visible ? (
+                          <Eye className="h-4 w-4 text-navy" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-tertiary" />
+                        )}
+                      </Td>
                       <Td>
                         <div className="flex gap-2">
                           {/* The buckets appear in the dropdown in this order. */}
@@ -359,25 +378,6 @@ export function FiltersManager({
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                      </Td>
-                      <Td>
-                        <span className="text-label-md">{r.label}</span>
-                      </Td>
-                      <Td className="text-secondary">{r.labelAr || '—'}</Td>
-                      <Td className="tabular-nums">
-                        {currencySymbol} {r.min.toLocaleString()}
-                      </Td>
-                      <Td className="tabular-nums">
-                        {r.max === null || r.max === undefined
-                          ? '∞'
-                          : `${currencySymbol} ${r.max.toLocaleString()}`}
-                      </Td>
-                      <Td>
-                        {r.visible ? (
-                          <Eye className="h-4 w-4 text-navy" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-tertiary" />
-                        )}
                       </Td>
                     </tr>
                   ))}

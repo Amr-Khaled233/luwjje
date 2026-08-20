@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
 import { updateOrderStatus } from '@/app/actions/dashboard';
+import { OrderEditor } from './order-editor';
 import { formatPrice, formatDate, ORDER_STATUSES } from '@/lib/utils';
 
 interface AdminOrder {
@@ -46,10 +47,12 @@ interface AdminOrder {
 
 export function OrdersManager({
   orders,
+  governorates,
   currencySymbol,
   initialStatus,
 }: {
   orders: AdminOrder[];
+  governorates: { name: string; nameAr: string }[];
   currencySymbol: string;
   initialStatus: string;
 }) {
@@ -57,9 +60,14 @@ export function OrdersManager({
   const { toast } = useToast();
   const { d } = useDash();
 
+  const [editing, setEditing] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [status, setStatus] = React.useState(initialStatus);
   const [open, setOpen] = React.useState<AdminOrder | null>(null);
+
+  React.useEffect(() => {
+    if (!open) setEditing(false);
+  }, [open]);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const filtered = orders.filter((o) => {
@@ -130,29 +138,18 @@ export function OrdersManager({
           <TableWrap>
             <thead>
               <tr>
-                <Th>{d.common.actions}</Th>
                 <Th>{d.orders.order}</Th>
                 <Th>{d.orders.customer}</Th>
                 <Th>{d.common.date}</Th>
                 <Th>{d.orders.items}</Th>
                 <Th>{d.common.total}</Th>
                 <Th>{d.common.status}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((o) => (
                 <tr key={o.id} className="transition-colors hover:bg-surface-low">
-                  <Td>
-                    <div className="flex justify-start">
-                      <button
-                        onClick={() => setOpen(o)}
-                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </Td>
                   <Td>
                     <span className="font-display text-body-lg">{o.orderNumber}</span>
                   </Td>
@@ -185,6 +182,17 @@ export function OrdersManager({
                       )}
                     </div>
                   </Td>
+                  <Td>
+                    <div className="flex justify-start">
+                      <button
+                        onClick={() => setOpen(o)}
+                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </Td>
                 </tr>
               ))}
             </tbody>
@@ -199,10 +207,30 @@ export function OrdersManager({
         title={open ? `Order ${open.orderNumber}` : ''}
         description={open ? `Placed ${formatDate(open.createdAt)}` : undefined}
         footer={
-          <Button variant="secondary" onClick={() => setOpen(null)}>{d.common.close}</Button>
+          editing ? undefined : (
+            <>
+              <Button variant="secondary" onClick={() => setOpen(null)}>
+                {d.common.close}
+              </Button>
+              <Button onClick={() => setEditing(true)}>{d.orders.editOrder}</Button>
+            </>
+          )
         }
       >
-        {open && (
+        {open && editing && (
+          <OrderEditor
+            order={open}
+            governorates={governorates}
+            currencySymbol={currencySymbol}
+            onCancel={() => setEditing(false)}
+            onDone={() => {
+              setEditing(false);
+              setOpen(null);
+            }}
+          />
+        )}
+
+        {open && !editing && (
           <div className="flex flex-col gap-8">
             <div className="flex flex-wrap items-end gap-6">
               <div>

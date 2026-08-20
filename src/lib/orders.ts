@@ -158,3 +158,163 @@ export async function createOrder({
     };
   }
 }
+
+export interface EditOrderInput {
+  orderId: string;
+  fullName: string;
+  phone?: string;
+  street: string;
+  area?: string;
+  governorate: string;
+  notes?: string;
+  lines: { id: string; quantity: number; unitPrice: number }[];
+  shippingCost: number;
+  discount: number;
+  total: number;
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  paymentStatus: 'UNPAID' | 'PAID' | 'REFUNDED';
+}
+
+export type EditOrderResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Edits an order that has already been placed: the address, the line
+ * quantities and prices, delivery, discount and the total.
+ *
+ * Stock follows the quantities. Reducing a line returns the difference to the
+ * shelf, raising it takes more off — and if there is not enough, the whole
+ * edit is refused rather than leaving the shop overselling.
+ *
+ * A cancelled order has already had its stock returned, so its lines are left
+ * alone here; moving it out of CANCELLED through the status control is what
+ * takes the stock again.
+ */
+export async function applyOrderEdit(data: EditOrderInput): Promise<EditOrderResult> {
+    const order = await prisma.order.findUnique({
+      where: { id: data.orderId },
+      include: { items: true },
+    });
+    if (!order) return { ok: false as const, error: 'Order not found.' };
+
+    // Every edited line has to belong to this order.
+    const byId = new Map(order.items.map((i) => [i.id, i]));
+    for (const line of data.lines) {
+      if (!byId.has(line.id)) return { ok: false as const, error: 'That line is not on this order.' };
+    }
+
+    const wasCancelled = order.status === 'CANCELLED';
+    const nowCancelled = data.status === 'CANCELLED';
+
+    // What each variant's stock has to move by, before writing anything.
+    const stockDelta = new Map<string, number>();
+    if (!wasCancelled && !nowCancelled) {
+      for (const line of data.lines) {
+        const item = byId.get(line.id)!;
+        if (!item.variantId) continue;
+        const change = item.quantity - line.quantity; // positive = back on the shelf
+        if (change !== 0) {
+          stockDelta.set(item.variantId, (stockDelta.get(item.variantId) ?? 0) + change);
+        }
+      }
+    }
+
+    // Refuse the whole edit if any line would oversell.
+    const takingIds = Array.from(stockDelta.entries())
+      .filter(([, change]) => change < 0)
+      .map(([variantId]) => variantId);
+
+    if (takingIds.length > 0) {
+      const variants = await prisma.productVariant.findMany({
+        where: { id: { in: takingIds } },
+        select: { id: true, stock: true, colorName: true, size: true },
+      });
+      for (const variant of variants) {
+        const needed = -(stockDelta.get(variant.id) ?? 0);
+        if (variant.stock < needed) {
+          const name = [variant.colorName, variant.size].filter(Boolean).join(' ');
+          return {
+            ok: false,
+            error: `Only ${variant.stock} left of ${name || 'that variant'} — reduce the quantity.`,
+          };
+        }
+      }
+    }
+
+    const subtotal =
+      Math.round(
+        data.lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) * 100,
+      ) / 100;
+
+    await prisma.$transaction(async (tx) => {
+      for (const line of data.lines) {
+        const item = byId.get(line.id)!;
+
+        // A line taken to zero is removed; the order keeps the rest.
+        if (line.quantity === 0) {
+          await tx.orderItem.delete({ where: { id: line.id } });
+        } else {
+          await tx.orderItem.update({
+            where: { id: line.id },
+            data: { quantity: line.quantity, unitPrice: line.unitPrice },
+          });
+        }
+
+        // Sold counts track what is actually on the order.
+        if (item.productId && !wasCancelled && !nowCancelled) {
+          const change = line.quantity - item.quantity;
+          if (change !== 0) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { soldCount: { increment: change } },
+            });
+          }
+        }
+      }
+
+      for (const [variantId, change] of stockDelta) {
+        await tx.productVariant.update({
+          where: { id: variantId },
+          data: { stock: { increment: change } },
+        });
+      }
+
+      // Cancelling here returns everything still on the order.
+      if (!wasCancelled && nowCancelled) {
+        for (const line of data.lines) {
+          const item = byId.get(line.id)!;
+          if (item.variantId && line.quantity > 0) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: line.quantity } },
+            });
+          }
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { soldCount: { decrement: item.quantity } },
+            });
+          }
+        }
+      }
+
+      await tx.order.update({
+        where: { id: data.orderId },
+        data: {
+          fullName: data.fullName,
+          phone: data.phone || null,
+          street: data.street,
+          area: data.area || null,
+          governorate: data.governorate,
+          notes: data.notes || null,
+          subtotal,
+          shippingCost: data.shippingCost,
+          discount: data.discount,
+          total: data.total,
+          status: data.status,
+          paymentStatus: data.paymentStatus,
+        },
+      });
+    });
+
+  return { ok: true as const };
+}

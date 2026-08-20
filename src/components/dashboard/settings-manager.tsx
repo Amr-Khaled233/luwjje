@@ -269,7 +269,7 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
             </div>
           </section>
 
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             <Button type="submit" size="lg" disabled={settingsForm.formState.isSubmitting}>
               {settingsForm.formState.isSubmitting ? (
                 <>
@@ -301,11 +301,11 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>{d.common.actions}</Th>
                     <Th>{d.settings.pageTitle}</Th>
                     <Th>{d.settings.url}</Th>
                     <Th>{d.settings.inFooter}</Th>
                     <Th>{d.common.status}</Th>
+                    <Th>{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -314,6 +314,21 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
                       p.slug === 'about' || p.slug === 'journal' ? `/${p.slug}` : `/pages/${p.slug}`;
                     return (
                       <tr key={p.id} className="transition-colors hover:bg-surface-low">
+                        <Td>
+                          <p className="text-label-md">{p.title}</p>
+                          {p.excerpt && (
+                            <p className="mt-0.5 line-clamp-1 text-body-sm text-tertiary">
+                              {p.excerpt}
+                            </p>
+                          )}
+                        </Td>
+                        <Td>
+                          <code className="text-body-sm text-secondary">{href}</code>
+                        </Td>
+                        <Td className="text-secondary">{p.showInFooter ? 'Yes' : '—'}</Td>
+                        <Td>
+                          <StatusBadge status={p.published ? 'PUBLISHED' : 'DRAFT'} />
+                        </Td>
                         <Td>
                           <div className="flex justify-start gap-2">
                             <Link
@@ -342,21 +357,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                        </Td>
-                        <Td>
-                          <p className="text-label-md">{p.title}</p>
-                          {p.excerpt && (
-                            <p className="mt-0.5 line-clamp-1 text-body-sm text-tertiary">
-                              {p.excerpt}
-                            </p>
-                          )}
-                        </Td>
-                        <Td>
-                          <code className="text-body-sm text-secondary">{href}</code>
-                        </Td>
-                        <Td className="text-secondary">{p.showInFooter ? 'Yes' : '—'}</Td>
-                        <Td>
-                          <StatusBadge status={p.published ? 'PUBLISHED' : 'DRAFT'} />
                         </Td>
                       </tr>
                     );

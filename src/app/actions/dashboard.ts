@@ -2,9 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { applyOrderEdit } from '@/lib/orders';
 import { requireDashboard } from '@/lib/dashboard-auth';
 import { slugify } from '@/lib/utils';
 import {
+  editOrderSchema,
   productSchema,
   promoSchema,
   freeShippingSchema,
@@ -363,6 +365,22 @@ const orderStatusSchema = z.object({
   orderId: z.string().min(1),
   status: z.enum(['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
+
+/** Authorised wrapper; the arithmetic lives in `applyOrderEdit`. */
+export async function editOrder(input: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = editOrderSchema.safeParse(input);
+    if (!parsed.success) return zodErrors(parsed.error);
+
+    const result = await applyOrderEdit(parsed.data);
+    if (!result.ok) return result;
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/orders');
+    revalidatePath('/dashboard/analytics');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
 
 export async function updateOrderStatus(input: unknown): Promise<ActionResult> {
   return guard(async () => {

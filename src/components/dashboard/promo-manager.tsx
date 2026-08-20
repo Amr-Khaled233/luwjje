@@ -91,7 +91,7 @@ export function PromoManager({
 
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <Button onClick={() => open(null)}>
           <Plus className="h-4 w-4" />{d.promo.addNew}</Button>
       </div>
@@ -108,12 +108,12 @@ export function PromoManager({
           <TableWrap>
             <thead>
               <tr>
-                <Th>{d.common.actions}</Th>
                 <Th>{d.promo.code}</Th>
                 <Th>{d.promo.discount}</Th>
                 <Th>{d.promo.minimum}</Th>
                 <Th>{d.promo.usage}</Th>
                 <Th>{d.promo.window}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -124,6 +124,37 @@ export function PromoManager({
                     key={c.id}
                     className={cn('transition-colors hover:bg-surface-low', !c.active && 'row-off')}
                   >
+                    <Td>
+                      <p className="font-mono text-label-md tracking-wider">{c.code}</p>
+                      {c.description && (
+                        <p className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
+                      )}
+                    </Td>
+                    <Td className="tabular-nums">
+                      {c.discountType === 'PERCENT'
+                        ? `${c.discountValue}%`
+                        : formatPrice(c.discountValue, currencySymbol)}
+                    </Td>
+                    <Td className="tabular-nums text-secondary">
+                      {c.minOrder > 0 ? formatPrice(c.minOrder, currencySymbol) : '—'}
+                    </Td>
+                    <Td>
+                      <p className="tabular-nums text-body-sm">
+                        {c.usedCount}
+                        {c.maxUses ? ` / ${c.maxUses}` : ' / ∞'}
+                      </p>
+                      {c.maxUses && (
+                        <ProgressBar
+                          value={(c.usedCount / c.maxUses) * 100}
+                          className="mt-2 w-24"
+                        />
+                      )}
+                    </Td>
+                    <Td className="text-body-sm text-secondary">
+                      {c.startsAt || c.expiresAt
+                        ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
+                        : d.promo.always}
+                    </Td>
                     <Td>
                       <div className="flex gap-2">
                         <button
@@ -155,37 +186,6 @@ export function PromoManager({
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </Td>
-                    <Td>
-                      <p className="font-mono text-label-md tracking-wider">{c.code}</p>
-                      {c.description && (
-                        <p className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
-                      )}
-                    </Td>
-                    <Td className="tabular-nums">
-                      {c.discountType === 'PERCENT'
-                        ? `${c.discountValue}%`
-                        : formatPrice(c.discountValue, currencySymbol)}
-                    </Td>
-                    <Td className="tabular-nums text-secondary">
-                      {c.minOrder > 0 ? formatPrice(c.minOrder, currencySymbol) : '—'}
-                    </Td>
-                    <Td>
-                      <p className="tabular-nums text-body-sm">
-                        {c.usedCount}
-                        {c.maxUses ? ` / ${c.maxUses}` : ' / ∞'}
-                      </p>
-                      {c.maxUses && (
-                        <ProgressBar
-                          value={(c.usedCount / c.maxUses) * 100}
-                          className="mt-2 w-24"
-                        />
-                      )}
-                    </Td>
-                    <Td className="text-body-sm text-secondary">
-                      {c.startsAt || c.expiresAt
-                        ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
-                        : d.promo.always}
                     </Td>
                   </tr>
                 );

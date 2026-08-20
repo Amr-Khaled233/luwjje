@@ -210,13 +210,13 @@ export function ProductsManager({
           <TableWrap>
             <thead>
               <tr>
-                <Th>{d.common.actions}</Th>
                 <Th>{d.stock.product}</Th>
                 <Th>{d.products.category}</Th>
                 <Th>{d.common.price}</Th>
                 <Th>{d.products.colours}</Th>
                 <Th>{d.products.stock}</Th>
                 <Th>{d.products.sold}</Th>
+                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -231,6 +231,45 @@ export function ProductsManager({
                       p.status !== 'PUBLISHED' && 'row-off',
                     )}
                   >
+                    <Td>
+                      <div className="flex items-center gap-3">
+                        {p.images[0] ? (
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-surface-low">
+                            <Image
+                              src={p.images[0].url}
+                              alt=""
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-14 w-10 shrink-0 bg-surface-container" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-2 truncate text-label-md">
+                            {p.name}
+                            {p.isBestSeller && (
+                              <Star className="h-3 w-3 shrink-0 fill-current text-navy" />
+                            )}
+                          </p>
+                          <p className="mt-0.5 truncate text-body-sm text-tertiary">/{p.slug}</p>
+                        </div>
+                      </div>
+                    </Td>
+                    <Td className="text-secondary">{p.categoryName ?? '—'}</Td>
+                    <Td className="tabular-nums">{formatPrice(p.price, currencySymbol)}</Td>
+                    <Td>
+                      <div className="flex items-center gap-1.5">
+                        {colorsOf(p).map((c) => (
+                          <ColorDot key={c.name} hex={c.hex} size="sm" title={c.name} />
+                        ))}
+                      </div>
+                    </Td>
+                    <Td>
+                      <span className={cn('tabular-nums', low && 'text-error')}>{stock}</span>
+                    </Td>
+                    <Td className="tabular-nums text-secondary">{p.soldCount}</Td>
                     <Td>
                       <div className="flex items-center justify-start gap-1">
                         <button
@@ -277,45 +316,6 @@ export function ProductsManager({
                         </button>
                       </div>
                     </Td>
-                    <Td>
-                      <div className="flex items-center gap-3">
-                        {p.images[0] ? (
-                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-surface-low">
-                            <Image
-                              src={p.images[0].url}
-                              alt=""
-                              fill
-                              sizes="40px"
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-14 w-10 shrink-0 bg-surface-container" />
-                        )}
-                        <div className="min-w-0">
-                          <p className="flex items-center gap-2 truncate text-label-md">
-                            {p.name}
-                            {p.isBestSeller && (
-                              <Star className="h-3 w-3 shrink-0 fill-current text-navy" />
-                            )}
-                          </p>
-                          <p className="mt-0.5 truncate text-body-sm text-tertiary">/{p.slug}</p>
-                        </div>
-                      </div>
-                    </Td>
-                    <Td className="text-secondary">{p.categoryName ?? '—'}</Td>
-                    <Td className="tabular-nums">{formatPrice(p.price, currencySymbol)}</Td>
-                    <Td>
-                      <div className="flex items-center gap-1.5">
-                        {colorsOf(p).map((c) => (
-                          <ColorDot key={c.name} hex={c.hex} size="sm" title={c.name} />
-                        ))}
-                      </div>
-                    </Td>
-                    <Td>
-                      <span className={cn('tabular-nums', low && 'text-error')}>{stock}</span>
-                    </Td>
-                    <Td className="tabular-nums text-secondary">{p.soldCount}</Td>
                   </tr>
                 );
               })}

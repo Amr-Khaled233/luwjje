@@ -54,6 +54,42 @@ export const placeOrderSchema = z.object({
   paymentMethod: z.enum(['card', 'cod']).default('cod'),
 });
 
+/**
+ * Editing an order after it was placed.
+ *
+ * Quantities move stock, so a line is identified by its own id rather than by
+ * position — a reordered list must not silently restock the wrong variant.
+ *
+ * `total` is what the customer owes. It is normally the arithmetic of the
+ * lines, but it is editable: a shop settles the odd order by agreement, and a
+ * figure the owner cannot change is one they would have to work around.
+ */
+export const editOrderSchema = z.object({
+  orderId: z.string().min(1),
+  fullName: z.string().trim().min(2, 'Enter a name.').max(80),
+  phone: z.string().trim().max(24).optional().or(z.literal('')),
+  street: z.string().trim().min(2, 'Enter an address.').max(200),
+  area: z.string().trim().max(80).optional().or(z.literal('')),
+  governorate: z.string().trim().min(1, 'Choose a governorate.'),
+  notes: z.string().trim().max(500).optional().or(z.literal('')),
+
+  lines: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        quantity: z.coerce.number().int().min(0, 'Cannot be negative.').max(999),
+        unitPrice: z.coerce.number().min(0, 'Cannot be negative.').max(10000000),
+      }),
+    )
+    .max(200),
+
+  shippingCost: z.coerce.number().min(0, 'Cannot be negative.').max(1000000),
+  discount: z.coerce.number().min(0, 'Cannot be negative.').max(10000000),
+  total: z.coerce.number().min(0, 'Cannot be negative.').max(10000000),
+  status: z.enum(['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']),
+});
+
 // ---------------------------------------------------------------- products
 
 export const variantSchema = z.object({
