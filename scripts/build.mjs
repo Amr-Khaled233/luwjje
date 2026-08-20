@@ -39,6 +39,20 @@ function fail(result) {
   process.exit(result.status ?? 1);
 }
 
+const sleep = (ms) => {
+  // Synchronous: the build is a straight line and has nothing else to do.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+};
+
+/** The host part of a connection string, for an error message worth reading. */
+function hostOf(connection) {
+  try {
+    return new URL(connection).host;
+  } catch {
+    return 'the database';
+  }
+}
+
 // ---------------------------------------------------------------- generate
 {
   const result = run('npx', ['prisma', 'generate']);
@@ -57,14 +71,50 @@ function fail(result) {
  * schema missing and Prisma convinced everything was fine.
  */
 {
-  let result = run('npx', ['prisma', 'migrate', 'deploy'], {
-    stdio: ['inherit', 'pipe', 'pipe'],
-  });
+  /**
+   * P1001 is "cannot reach the database". A hosted Postgres that has been idle
+   * can take a few seconds to accept its first connection, and a build machine
+   * asking once and giving up turns that into a failed deploy — so ask again
+   * before believing it.
+   */
+  const ATTEMPTS = 4;
+  let result;
+  let output = '';
 
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    result = run('npx', ['prisma', 'migrate', 'deploy'], {
+      stdio: ['inherit', 'pipe', 'pipe'],
+    });
+    output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+
+    if (result.status === 0 || !output.includes('P1001') || attempt === ATTEMPTS) break;
+
+    const wait = attempt * 5000;
+    console.log(
+      `▸ ${hostOf(url)} did not answer (attempt ${attempt} of ${ATTEMPTS}) — waiting ${
+        wait / 1000
+      }s and trying again.`,
+    );
+    sleep(wait);
+  }
+
   process.stdout.write(output);
 
   if (result.status !== 0) {
+    if (output.includes('P1001')) {
+      console.error(
+        [
+          '',
+          `✗ Could not reach ${hostOf(url)} from the build.`,
+          `  The connection string came from ${source}.`,
+          '  Check that the database is awake, and that this value is the direct',
+          '  postgres:// string from your database provider — an Accelerate URL',
+          '  (prisma+postgres://) cannot be used to run migrations.',
+          '',
+        ].join('\n'),
+      );
+      fail(result);
+    }
     if (!output.includes('P3005')) fail(result);
 
     console.log(
