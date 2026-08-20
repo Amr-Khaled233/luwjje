@@ -228,7 +228,6 @@ async function main() {
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
-  await prisma.filterColor.deleteMany();
   await prisma.promoCode.deleteMany();
   await prisma.paletteSwatch.deleteMany();
   await prisma.banner.deleteMany({ where: { slot: 'OFFER' } });
@@ -314,21 +313,6 @@ async function main() {
 
   // Filter colours mirror the colourways now in the catalogue.
   console.log('▸ Filter colours…');
-  const seen = new Map<string, { nameAr: string; hex: string }>();
-  for (const p of PRODUCTS) {
-    for (const v of p.variants) {
-      if (!seen.has(v.colorName)) seen.set(v.colorName, { nameAr: v.colorNameAr, hex: v.colorHex });
-    }
-  }
-  await prisma.filterColor.createMany({
-    data: Array.from(seen.entries()).map(([name, v], i) => ({
-      name,
-      nameAr: v.nameAr,
-      hex: v.hex,
-      visible: true,
-      position: i,
-    })),
-  });
 
   console.log('▸ Palette, offer banner and promo codes…');
   await prisma.paletteSwatch.createMany({

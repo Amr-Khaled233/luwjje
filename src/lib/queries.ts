@@ -96,7 +96,6 @@ export async function getBestSellers(locale: Locale, limit = 4): Promise<Product
 
 export interface ShopFilters {
   q?: string;
-  color?: string;
   category?: string;
   price?: string; // "<min>-<max>" | "<min>-" for open-ended
   sort?: string; // best | price-asc | price-desc | newest
@@ -119,11 +118,6 @@ export async function getShopProducts(filters: ShopFilters, locale: Locale) {
       { descriptionAr: { contains: filters.q } },
       { category: { name: { contains: filters.q, mode: 'insensitive' } } },
     ];
-  }
-  if (filters.color) {
-    // Colour is filtered on the canonical (English) name so the URL is stable
-    // across languages.
-    where.variants = { some: { colorName: filters.color } };
   }
   if (filters.category) {
     where.category = { slug: filters.category, visible: true };
@@ -170,27 +164,16 @@ export async function getShopProducts(filters: ShopFilters, locale: Locale) {
  * stock are dropped so the filter never leads to an empty grid.
  */
 export async function getFilterOptions(locale: Locale) {
-  const [colorRows, categories, priceRanges, liveColors] = await Promise.all([
-    prisma.filterColor.findMany({ where: { visible: true }, orderBy: { position: 'asc' } }),
+  const [categories, priceRanges] = await Promise.all([
     prisma.category.findMany({
       where: { visible: true, products: { some: { status: 'PUBLISHED' } } },
       select: { name: true, nameAr: true, slug: true },
       orderBy: { position: 'asc' },
     }),
     prisma.priceRange.findMany({ where: { visible: true }, orderBy: { position: 'asc' } }),
-    prisma.productVariant.findMany({
-      where: { product: { status: 'PUBLISHED' } },
-      select: { colorName: true },
-      distinct: ['colorName'],
-    }),
   ]);
 
-  const inCatalogue = new Set(liveColors.map((v) => v.colorName));
-
   return {
-    colors: colorRows
-      .filter((c) => inCatalogue.has(c.name))
-      .map((c) => ({ value: c.name, label: pick(locale, c.name, c.nameAr), hex: c.hex })),
     categories: categories.map((c) => ({
       value: c.slug,
       label: pick(locale, c.name, c.nameAr),

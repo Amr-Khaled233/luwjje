@@ -54,11 +54,8 @@ check('English price in EGP', /EGP\s?1,250/.test(pEn), pEn.match(/EGP[^<]{0,12}/
 check('Arabic price uses ج.م', pAr.includes('ج.م'));
 check('no dollar prices remain', !/\$\s?\d/.test(pEn), pEn.match(/\$\s?\d[^<]{0,10}/)?.[0]);
 
-console.log('\n▸ Sort by has one "Best Selling"');
+console.log('\n▸ Sort by');
 const shop = await html('/shop', EN);
-const SORT_OPTION = new RegExp('<option[^>]*>Best Selling</option>', 'g');
-const sortOptions = shop.match(SORT_OPTION) ?? [];
-check('exactly one Best Selling option', sortOptions.length === 1, `found ${sortOptions.length}`);
 
 console.log('\n▸ Governorates at checkout');
 // CartView renders a spinner until it hydrates, so the option list lives in
@@ -86,19 +83,13 @@ console.log('\n▸ Filters are dashboard-driven');
 const { PrismaClient } = await import('@prisma/client');
 const prisma = new PrismaClient();
 
-check('colour filter present by default', shop.includes('Colour'));
-await prisma.siteSettings.update({ where: { id: 'singleton' }, data: { showColorFilter: false } });
-const noColour = await html('/shop', EN);
-check('switching the colour filter off removes it', !noColour.includes('>Colour<'));
-await prisma.siteSettings.update({ where: { id: 'singleton' }, data: { showColorFilter: true } });
+// The shop does not filter by colour, so the control must not be there.
+check('no colour filter is offered', !shop.includes('>Colour<'));
 
-const beige = await prisma.filterColor.findFirst({ where: { name: 'Beige' } });
-if (beige) {
-  check('Beige offered in the filter', (await html('/shop', EN)).includes('>Beige<'));
-  await prisma.filterColor.update({ where: { id: beige.id }, data: { visible: false } });
-  check('hiding a colour removes just that option', !(await html('/shop', EN)).includes('>Beige<'));
-  await prisma.filterColor.update({ where: { id: beige.id }, data: { visible: true } });
-}
+// Sorting is by price only, both directions.
+check('sort offers price low to high', shop.includes('value="price-asc"'));
+check('sort offers price high to low', shop.includes('value="price-desc"'));
+check('and nothing else', !shop.includes('value="newest"') && !shop.includes('value="best"'));
 
 const knit = await prisma.category.findFirst({ where: { name: 'Knitwear' } });
 if (knit) {

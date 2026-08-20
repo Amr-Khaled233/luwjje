@@ -29,7 +29,6 @@ export default async function ShopPage({
 
   const filters = {
     q: get('q'),
-    color: get('color'),
     category: get('category'),
     price: get('price'),
     sort: get('sort') ?? 'best',
@@ -45,7 +44,6 @@ export default async function ShopPage({
   ]);
 
   const anyFilterVisible =
-    settings.showColorFilter ||
     settings.showCategoryFilter ||
     settings.showPriceFilter ||
     settings.showSortFilter;
@@ -65,7 +63,6 @@ export default async function ShopPage({
       {anyFilterVisible && (
         <ShopFilterBar
           t={t}
-          colors={settings.showColorFilter ? options.colors : []}
           categories={settings.showCategoryFilter ? options.categories : []}
           priceRanges={settings.showPriceFilter ? options.priceRanges : []}
           showSort={settings.showSortFilter}
@@ -76,7 +73,7 @@ export default async function ShopPage({
       <div className="mt-8 md:mt-stack-md">
         {products.length ? (
           <ProductGrid products={products} currencySymbol={symbol} locale={locale} t={t} />
-        ) : total === 0 && !filters.q && !filters.color && !filters.category && !filters.price ? (
+        ) : total === 0 && !filters.q && !filters.category && !filters.price ? (
           <EmptyState title={t.shop.emptyTitle} body={t.shop.emptyHint} />
         ) : (
           <EmptyState

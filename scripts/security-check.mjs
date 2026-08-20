@@ -244,23 +244,24 @@ const html = await upload('x.html', 'text/html', '<script>alert(1)</script>');
 check('HTML upload refused', html.status === 400, html.status);
 
 // ---------------------------------------------------------------- rate limits
+// The page-view endpoint allows 300 an hour, so the flood has to exceed that.
 console.log('\n▸ Rate limits');
-const newsletterHits = [];
-for (let i = 0; i < 26; i++) {
-  const res = await fetch(`${BASE}/api/newsletter`, {
+const trackHits = [];
+for (let i = 0; i < 310; i++) {
+  const res = await fetch(`${BASE}/api/track`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: `flood-${i}@example.com` }),
+    body: JSON.stringify({ path: `/flood-${i}`, sessionId: 'flood', referrer: 'direct' }),
   });
-  newsletterHits.push(res.status);
+  trackHits.push(res.status);
 }
 check(
-  'newsletter flood is throttled',
-  newsletterHits.includes(429),
-  `statuses seen: ${[...new Set(newsletterHits)].join(', ')}`,
+  'a flood of page-view pings is throttled',
+  trackHits.includes(429),
+  `statuses seen: ${[...new Set(trackHits)].join(', ')}`,
 );
 
-await prisma.newsletterSubscriber.deleteMany({ where: { email: { contains: 'flood-' } } });
+await prisma.pageView.deleteMany({ where: { sessionId: 'flood' } });
 
 console.log(`\n${fail === 0 ? '✓' : '✗'} ${pass} passed, ${fail} failed\n`);
 await prisma.$disconnect();

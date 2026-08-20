@@ -40,7 +40,6 @@ function fallbackSettings(): Settings {
     currencySymbolAr: 'ج.م',
     defaultShippingRate: 0,
     lowStockThreshold: 5,
-    showColorFilter: true,
     showCategoryFilter: true,
     showPriceFilter: true,
     showSortFilter: true,
@@ -52,10 +51,6 @@ function fallbackSettings(): Settings {
     metaDescription: '',
     metaDescriptionAr: '',
     ogImageUrl: '',
-    newsletterHeading: 'Newsletter',
-    newsletterHeadingAr: '',
-    newsletterBody: '',
-    newsletterBodyAr: '',
     updatedAt: new Date(),
   };
 }

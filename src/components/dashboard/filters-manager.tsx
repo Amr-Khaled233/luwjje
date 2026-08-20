@@ -19,18 +19,14 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Checkbox } from '@/components/ui/field';
-import { ColorDot, EmptyState } from '@/components/ui/primitives';
+import { EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { filterColorSchema, priceRangeSchema, filterVisibilitySchema } from '@/lib/validations';
+import { priceRangeSchema, filterVisibilitySchema } from '@/lib/validations';
 import {
-  syncFilterColors,
-  saveFilterColor,
-  toggleFilterColor,
-  deleteFilterColor,
   savePriceRange,
   deletePriceRange,
   saveFilterVisibility,
@@ -39,15 +35,9 @@ import {
 } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
-type ColorInput = z.infer<typeof filterColorSchema>;
 type RangeInput = z.infer<typeof priceRangeSchema>;
 type VisibilityInput = z.infer<typeof filterVisibilitySchema>;
 
-interface ColorRow extends ColorInput {
-  id: string;
-  /** False when nothing in the published catalogue uses this colourway. */
-  inCatalogue: boolean;
-}
 interface RangeRow extends RangeInput {
   id: string;
 }
@@ -60,21 +50,18 @@ interface CategoryRow {
   productCount: number;
 }
 
-const EMPTY_COLOR: ColorInput = { name: '', nameAr: '', hex: '#0b1c30', visible: true };
 const EMPTY_RANGE: RangeInput = { label: '', labelAr: '', min: 0, max: null, visible: true };
 
-const TAB_KEYS = ['controls', 'categories', 'colours', 'ranges'] as const;
+const TAB_KEYS = ['controls', 'categories', 'ranges'] as const;
 type Tab = (typeof TAB_KEYS)[number];
 
 export function FiltersManager({
   categories,
-  colors,
   priceRanges,
   visibility,
   currencySymbol,
 }: {
   categories: CategoryRow[];
-  colors: ColorRow[];
   priceRanges: RangeRow[];
   visibility: VisibilityInput;
   currencySymbol: string;
@@ -86,7 +73,6 @@ export function FiltersManager({
   const TAB_LABELS: Record<Tab, string> = {
     controls: d.filters.tabControls,
     categories: d.nav.categories,
-    colours: d.filters.tabColours,
     ranges: d.filters.tabRanges,
   };
   const [pending, setPending] = React.useState(false);
@@ -96,19 +82,11 @@ export function FiltersManager({
     resolver: zodResolver(filterVisibilitySchema),
     defaultValues: visibility,
   });
-  const colorForm = useForm<ColorInput>({
-    resolver: zodResolver(filterColorSchema),
-    defaultValues: EMPTY_COLOR,
-  });
   const rangeForm = useForm<RangeInput>({
     resolver: zodResolver(priceRangeSchema),
     defaultValues: EMPTY_RANGE,
   });
 
-  const [colorModal, setColorModal] = React.useState<{ open: boolean; data: ColorRow | null }>({
-    open: false,
-    data: null,
-  });
   const [rangeModal, setRangeModal] = React.useState<{ open: boolean; data: RangeRow | null }>({
     open: false,
     data: null,
@@ -129,7 +107,6 @@ export function FiltersManager({
   }
 
   const CONTROLS: { key: keyof VisibilityInput; label: string; hint: string }[] = [
-    { key: 'showColorFilter', label: d.filters.colourFilter, hint: d.filters.tabColours },
     { key: 'showCategoryFilter', label: d.filters.categoryFilter, hint: d.nav.categories },
     { key: 'showPriceFilter', label: d.filters.priceFilter, hint: d.filters.tabRanges },
     { key: 'showSortFilter', label: d.filters.sortBy, hint: d.analytics.revenue },
@@ -300,142 +277,6 @@ export function FiltersManager({
         </section>
       )}
 
-      {tab === 'colours' && (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-[70ch] text-body-md text-secondary">
-              Only ticked colours appear in the Shop filter. A colour with nothing in the published
-              catalogue is hidden automatically, so the filter never leads to an empty grid.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                disabled={syncing}
-                onClick={async () => {
-                  setSyncing(true);
-                  const result = await syncFilterColors();
-                  setSyncing(false);
-                  if (!result.ok) {
-                    toast(result.error ?? d.filters.couldNotSync, 'error');
-                    return;
-                  }
-                  toast(d.filters.synced);
-                  router.refresh();
-                }}
-              >
-                {syncing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> {d.filters.syncing}
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4" />{d.filters.syncFromProducts}</>
-                )}
-              </Button>
-              <Button
-                onClick={() => {
-                  colorForm.reset(EMPTY_COLOR);
-                  setColorModal({ open: true, data: null });
-                }}
-              >
-                <Plus className="h-4 w-4" />{d.filters.addColour}</Button>
-            </div>
-          </div>
-
-          <section className="border border-outline-variant bg-surface-lowest">
-            {colors.length === 0 ? (
-              <EmptyState
-                title={d.filters.noColours}
-                body={d.filters.noColoursBody}
-                className="border-0"
-              />
-            ) : (
-              <TableWrap>
-                <thead>
-                  <tr>
-                    <Th>{d.stock.colour}</Th>
-                    <Th>{d.common.nameAr}</Th>
-                    <Th>{d.filters.colourFilter}</Th>
-                    <Th>{d.filters.inCatalogue}</Th>
-                    <Th>{d.common.visible}</Th>
-                    <Th className="text-end">{d.common.actions}</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {colors.map((c) => (
-                    <tr
-                      key={c.id}
-                      className={cn(
-                        'transition-colors hover:bg-surface-low',
-                        (!c.visible || !c.inCatalogue) && 'opacity-60',
-                      )}
-                    >
-                      <Td>
-                        <span className="flex items-center gap-3">
-                          <ColorDot hex={c.hex} size="md" />
-                          <span className="text-label-md">{c.name}</span>
-                        </span>
-                      </Td>
-                      <Td className="text-secondary">{c.nameAr || '—'}</Td>
-                      <Td className="uppercase text-tertiary">
-                        <span dir="ltr">{c.hex}</span>
-                      </Td>
-                      <Td>
-                        {c.inCatalogue ? (
-                          <span className="label-caps text-secondary">{d.common.yes}</span>
-                        ) : (
-                          <span className="label-caps text-error">{d.filters.unused}</span>
-                        )}
-                      </Td>
-                      <Td>
-                        <button
-                          onClick={() =>
-                            run(
-                              () => toggleFilterColor(c.id),
-                              c.visible ? d.categories.hiddenToast : d.categories.shownToast,
-                            )
-                          }
-                          disabled={pending}
-                          aria-label={`${d.common.visible} — ${c.name}`}
-                        >
-                          {c.visible ? (
-                            <Eye className="h-4 w-4 text-navy" />
-                          ) : (
-                            <EyeOff className="h-4 w-4 text-tertiary" />
-                          )}
-                        </button>
-                      </Td>
-                      <Td>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              colorForm.reset(c);
-                              setColorModal({ open: true, data: c });
-                            }}
-                            aria-label={`${d.common.edit} ${c.name}`}
-                            className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setConfirm({ kind: 'color', id: c.id })}
-                            aria-label={`${d.common.delete} ${c.name}`}
-                            className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </TableWrap>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* ----------------------------------------------------- price ranges */}
       {tab === 'ranges' && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -523,88 +364,6 @@ export function FiltersManager({
         </>
       )}
 
-      {/* ----------------------------------------------------- colour modal */}
-      <Modal
-        open={colorModal.open}
-        onClose={() => setColorModal({ open: false, data: null })}
-        size="sm"
-        title={colorModal.data ? `${d.common.edit} — ${colorModal.data.name}` : d.filters.newColour}
-        description={d.filters.colourModalHint}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setColorModal({ open: false, data: null })}>{d.common.cancel}</Button>
-            <Button
-              disabled={colorForm.formState.isSubmitting}
-              onClick={colorForm.handleSubmit(async (values) => {
-                const ok = await run(
-                  () => saveFilterColor({ ...values, id: colorModal.data?.id }),
-                  d.filters.colourSaved,
-                );
-                if (ok) setColorModal({ open: false, data: null });
-              })}
-            >
-              {colorForm.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
-                </>
-              ) : (
-                d.common.save
-              )}
-            </Button>
-          </>
-        }
-      >
-        <form className="flex flex-col gap-6" noValidate>
-          <Input
-            label={d.shipping.nameEnglish}
-            required
-            placeholder="Deep Navy"
-            error={colorForm.formState.errors.name?.message}
-            {...colorForm.register('name')}
-          />
-          <Input
-            label={d.shipping.nameArabic}
-            placeholder="كحلي غامق"
-            dir="rtl"
-            error={colorForm.formState.errors.nameAr?.message}
-            {...colorForm.register('nameAr')}
-          />
-          <div>
-            <label className="label-caps mb-2 block text-secondary">{d.products.swatch}</label>
-            <div className="flex h-12 items-center gap-2 border border-outline-variant bg-background px-2">
-              <Controller
-                control={colorForm.control}
-                name="hex"
-                render={({ field }) => (
-                  <input
-                    type="color"
-                    value={field.value}
-                    onChange={field.onChange}
-                    aria-label={d.products.swatch}
-                    className="h-7 w-7 shrink-0 cursor-pointer border-0 bg-transparent p-0"
-                  />
-                )}
-              />
-              <input
-                {...colorForm.register('hex')}
-                dir="ltr"
-                className="w-full min-w-0 bg-transparent text-body-sm uppercase outline-none"
-              />
-            </div>
-          </div>
-          <Controller
-            control={colorForm.control}
-            name="visible"
-            render={({ field }) => (
-              <Checkbox
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                label={d.filters.showColourInFilter}
-              />
-            )}
-          />
-        </form>
-      </Modal>
 
       {/* ------------------------------------------------------ range modal */}
       <Modal
@@ -692,15 +451,11 @@ export function FiltersManager({
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title={confirm?.kind === 'color' ? d.filters.deleteColour : d.filters.deleteRange}
+        title={d.filters.deleteRange}
         body={d.filters.deleteBody}
         onConfirm={async () => {
           if (!confirm) return;
-          const ok = await run(
-            () =>
-              confirm.kind === 'color' ? deleteFilterColor(confirm.id) : deletePriceRange(confirm.id),
-            d.common.deleted,
-          );
+          const ok = await run(() => deletePriceRange(confirm.id), d.common.deleted);
           if (ok) setConfirm(null);
         }}
       />

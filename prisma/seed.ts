@@ -26,14 +26,12 @@ async function main() {
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
-  await prisma.filterColor.deleteMany();
   await prisma.priceRange.deleteMany();
   await prisma.promoCode.deleteMany();
   await prisma.governorate.deleteMany();
   await prisma.paletteSwatch.deleteMany();
   await prisma.banner.deleteMany();
   await prisma.page.deleteMany();
-  await prisma.newsletterSubscriber.deleteMany();
   await prisma.freeShippingRule.deleteMany();
 
   const dashboardPassword = process.env.DASHBOARD_PASSWORD || 'luwjje-admin';
@@ -62,7 +60,6 @@ async function main() {
       currencySymbolAr: 'ج.م',
       defaultShippingRate: 75,
       lowStockThreshold: 5,
-      showColorFilter: true,
       showCategoryFilter: true,
       showPriceFilter: true,
       showSortFilter: true,
@@ -74,10 +71,6 @@ async function main() {
       metaDescription: 'Quiet, well-made pieces in wool, cotton and leather. Delivered across Egypt.',
       metaDescriptionAr: 'قطع هادئة مصنوعة بعناية من الصوف والقطن والجلد. توصيل لكل محافظات مصر.',
       ogImageUrl: heroImage,
-      newsletterHeading: 'Newsletter',
-      newsletterHeadingAr: 'النشرة البريدية',
-      newsletterBody: 'Quiet updates. New arrivals, no noise.',
-      newsletterBodyAr: 'تحديثات هادئة. كل جديد، بدون إزعاج.',
     },
   });
 

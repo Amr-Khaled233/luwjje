@@ -103,17 +103,6 @@ model ProductVariant {
   @@index([productId])
 }
 
-/// Which colourways appear in the Shop colour filter, and what they are
-/// called there. Kept in sync with the variants by the dashboard.
-model FilterColor {
-  id       String  @id @default(cuid())
-  name     String  @unique
-  nameAr   String  @default("")
-  hex      String  @default("#0b1c30")
-  visible  Boolean @default(true)
-  position Int     @default(0)
-}
-
 /// An editable bucket in the Shop price filter. Empty table = no price filter.
 model PriceRange {
   id       String  @id @default(cuid())
@@ -298,7 +287,6 @@ model SiteSettings {
   lowStockThreshold   Int   @default(5)
 
   // Which controls the Shop filter bar offers.
-  showColorFilter    Boolean @default(true)
   showCategoryFilter Boolean @default(true)
   showPriceFilter    Boolean @default(true)
   showSortFilter     Boolean @default(true)
@@ -314,10 +302,6 @@ model SiteSettings {
   metaDescriptionAr String @default("")
   ogImageUrl        String @default("")
 
-  newsletterHeading   String @default("Newsletter")
-  newsletterHeadingAr String @default("")
-  newsletterBody      String @default("")
-  newsletterBodyAr    String @default("")
 
   updatedAt DateTime @updatedAt @default(now())
 }
@@ -374,12 +358,6 @@ model Page {
   position     Int      @default(0)
   updatedAt    DateTime @updatedAt
   createdAt    DateTime @default(now())
-}
-
-model NewsletterSubscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
 }
 
 /// A single outstanding "forgot password" link.

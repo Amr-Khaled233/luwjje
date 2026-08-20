@@ -182,8 +182,6 @@ const en = {
     contact: 'Contact',
     trackOrder: 'Track an Order',
     rights: 'All rights reserved.',
-    subscribe: 'Subscribe',
-    emailPlaceholder: 'Your email',
     comingSoon: 'Coming soon.',
   },
   common: {
@@ -372,8 +370,6 @@ const ar: Dictionary = {
     contact: 'تواصل معنا',
     trackOrder: 'تتبّع طلبك',
     rights: 'جميع الحقوق محفوظة.',
-    subscribe: 'اشترك',
-    emailPlaceholder: 'بريدك الإلكتروني',
     comingSoon: 'قريباً.',
   },
   common: {

@@ -62,14 +62,12 @@ function FilterSelect({
 
 export function ShopFilterBar({
   t,
-  colors,
   categories,
   priceRanges,
   showSort,
   className,
 }: {
   t: Dictionary;
-  colors: FilterOption[];
   categories: FilterOption[];
   priceRanges: FilterOption[];
   showSort: boolean;
@@ -106,26 +104,19 @@ export function ShopFilterBar({
   );
 
   const SORTS: FilterOption[] = [
-    { value: 'best', label: t.shop.sort.best },
     { value: 'price-asc', label: t.shop.sort.priceAsc },
     { value: 'price-desc', label: t.shop.sort.priceDesc },
-    { value: 'newest', label: t.shop.sort.newest },
   ];
 
   const active = {
-    color: searchParams.get('color') ?? '',
     category: searchParams.get('category') ?? '',
     price: searchParams.get('price') ?? '',
-    sort: searchParams.get('sort') ?? 'best',
+    sort: searchParams.get('sort') ?? 'price-asc',
     q: searchParams.get('q') ?? '',
   };
 
   const chips = [
     active.q && { key: 'q', label: `${t.shop.searchLabel}: ${active.q}` },
-    active.color && {
-      key: 'color',
-      label: colors.find((c) => c.value === active.color)?.label ?? active.color,
-    },
     active.category && {
       key: 'category',
       label: categories.find((c) => c.value === active.category)?.label ?? active.category,
@@ -136,20 +127,11 @@ export function ShopFilterBar({
     },
   ].filter(Boolean) as { key: string; label: string }[];
 
-  const hasFilters = colors.length > 0 || categories.length > 0 || priceRanges.length > 0;
+  const hasFilters = categories.length > 0 || priceRanges.length > 0;
 
-  /** The three filter selects, shared by the desktop bar and the phone sheet. */
+  /** The filter selects, shared by the desktop bar and the phone sheet. */
   const selects = (stacked: boolean) => (
     <>
-      {colors.length > 0 && (
-        <FilterSelect
-          placeholder={t.shop.colour}
-          value={active.color}
-          options={colors}
-          onChange={(v) => setParam('color', v)}
-          className={stacked ? 'w-full' : 'w-auto'}
-        />
-      )}
       {categories.length > 0 && (
         <FilterSelect
           placeholder={t.shop.category}
@@ -171,8 +153,8 @@ export function ShopFilterBar({
     </>
   );
 
-  // Only the three filter selects count towards the badge — sort is not a filter.
-  const activeCount = [active.color, active.category, active.price].filter(Boolean).length;
+  // Only the filter selects count towards the badge — sort is not a filter.
+  const activeCount = [active.category, active.price].filter(Boolean).length;
 
   return (
     <div className={cn('border-y border-outline-variant', className)}>

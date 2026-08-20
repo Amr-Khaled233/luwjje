@@ -10,7 +10,6 @@ import {
   freeShippingSchema,
   governorateSchema,
   governorateRatesSchema,
-  filterColorSchema,
   priceRangeSchema,
   filterVisibilitySchema,
   bannerSchema,
@@ -598,89 +597,6 @@ export async function deleteGovernorate(id: string): Promise<ActionResult> {
 }
 
 // ================================================================ shop filters
-
-/**
- * Rebuilds the filter colour list from the colourways actually in the
- * catalogue, preserving the visibility and Arabic name already chosen.
- */
-export async function syncFilterColors(): Promise<ActionResult> {
-  return guard(async () => {
-    const [variants, existing] = await Promise.all([
-      prisma.productVariant.findMany({
-        select: { colorName: true, colorNameAr: true, colorHex: true },
-        distinct: ['colorName'],
-        orderBy: { colorName: 'asc' },
-      }),
-      prisma.filterColor.findMany(),
-    ]);
-
-    const known = new Map(existing.map((c) => [c.name, c]));
-    let position = existing.length;
-
-    for (const v of variants) {
-      const row = known.get(v.colorName);
-      if (row) {
-        // Keep whatever the admin chose; only refresh the swatch.
-        await prisma.filterColor.update({
-          where: { id: row.id },
-          data: { hex: v.colorHex, nameAr: row.nameAr || v.colorNameAr },
-        });
-      } else {
-        await prisma.filterColor.create({
-          data: {
-            name: v.colorName,
-            nameAr: v.colorNameAr,
-            hex: v.colorHex,
-            visible: true,
-            position: position++,
-          },
-        });
-      }
-    }
-
-    revalidateStorefront();
-    revalidatePath('/dashboard/filters');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-export async function saveFilterColor(input: unknown): Promise<ActionResult> {
-  return guard(async () => {
-    const parsed = filterColorSchema.safeParse(input);
-    if (!parsed.success) return zodErrors(parsed.error);
-
-    const { id, ...data } = parsed.data;
-    if (id) await prisma.filterColor.update({ where: { id }, data });
-    else {
-      const count = await prisma.filterColor.count();
-      await prisma.filterColor.create({ data: { ...data, position: count } });
-    }
-
-    revalidateStorefront();
-    revalidatePath('/dashboard/filters');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-export async function toggleFilterColor(id: string): Promise<ActionResult> {
-  return guard(async () => {
-    const row = await prisma.filterColor.findUnique({ where: { id }, select: { visible: true } });
-    if (!row) return { ok: false, error: 'Colour not found.' };
-    await prisma.filterColor.update({ where: { id }, data: { visible: !row.visible } });
-    revalidateStorefront();
-    revalidatePath('/dashboard/filters');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-export async function deleteFilterColor(id: string): Promise<ActionResult> {
-  return guard(async () => {
-    await prisma.filterColor.delete({ where: { id } });
-    revalidateStorefront();
-    revalidatePath('/dashboard/filters');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
 
 export async function savePriceRange(input: unknown): Promise<ActionResult> {
   return guard(async () => {

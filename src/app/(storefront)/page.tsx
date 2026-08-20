@@ -82,7 +82,7 @@ export default async function HomePage() {
           action={
             bestSellers.length > 0 ? (
               <Link
-                href="/shop?sort=best"
+                href="/shop"
                 className="label-caps group flex items-center gap-2 text-secondary transition-colors hover:text-on-surface"
               >
                 {t.home.viewAll}

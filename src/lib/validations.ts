@@ -103,18 +103,6 @@ export const categorySchema = z.object({
 
 // ---------------------------------------------------------------- filters
 
-export const filterColorSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().trim().min(1, 'Colour name is required.').max(60),
-  nameAr: z.string().trim().max(60).default(''),
-  hex: z
-    .string()
-    .trim()
-    .regex(/^#([0-9a-fA-F]{6})$/, 'Use a 6-digit hex colour.')
-    .default('#0b1c30'),
-  visible: z.boolean().default(true),
-});
-
 export const priceRangeSchema = z
   .object({
     id: z.string().optional(),
@@ -130,7 +118,6 @@ export const priceRangeSchema = z
   });
 
 export const filterVisibilitySchema = z.object({
-  showColorFilter: z.boolean(),
   showCategoryFilter: z.boolean(),
   showPriceFilter: z.boolean(),
   showSortFilter: z.boolean(),
@@ -283,10 +270,6 @@ export const settingsSchema = z.object({
   metaDescription: z.string().trim().max(300).default(''),
   metaDescriptionAr: z.string().trim().max(300).default(''),
   ogImageUrl: z.string().trim().max(600).default(''),
-  newsletterHeading: z.string().trim().max(80).default('Newsletter'),
-  newsletterHeadingAr: z.string().trim().max(80).default(''),
-  newsletterBody: z.string().trim().max(300).default(''),
-  newsletterBodyAr: z.string().trim().max(300).default(''),
 });
 
 export const pageSchema = z.object({

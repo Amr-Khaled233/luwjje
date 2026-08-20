@@ -110,17 +110,6 @@ export function ProductsManager({
         </div>
 
         <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label={d.common.status}
-          className="h-11 w-full sm:w-auto sm:min-w-[150px]"
-        >
-          <option value="">{d.products.allStatuses}</option>
-          <option value="PUBLISHED">{d.products.published}</option>
-          <option value="DRAFT">{d.products.draft}</option>
-        </Select>
-
-        <Select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
           aria-label={d.products.category}
@@ -133,11 +122,6 @@ export function ProductsManager({
             </option>
           ))}
         </Select>
-
-        <ButtonLink href="/dashboard/categories" variant="secondary">
-          <FolderTree className="h-4 w-4" />
-          {d.nav.categories}
-        </ButtonLink>
 
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" />{d.products.addNew}</Button>

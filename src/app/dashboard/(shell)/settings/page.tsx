@@ -37,10 +37,6 @@ export default async function DashboardSettingsPage() {
           metaDescription: settings.metaDescription,
           metaDescriptionAr: settings.metaDescriptionAr,
           ogImageUrl: settings.ogImageUrl,
-          newsletterHeading: settings.newsletterHeading,
-          newsletterHeadingAr: settings.newsletterHeadingAr,
-          newsletterBody: settings.newsletterBody,
-          newsletterBodyAr: settings.newsletterBodyAr,
         }}
         pages={pages.map((p) => ({
           id: p.id,
