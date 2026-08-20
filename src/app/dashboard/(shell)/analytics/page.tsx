@@ -3,8 +3,8 @@ import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 import { fmt } from '@/i18n/dictionaries';
 import { AnalyticsHeader } from '@/components/dashboard/analytics-header';
-import { RevenueChart } from '@/components/dashboard/revenue-chart';
-import { RankedBarChart } from '@/components/dashboard/ranked-bar-chart';
+import { RevenueTable } from '@/components/dashboard/revenue-table';
+import { RankedTable } from '@/components/dashboard/ranked-table';
 import { OrderStatusPanel } from '@/components/dashboard/order-status-panel';
 import {
   getOverviewStats,
@@ -15,8 +15,8 @@ import {
   periodFromDays,
   type Period,
 } from '@/lib/analytics';
-import { startOfDay, endOfDay, differenceInCalendarDays, format } from 'date-fns';
-import { formatPrice } from '@/lib/utils';
+import { startOfDay, endOfDay, format } from 'date-fns';
+import { formatPrice, formatDate } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,8 @@ export default async function AdminAnalyticsPage({
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const d = getDashboardDictionary(await getLocale());
+  const locale = await getLocale();
+  const d = getDashboardDictionary(locale);
 
   // No period asked for, or one that will not parse, opens on the last thirty
   // days rather than on an empty page.
@@ -43,7 +44,9 @@ export default async function AdminAnalyticsPage({
     period = periodFromDays(30);
   }
 
-  const days = differenceInCalendarDays(period.end, period.start) + 1;
+  // Every panel is about the same chosen period, so each one names it by its
+  // dates. "The last N days" would be a lie for a range picked by hand.
+  const periodLabel = `${formatDate(period.start, locale)} — ${formatDate(period.end, locale)}`;
 
   const [stats, series, topProducts, categories, statuses] = await Promise.all([
     getOverviewStats(period),
@@ -88,14 +91,14 @@ export default async function AdminAnalyticsPage({
       </div>
 
       <Panel bodyClassName="p-4 md:p-6">
-        <RevenueChart data={series} currencySymbol={symbol} days={days} />
+        <RevenueTable data={series} currencySymbol={symbol} periodLabel={periodLabel} />
       </Panel>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Panel bodyClassName="p-4 md:p-6">
-          <RankedBarChart
+          <RankedTable
             title={d.analytics.topProducts}
-            subtitle={fmt(d.analytics.unitsSoldIn, { days })}
+            subtitle={fmt(d.analytics.unitsSoldIn, { period: periodLabel })}
             valueLabel={d.analytics.units}
             data={topProducts.map((p) => ({
               name: p.name,
@@ -107,14 +110,14 @@ export default async function AdminAnalyticsPage({
         </Panel>
 
         <Panel bodyClassName="p-4 md:p-6">
-          <RankedBarChart
+          <RankedTable
             title={d.analytics.topCategories}
-            subtitle={fmt(d.analytics.revenueIn, { days })}
+            subtitle={fmt(d.analytics.revenueIn, { period: periodLabel })}
             valueLabel={`${d.analytics.revenue} (${symbol})`}
             data={categories.map((c) => ({
               name: c.name,
               value: c.revenue,
-              secondary: `${c.units} units`,
+              secondary: fmt(d.analytics.unitsCount, { n: c.units }),
             }))}
             secondaryLabel={d.analytics.units}
             format="currency"
