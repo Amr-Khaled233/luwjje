@@ -407,6 +407,7 @@ export function ProductEditor({
             render={({ field }) => (
               <ImageUploader
                 label={d.common.images}
+                hint={d.images.hint}
                 value={field.value}
                 onChange={(images) =>
                   field.onChange(images.map((i) => ({ ...i, isPrimary: false, isHover: false })))

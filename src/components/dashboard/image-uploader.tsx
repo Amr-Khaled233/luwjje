@@ -24,10 +24,13 @@ export function ImageUploader({
   value,
   onChange,
   label,
+  hint,
 }: {
   value: UploadedImage[];
   onChange: (images: UploadedImage[]) => void;
   label?: string;
+  /** Shown under the previews. Only the product form has two images to explain. */
+  hint?: string;
 }) {
   const { d } = useDash();
   const [uploading, setUploading] = React.useState(false);
@@ -168,7 +171,7 @@ export function ImageUploader({
               </li>
             ))}
           </ul>
-          <FieldHint>{d.images.hint}</FieldHint>
+          {hint && <FieldHint>{hint}</FieldHint>}
         </>
       )}
     </div>

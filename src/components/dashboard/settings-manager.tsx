@@ -292,13 +292,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
               everything else lives at <code>/pages/&lt;slug&gt;</code>. Tick &ldquo;show in
               footer&rdquo; to list a page under Customer Care.
             </p>
-            <Button
-              onClick={() => {
-                pageForm.reset(EMPTY_PAGE);
-                setPageModal({ open: true, data: null });
-              }}
-            >
-              <Plus className="h-4 w-4" />{d.settings.newPageTitle}</Button>
           </div>
 
           <section className="border border-outline-variant bg-surface-lowest">
@@ -511,13 +504,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
                   label={d.settings.showInFooter}
                 />
               )}
-            />
-            <Input
-              label={d.settings.footerOrder}
-              type="number"
-              min="0"
-              containerClassName="w-32"
-              {...pageForm.register('position')}
             />
           </div>
         </form>

@@ -5,6 +5,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { SectionHeading } from '@/components/ui/primitives';
 import { ProductGrid } from '@/components/storefront/product-card';
 import { Reveal } from '@/components/ui/motion';
+import { cn } from '@/lib/utils';
 import { getBestSellers } from '@/lib/queries';
 import { getActiveBanners, getPaletteSwatches, getSettings, getCurrencySymbol } from '@/lib/settings';
 import { getI18n } from '@/i18n/server';
@@ -31,25 +32,36 @@ export default async function HomePage() {
     <>
       {/* ------------------------------------------------------------- hero */}
       {hero && (
-        // `svh` tracks the visible viewport on phones, so the hero does not
-        // jump when Safari's address bar collapses. `min-h` keeps it usable
-        // on a landscape phone where 80svh is only a few hundred pixels.
-        <section className="relative h-[78svh] min-h-[440px] w-full overflow-hidden md:h-[80vh] md:min-h-[540px]">
+        // The banner is as tall as the image is: it is shown whole, the same
+        // as every other photo in the shop. The copy sits over it, which is
+        // why the section is a positioning context and the image is in flow.
+        <section className="relative w-full overflow-hidden bg-surface-low">
           {hero.imageUrl && (
             <Image
               src={hero.imageUrl}
               alt={hero.heading || settings.storeName}
-              fill
+              width={0}
+              height={0}
               priority
               sizes="100vw"
               // A slow drift in gives the still image some life without
               // moving anything the reader is trying to read.
-              className="animate-fade-in object-cover"
+              className="block h-auto w-full animate-fade-in"
             />
           )}
-          <div className="absolute inset-0 bg-navy/15" />
+          {hero.imageUrl && <div className="absolute inset-0 bg-navy/15" />}
 
-          <div className="container-luwjje relative flex h-full items-center">
+          {/*
+            Over the image when there is one, in flow when there is not — a
+            banner with only text would otherwise be positioned over a section
+            with no height, and disappear.
+          */}
+          <div
+            className={cn(
+              'container-luwjje flex items-center',
+              hero.imageUrl ? 'absolute inset-0' : 'py-16 md:py-stack-lg',
+            )}
+          >
             <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/80 p-6 backdrop-blur-[20px] sm:p-8 md:p-12">
               {hero.eyebrow && (
                 <p className="label-caps mb-4 text-secondary md:mb-5">{hero.eyebrow}</p>
@@ -111,14 +123,15 @@ export default async function HomePage() {
       {offer && (
         <section className="container-luwjje pt-12 md:pt-stack-lg">
           <Reveal className="grid grid-cols-1 border border-outline-variant bg-surface-container md:grid-cols-2">
-            <div className="relative order-2 min-h-[240px] sm:min-h-[300px] md:order-1 md:min-h-[420px]">
+            <div className="order-2 bg-surface-low md:order-1">
               {offer.imageUrl && (
                 <Image
                   src={offer.imageUrl}
                   alt={offer.heading}
-                  fill
+                  width={0}
+                  height={0}
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
+                  className="block h-auto w-full"
                 />
               )}
             </div>

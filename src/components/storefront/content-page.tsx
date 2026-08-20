@@ -41,14 +41,15 @@ export async function ContentPage({ slug }: { slug: string }) {
   return (
     <article>
       {page.heroImage && (
-        <div className="relative h-[38svh] min-h-[220px] w-full overflow-hidden md:h-[46vh] md:min-h-[280px]">
+        <div className="w-full overflow-hidden bg-surface-low">
           <Image
             src={page.heroImage}
             alt={title}
-            fill
+            width={0}
+            height={0}
             priority
             sizes="100vw"
-            className="object-cover"
+            className="block h-auto w-full"
           />
         </div>
       )}
