@@ -194,31 +194,6 @@ export function StockManager({
 
   return (
     <>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="relative w-full sm:min-w-[220px] sm:flex-1">
-          <Search className="absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={d.stock.searchPlaceholder}
-            aria-label={d.stock.searchPlaceholder}
-            className="h-11 w-full border border-outline-variant bg-background ps-11 pe-4 text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none"
-          />
-        </div>
-        <Select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          aria-label={d.common.status}
-          className="h-11 w-full sm:w-auto sm:min-w-[180px]"
-        >
-          <option value="">{d.stock.allSkus}</option>
-          <option value="low">{d.stock.lowOrOut}</option>
-          <option value="out">{d.stock.outOnly}</option>
-          <option value="in">{d.stock.healthy}</option>
-        </Select>
-        <span className="pb-3 text-body-sm text-secondary">{fmt(d.stock.skusCount, { n: filtered.length })}</span>
-      </div>
-
       <section className="border border-outline-variant bg-surface-lowest">
         {filtered.length === 0 ? (
           <EmptyState

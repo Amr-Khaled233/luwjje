@@ -676,6 +676,30 @@ export async function reorderCategory(id: string, direction: 'up' | 'down'): Pro
   }) as Promise<ActionResult>;
 }
 
+export async function reorderPriceRange(
+  id: string,
+  direction: 'up' | 'down',
+): Promise<ActionResult> {
+  return guard(async () => {
+    const list = await prisma.priceRange.findMany({
+      orderBy: { position: 'asc' },
+      select: { id: true },
+    });
+    const index = list.findIndex((r) => r.id === id);
+    const swapWith = direction === 'up' ? index - 1 : index + 1;
+    if (index === -1 || swapWith < 0 || swapWith >= list.length) return { ok: true };
+
+    [list[index], list[swapWith]] = [list[swapWith], list[index]];
+    await prisma.$transaction(
+      list.map((r, i) => prisma.priceRange.update({ where: { id: r.id }, data: { position: i } })),
+    );
+
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
 // ================================================================ banners
 
 export async function saveBanner(input: unknown): Promise<ActionResult> {

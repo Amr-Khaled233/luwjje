@@ -191,14 +191,24 @@ export function OffersManager({
               {d.offers.heroHint}
             </p>
           </div>
-          <Button size="sm" onClick={() => openBanner(null, 'HERO')}>
-            <Plus className="h-3.5 w-3.5" />{d.offers.addHero}</Button>
+          {/*
+            The home page renders one hero. A second would be written, listed
+            here, and never shown — so it is refused rather than accepted and
+            silently ignored.
+          */}
+          <Button
+            size="sm"
+            onClick={() => openBanner(null, 'HERO')}
+            disabled={heroBanners.length > 0}
+            title={heroBanners.length > 0 ? d.offers.heroExists : undefined}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {d.offers.addHero}
+          </Button>
         </header>
         <div className="p-6">
           {heroBanners.length === 0 ? (
-            <p className="text-body-sm text-secondary">
-              {d.offers.noHero}
-            </p>
+            <p className="text-body-sm text-secondary">{d.offers.noHero}</p>
           ) : (
             <ul className="flex flex-col gap-4">{heroBanners.map(bannerCard)}</ul>
           )}
@@ -216,8 +226,15 @@ export function OffersManager({
               {d.offers.offerHint}
             </p>
           </div>
-          <Button size="sm" onClick={() => openBanner(null, 'OFFER')}>
-            <Plus className="h-3.5 w-3.5" />{d.offers.addBlock}</Button>
+          <Button
+            size="sm"
+            onClick={() => openBanner(null, 'OFFER')}
+            disabled={offerBanners.length > 0}
+            title={offerBanners.length > 0 ? d.offers.blockExists : undefined}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {d.offers.addBlock}
+          </Button>
         </header>
         <div className="p-6">
           {offerBanners.length === 0 ? (
@@ -414,10 +431,6 @@ export function OffersManager({
       >
         <form className="flex flex-col gap-6" noValidate>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Select label={d.offers.slot} {...bannerForm.register('slot')}>
-              <option value="HERO">{d.offers.slotHero}</option>
-              <option value="OFFER">{d.offers.slotOffer}</option>
-            </Select>
             <Controller
               control={bannerForm.control}
               name="eyebrow"

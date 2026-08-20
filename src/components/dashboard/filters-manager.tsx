@@ -32,6 +32,7 @@ import {
   saveFilterVisibility,
   toggleCategoryVisible,
   reorderCategory,
+  reorderPriceRange,
 } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
@@ -309,12 +310,18 @@ export function FiltersManager({
                     <Th>{d.filters.from}</Th>
                     <Th>{d.filters.to}</Th>
                     <Th>{d.common.visible}</Th>
-                    <Th className="text-end">{d.common.actions}</Th>
+                    <Th>{d.common.actions}</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {priceRanges.map((r) => (
-                    <tr key={r.id} className={cn('transition-colors hover:bg-surface-low', !r.visible && 'opacity-60')}>
+                  {priceRanges.map((r, i) => (
+                    <tr
+                      key={r.id}
+                      className={cn(
+                        'transition-colors hover:bg-surface-low',
+                        !r.visible && 'row-off',
+                      )}
+                    >
                       <Td>
                         <span className="text-label-md">{r.label}</span>
                       </Td>
@@ -335,7 +342,24 @@ export function FiltersManager({
                         )}
                       </Td>
                       <Td>
-                        <div className="flex justify-end gap-2">
+                        <div className="flex gap-2">
+                          {/* The buckets appear in the dropdown in this order. */}
+                          <button
+                            onClick={() => run(() => reorderPriceRange(r.id, 'up'), d.common.saved)}
+                            disabled={pending || i === 0}
+                            aria-label={`${d.products.moveUp} ${r.label}`}
+                            className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => run(() => reorderPriceRange(r.id, 'down'), d.common.saved)}
+                            disabled={pending || i === priceRanges.length - 1}
+                            aria-label={`${d.products.moveDown} ${r.label}`}
+                            className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-30"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
                           <button
                             onClick={() => {
                               rangeForm.reset(r);

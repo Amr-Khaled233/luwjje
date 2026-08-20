@@ -1,4 +1,3 @@
-import { StatCard } from '@/components/dashboard/admin-ui';
 import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 import { fmt } from '@/i18n/dictionaries';
@@ -49,13 +48,6 @@ export default async function AdminStockPage({
   return (
     <div className="flex flex-col gap-8">
       <PageTitle section="stock" />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label={d.stock.totalSkus} value={String(rows.length)} />
-        <StatCard label={d.stock.unitsOnHand} value={units.toLocaleString()} />
-        <StatCard label={d.stock.lowStock} value={String(low)} hint={d.stock.lowStockHint} />
-        <StatCard label={d.stock.outOfStock} value={String(outOfStock)} />
-      </div>
 
       <StockManager rows={rows} initialFilter={searchParams.filter ?? ''} />
     </div>
