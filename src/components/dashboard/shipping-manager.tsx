@@ -138,17 +138,6 @@ export function ShippingManager({
             className="h-11 w-full border border-outline-variant bg-background text-body-md transition-colors placeholder:text-tertiary focus:border-navy focus:outline-none ltr:pl-11 ltr:pr-4 rtl:pl-4 rtl:pr-11"
           />
         </div>
-        <Select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          aria-label={d.common.status}
-          className="h-11 w-full sm:w-auto sm:min-w-[160px]"
-        >
-          <option value="">{d.common.all}</option>
-          <option value="active">{d.shipping.delivering}</option>
-          <option value="inactive">{d.shipping.switchedOff}</option>
-        </Select>
-
         <div className="flex items-center gap-3 ltr:ml-auto rtl:mr-auto">
           {saving === 'saved' && <Check className="h-4 w-4 text-navy" />}
           <Button variant="secondary" onClick={() => { form.reset(EMPTY); setModal({ open: true, data: null }); }}>
@@ -176,12 +165,12 @@ export function ShippingManager({
           <TableWrap>
             <thead>
               <tr>
+                <Th>{d.common.actions}</Th>
                 <Th>{d.shipping.governorate}</Th>
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.shipping.deliveryPrice} ({currencySymbol})</Th>
                 <Th>{d.shipping.days}</Th>
                 <Th>{d.shipping.delivering}</Th>
-                <Th className="text-end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
@@ -194,6 +183,27 @@ export function ShippingManager({
                     key={g.id}
                     className={cn('transition-colors hover:bg-surface-low', changed && 'bg-surface-low')}
                   >
+                    <Td>
+                      <div className="flex justify-start gap-2">
+                        <button
+                          onClick={() => {
+                            form.reset(g);
+                            setModal({ open: true, data: g });
+                          }}
+                          aria-label={`${d.common.edit} ${g.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setConfirm(g.id)}
+                          aria-label={`${d.common.delete} ${g.name}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </Td>
                     <Td>
                       <span className="text-label-md">{g.name}</span>
                     </Td>
@@ -222,27 +232,6 @@ export function ShippingManager({
                         }
                         aria-label={`${d.shipping.deliveringLabel} — ${g.name}`}
                       />
-                    </Td>
-                    <Td>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            form.reset(g);
-                            setModal({ open: true, data: g });
-                          }}
-                          aria-label={`${d.common.edit} ${g.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setConfirm(g.id)}
-                          aria-label={`${d.common.delete} ${g.name}`}
-                          className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
                     </Td>
                   </tr>
                 );

@@ -70,29 +70,70 @@ console.log('\n▸ Checkbox renders a tick');
 check('a check icon sits next to each box', /peer-checked:opacity-100/.test(shipping));
 check('no broken background-image class', !/checked:bg-\[url/.test(shipping));
 
-console.log('\n▸ Excel export');
-const xlsx = await fetch(`${BASE}/api/dashboard/report?days=30`, { headers: EN });
-const type = xlsx.headers.get('content-type') ?? '';
-const disp = xlsx.headers.get('content-disposition') ?? '';
-check('returns 200', xlsx.status === 200, xlsx.status);
-check('is a spreadsheet MIME type', type.includes('spreadsheetml.sheet'), type);
-check('filename ends in .xlsx', disp.includes('.xlsx'), disp);
-
-const buf = Buffer.from(await xlsx.arrayBuffer());
-// A .xlsx is a zip: it must start with the PK signature.
-check('body is a real zip/xlsx container', buf[0] === 0x50 && buf[1] === 0x4b, buf.subarray(0, 4));
-check('file is non-trivial', buf.byteLength > 2000, `${buf.byteLength} bytes`);
-
+console.log('\n▸ Excel exports');
 const { default: ExcelJS } = await import('exceljs');
-const wb = new ExcelJS.Workbook();
-await wb.xlsx.load(buf);
-check('has an Orders sheet', Boolean(wb.getWorksheet('Orders')));
-check('has a Product sales sheet', Boolean(wb.getWorksheet('Product sales')));
+
+/** Fetches a workbook and opens it, so the checks read the real file. */
+async function workbook(query) {
+  const res = await fetch(`${BASE}/api/dashboard/report?${query}`, { headers: EN });
+  const buf = Buffer.from(await res.arrayBuffer());
+  const wb = new ExcelJS.Workbook();
+  if (buf[0] === 0x50 && buf[1] === 0x4b) await wb.xlsx.load(buf);
+  return {
+    status: res.status,
+    type: res.headers.get('content-type') ?? '',
+    disposition: res.headers.get('content-disposition') ?? '',
+    bytes: buf.byteLength,
+    isZip: buf[0] === 0x50 && buf[1] === 0x4b,
+    sheets: wb.worksheets.map((s) => s.name),
+    wb,
+  };
+}
+
+// ------------------------------------------------------ the analytics file
+const summary = await workbook('report=summary&days=30');
+check('analytics export returns 200', summary.status === 200, summary.status);
+check('is a spreadsheet MIME type', summary.type.includes('spreadsheetml.sheet'), summary.type);
+check('filename ends in .xlsx', summary.disposition.includes('.xlsx'), summary.disposition);
+check('body is a real zip/xlsx container', summary.isZip);
+check('file is non-trivial', summary.bytes > 2000, `${summary.bytes} bytes`);
+check('has a Summary sheet', summary.sheets.includes('Summary'), summary.sheets.join(', '));
+check('has a day-by-day sheet', summary.sheets.includes('By day'));
+check('has a Products sheet', summary.sheets.includes('Products'));
+check('has a Governorates sheet', summary.sheets.includes('Governorates'));
+check(
+  'the day sheet covers every day of the period',
+  summary.wb.getWorksheet('By day').rowCount === 31,
+  summary.wb.getWorksheet('By day').rowCount,
+);
+
+// --------------------------------------------------------- the orders file
+const orderBook = await workbook('report=orders&days=30');
+check('orders export returns 200', orderBook.status === 200, orderBook.status);
+check('has an Orders sheet', orderBook.sheets.includes('Orders'), orderBook.sheets.join(', '));
+check('and only that sheet', orderBook.sheets.length === 1, orderBook.sheets.join(', '));
 check(
   'Orders sheet has the expected header',
-  wb.getWorksheet('Orders')?.getRow(1).getCell(1).value === 'Order',
-  wb.getWorksheet('Orders')?.getRow(1).getCell(1).value,
+  orderBook.wb.getWorksheet('Orders')?.getRow(1).getCell(1).value === 'Order',
+  orderBook.wb.getWorksheet('Orders')?.getRow(1).getCell(1).value,
 );
+
+// ------------------------------------------------------- a period of choice
+const custom = await workbook('report=orders&from=2026-01-05&to=2026-01-19');
+check(
+  'a custom period names itself in the filename',
+  custom.disposition.includes('2026-01-05-to-2026-01-19'),
+  custom.disposition,
+);
+const backwards = await workbook('report=orders&from=2026-01-19&to=2026-01-05');
+check(
+  'a backwards period is corrected rather than returning nothing',
+  backwards.disposition.includes('2026-01-05-to-2026-01-19'),
+  backwards.disposition,
+);
+const nonsense = await workbook('report=orders&from=not-a-date&to=nope');
+check('an unparseable period falls back to the default', nonsense.status === 200, nonsense.status);
+
 check('report rejects without a session', (await fetch(`${BASE}/api/dashboard/report`)).status === 401);
 
 console.log(`\n${fail === 0 ? '✓' : '✗'} ${pass} passed, ${fail} failed\n`);

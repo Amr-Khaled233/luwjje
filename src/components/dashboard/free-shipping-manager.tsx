@@ -155,21 +155,14 @@ export function FreeShippingManager({
           <TableWrap>
             <thead>
               <tr>
+                <Th>{d.common.actions}</Th>
                 <Th>{d.common.name}</Th>
                 <Th>{d.freeShipping.appliesWhen}</Th>
-                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
               {rules.map((rule) => (
                 <tr key={rule.id} className={rule.active ? undefined : 'row-off'}>
-                  <Td>
-                    <span className="flex items-center gap-2">
-                      <Truck className="h-4 w-4 shrink-0 text-secondary" />
-                      {rule.name || d.freeShipping.untitled}
-                    </span>
-                  </Td>
-                  <Td className="text-secondary">{describe(rule)}</Td>
                   <Td>
                     <span className="flex gap-1">
                       {/* On or off, as a switch rather than a word in a column. */}
@@ -208,6 +201,13 @@ export function FreeShippingManager({
                       </button>
                     </span>
                   </Td>
+                  <Td>
+                    <span className="flex items-center gap-2">
+                      <Truck className="h-4 w-4 shrink-0 text-secondary" />
+                      {rule.name || d.freeShipping.untitled}
+                    </span>
+                  </Td>
+                  <Td className="text-secondary">{describe(rule)}</Td>
                 </tr>
               ))}
             </tbody>

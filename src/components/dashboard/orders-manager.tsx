@@ -130,18 +130,29 @@ export function OrdersManager({
           <TableWrap>
             <thead>
               <tr>
+                <Th>{d.common.actions}</Th>
                 <Th>{d.orders.order}</Th>
                 <Th>{d.orders.customer}</Th>
                 <Th>{d.common.date}</Th>
                 <Th>{d.orders.items}</Th>
                 <Th>{d.common.total}</Th>
                 <Th>{d.common.status}</Th>
-                <Th align="end">{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((o) => (
                 <tr key={o.id} className="transition-colors hover:bg-surface-low">
+                  <Td>
+                    <div className="flex justify-start">
+                      <button
+                        onClick={() => setOpen(o)}
+                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </Td>
                   <Td>
                     <span className="font-display text-body-lg">{o.orderNumber}</span>
                   </Td>
@@ -172,17 +183,6 @@ export function OrdersManager({
                       {pendingId === o.id && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-secondary" />
                       )}
-                    </div>
-                  </Td>
-                  <Td>
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => setOpen(o)}
-                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
                     </div>
                   </Td>
                 </tr>

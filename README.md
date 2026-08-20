@@ -86,7 +86,7 @@ It has a six-second ceiling and swallows its own errors, logging rather than sur
 npm run smoke        # 33 checks: pricing, promos, shipping, the order transaction, oversell
 npm run gate         # 50 checks: password gate, session signing, order privacy, route access
 npm run features     # 35 checks: Arabic/RTL, EGP, governorates, filter controls
-npm run dash         # 34 checks: Arabic dashboard, grid tables, Excel export
+npm run dash         # 43 checks: Arabic dashboard, grid tables, both Excel exports
 npm run orders       # 59 checks: the order lifecycle and free-delivery rules
 npm run security     # 44 checks: headers, forged sessions, tampering, injection, uploads
 npm run i18n         # 101 checks: placeholder substitution, dictionary coverage, every page in both languages
@@ -95,7 +95,7 @@ npm run reset        # 61 checks: the emailed reset flow, and the order confirma
 npm run deadcode     # 7 checks: unused exports, dictionary keys, deps, files, columns
 ```
 
-492 checks in total. `features`, `security` and `i18n` need a running server
+501 checks in total. `features`, `security` and `i18n` need a running server
 (`npm run build && npm start`); `orders` and `smoke` talk to the database directly.
 All of them briefly create and then remove their own rows — point them at a dev
 database, not production.

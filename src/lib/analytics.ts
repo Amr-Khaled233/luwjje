@@ -1,4 +1,11 @@
-import { subDays, startOfDay, format, eachDayOfInterval } from 'date-fns';
+import {
+  subDays,
+  startOfDay,
+  endOfDay,
+  differenceInCalendarDays,
+  format,
+  eachDayOfInterval,
+} from 'date-fns';
 import { prisma } from './prisma';
 import { getSettings } from './settings';
 import { percentChange } from './utils';
@@ -6,20 +13,46 @@ import { percentChange } from './utils';
 /** Orders that count as revenue — cancelled ones never do. */
 const REVENUE_STATUSES = ['PAID', 'SHIPPED', 'DELIVERED'];
 
-export async function getOverviewStats(days = 30) {
+/**
+ * The window every figure on the Analytics page is computed over.
+ *
+ * Passed around rather than a day count because the page offers a period of
+ * your own choosing: "1 to 15 March" cannot be expressed as "N days back from
+ * today", which is what a count assumes.
+ */
+export interface Period {
+  start: Date;
+  end: Date;
+}
+
+/** The last `days` days, ending today. */
+export function periodFromDays(days = 30): Period {
   const now = new Date();
-  const periodStart = startOfDay(subDays(now, days - 1));
-  const priorStart = startOfDay(subDays(periodStart, days));
+  return { start: startOfDay(subDays(now, days - 1)), end: endOfDay(now) };
+}
+
+/** The equally long window immediately before, for the change figures. */
+function priorPeriod({ start, end }: Period): Period {
+  const length = differenceInCalendarDays(end, start) + 1;
+  return { start: startOfDay(subDays(start, length)), end: endOfDay(subDays(start, 1)) };
+}
+
+export async function getOverviewStats(period: Period = periodFromDays()) {
+  const { start: periodStart, end: periodEnd } = period;
+  const { start: priorStart, end: priorEnd } = priorPeriod(period);
 
   const [current, prior, activeOrders, variants, currentViews, priorViews, settings] =
     await Promise.all([
       prisma.order.findMany({
-        where: { createdAt: { gte: periodStart }, status: { in: REVENUE_STATUSES } },
+        where: {
+          createdAt: { gte: periodStart, lte: periodEnd },
+          status: { in: REVENUE_STATUSES },
+        },
         select: { total: true, createdAt: true },
       }),
       prisma.order.findMany({
         where: {
-          createdAt: { gte: priorStart, lt: periodStart },
+          createdAt: { gte: priorStart, lte: priorEnd },
           status: { in: REVENUE_STATUSES },
         },
         select: { total: true },
@@ -28,12 +61,12 @@ export async function getOverviewStats(days = 30) {
       prisma.productVariant.findMany({ select: { stock: true, lowStockAt: true } }),
       prisma.pageView.groupBy({
         by: ['sessionId'],
-        where: { createdAt: { gte: periodStart } },
+        where: { createdAt: { gte: periodStart, lte: periodEnd } },
         _count: true,
       }),
       prisma.pageView.groupBy({
         by: ['sessionId'],
-        where: { createdAt: { gte: priorStart, lt: periodStart } },
+        where: { createdAt: { gte: priorStart, lte: priorEnd } },
         _count: true,
       }),
       getSettings(),
@@ -67,11 +100,11 @@ export async function getOverviewStats(days = 30) {
 }
 
 /** Daily revenue + order count series, gap-filled so the chart has no holes. */
-export async function getRevenueSeries(days = 30) {
-  const start = startOfDay(subDays(new Date(), days - 1));
+export async function getRevenueSeries(period: Period = periodFromDays()) {
+  const { start, end } = period;
 
   const orders = await prisma.order.findMany({
-    where: { createdAt: { gte: start }, status: { in: REVENUE_STATUSES } },
+    where: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
     select: { total: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
@@ -91,7 +124,7 @@ export async function getRevenueSeries(days = 30) {
 
   return Array.from(buckets.entries()).map(([date, v]) => ({
     date,
-    label: format(new Date(date), days > 45 ? 'd MMM' : 'd MMM'),
+    label: format(new Date(date), 'd MMM'),
     revenue: Math.round(v.revenue * 100) / 100,
     orders: v.orders,
   }));
@@ -128,12 +161,14 @@ export async function getLowStockVariants(limit = 6) {
     }));
 }
 
-export async function getTopPerformers(days = 30, limit = 3) {
-  const start = startOfDay(subDays(new Date(), days - 1));
+export async function getTopPerformers(period: Period = periodFromDays(), limit = 3) {
+  const { start, end } = period;
 
   const grouped = await prisma.orderItem.groupBy({
     by: ['productId'],
-    where: { order: { createdAt: { gte: start }, status: { in: REVENUE_STATUSES } } },
+    where: {
+      order: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
+    },
     _sum: { quantity: true },
     orderBy: { _sum: { quantity: 'desc' } },
     take: limit,
@@ -168,11 +203,13 @@ export async function getTopPerformers(days = 30, limit = 3) {
   });
 }
 
-export async function getCategoryPerformance(days = 90) {
-  const start = startOfDay(subDays(new Date(), days - 1));
+export async function getCategoryPerformance(period: Period = periodFromDays(90)) {
+  const { start, end } = period;
 
   const items = await prisma.orderItem.findMany({
-    where: { order: { createdAt: { gte: start }, status: { in: REVENUE_STATUSES } } },
+    where: {
+      order: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
+    },
     select: {
       quantity: true,
       unitPrice: true,

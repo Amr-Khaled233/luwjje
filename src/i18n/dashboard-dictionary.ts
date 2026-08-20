@@ -140,7 +140,10 @@ const en = {
     hint: 'The first image is the one on the product card; the second is revealed when the cursor is over it. Every photo is shown exactly as you upload it — nothing is cropped, and there is nothing to set.',
   },
   ranges: { d7: 'Last 7 Days', d30: 'Last 30 Days', d90: 'Last 90 Days' },
-  report: { download: 'Download Report' },
+  report: {
+    downloadAnalytics: 'Analytics (Excel)',
+    downloadOrders: 'Orders (Excel)',
+  },
   orders: {
     title: 'Orders',
     description:
@@ -274,7 +277,6 @@ const en = {
     savePrices: 'Save prices',
     searchPlaceholder: 'Search governorates…',
     delivering: 'Delivering',
-    switchedOff: 'Switched off',
     governorate: 'Governorate',
     deliveryPrice: 'Delivery price',
     days: 'Days',
@@ -454,6 +456,9 @@ const en = {
     dateCol: 'Date',
     ordersCol: 'Orders',
     nameCol: 'Name',
+    from: 'From',
+    to: 'To',
+    apply: 'Apply',
   },
   settings: {
     title: 'Settings',
@@ -640,7 +645,10 @@ const ar: DashboardDictionary = {
     hint: 'أول صورة هي صورة كارت المنتج، والثانية تظهر عند مرور المؤشر. كل صورة بتظهر بالظبط زي ما رفعتها — مفيش قص ومفيش حاجة تظبطها.',
   },
   ranges: { d7: 'آخر ٧ أيام', d30: 'آخر ٣٠ يوم', d90: 'آخر ٩٠ يوم' },
-  report: { download: 'تحميل التقرير' },
+  report: {
+    downloadAnalytics: 'الإحصائيات (إكسيل)',
+    downloadOrders: 'الطلبات (إكسيل)',
+  },
   orders: {
     title: 'الطلبات',
     description:
@@ -772,7 +780,6 @@ const ar: DashboardDictionary = {
     savePrices: 'حفظ الأسعار',
     searchPlaceholder: 'ابحث في المحافظات…',
     delivering: 'يتم التوصيل',
-    switchedOff: 'موقوف',
     governorate: 'المحافظة',
     deliveryPrice: 'سعر التوصيل',
     days: 'الأيام',
@@ -948,6 +955,9 @@ const ar: DashboardDictionary = {
     dateCol: 'التاريخ',
     ordersCol: 'الطلبات',
     nameCol: 'الاسم',
+    from: 'من',
+    to: 'إلى',
+    apply: 'تطبيق',
   },
   settings: {
     title: 'الإعدادات',

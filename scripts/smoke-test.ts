@@ -17,7 +17,12 @@ import {
   getFreeShipping,
 } from '../src/lib/commerce';
 import { createOrder } from '../src/lib/orders';
-import { getOverviewStats, getRevenueSeries, getLowStockVariants } from '../src/lib/analytics';
+import {
+  getOverviewStats,
+  getRevenueSeries,
+  getLowStockVariants,
+  periodFromDays,
+} from '../src/lib/analytics';
 
 let passed = 0;
 let failed = 0;
@@ -179,12 +184,12 @@ async function main() {
   check('failed order left stock untouched', stockUnchanged.stock === afterVariant.stock, stockUnchanged.stock);
 
   console.log('\n▸ Dashboard analytics');
-  const stats = await getOverviewStats(30);
+  const stats = await getOverviewStats(periodFromDays(30));
   check('sales figure computed', stats.sales > 0, stats.sales);
   check('conversion rate computed', stats.conversion > 0, stats.conversion);
   check('inventory level is a percentage', stats.inventoryLevel >= 0 && stats.inventoryLevel <= 100, stats.inventoryLevel);
 
-  const series = await getRevenueSeries(30);
+  const series = await getRevenueSeries(periodFromDays(30));
   check('revenue series is gap-filled to 30 points', series.length === 30, series.length);
 
   const lowStock = await getLowStockVariants(5);
