@@ -91,6 +91,11 @@ export default async function OrderConfirmationPage({
               </p>
             </div>
             <div>
+              {/*
+                Nothing has been charged — the courier collects. So an order
+                waiting to be delivered reads "Cash on delivery" rather than
+                "Paid", which would tell the shopper they had already paid.
+              */}
               <p className="label-caps mb-2 text-secondary">{t.order.status}</p>
               <span className="label-caps inline-flex items-center border border-navy px-2.5 py-1">
                 {t.order.statuses[order.status] ?? order.status}
@@ -166,7 +171,12 @@ export default async function OrderConfirmationPage({
             </dl>
           </div>
 
-          <div className="border-t border-outline-variant p-6">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-outline-variant px-6 pt-6">
+            <p className="label-caps text-secondary">{t.order.payment}</p>
+            <p className="text-body-md">{t.order.cashOnDelivery}</p>
+          </div>
+
+          <div className="p-6">
             <p className="label-caps mb-3 text-secondary">{t.order.deliverTo}</p>
             <address className="not-italic text-body-md leading-7 text-secondary">
               {order.fullName}

@@ -21,7 +21,7 @@ import { fmt } from '@/i18n/dictionaries';
 import { productFormSchema, type ProductFormInput } from '@/lib/validations';
 import { FormProblems, type FormProblem } from '@/components/dashboard/form-problems';
 import { saveProduct } from '@/app/actions/dashboard';
-import { slugify } from '@/lib/utils';
+import { slugify, DESCRIPTION_WORD_LIMIT } from '@/lib/utils';
 import type { AdminCategory } from './products-manager';
 
 export interface EditableProduct {
@@ -387,6 +387,7 @@ export function ProductEditor({
                   <BilingualField
                     label={d.common.description}
                     rows={5}
+                    maxWords={DESCRIPTION_WORD_LIMIT}
                     className="md:col-span-2"
                     english={{ value: en.value, onChange: en.onChange }}
                     arabic={{ value: ar.value, onChange: ar.onChange }}

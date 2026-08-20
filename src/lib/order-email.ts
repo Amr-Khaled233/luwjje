@@ -37,6 +37,8 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
       free: 'مجاني',
       discount: 'الخصم',
       total: 'الإجمالي',
+      payment: 'طريقة الدفع',
+      cashOnDelivery: 'الدفع عند الاستلام — تدفع للمندوب نقداً عند وصول طلبك',
       deliverTo: 'التوصيل إلى',
       notes: 'ملاحظات التوصيل',
       track: 'تتبّع طلبك',
@@ -60,6 +62,8 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
     free: 'Free',
     discount: 'Discount',
     total: 'Total',
+    payment: 'Payment',
+    cashOnDelivery: 'Cash on delivery — pay the courier in cash when your order arrives',
     deliverTo: 'Delivering to',
     notes: 'Delivery notes',
     track: 'Track your order',
@@ -146,6 +150,8 @@ export async function buildOrderEmail(
       `${t.shipping}: ${order.shippingCost === 0 ? t.free : money(order.shippingCost)}`,
       order.discount > 0 ? `${t.discount}: −${money(order.discount)}` : null,
       `${t.total}: ${money(order.total)}`,
+      '',
+      `${t.payment}: ${t.cashOnDelivery}`,
       '',
       `${t.deliverTo}: ${order.fullName}, ${address}`,
       order.notes ? `${t.notes}: ${order.notes}` : null,
@@ -243,6 +249,10 @@ export async function buildOrderEmail(
                       ${order.phone ? `<br><span dir="ltr">${escapeHtml(order.phone)}</span>` : ''}
                     </div>
                     ${order.notes ? `<div style="margin-top:14px;font-size:13px;line-height:1.6;color:#747879">${escapeHtml(t.notes)}: ${escapeHtml(order.notes)}</div>` : ''}
+                    <div style="margin-top:18px;padding-top:18px;border-top:1px solid #e5eeff">
+                      <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#747879;margin-bottom:6px">${escapeHtml(t.payment)}</div>
+                      <div style="font-size:15px;line-height:1.7;color:#0b1c30">${escapeHtml(t.cashOnDelivery)}</div>
+                    </div>
                   </td>
                 </tr>
               </table>

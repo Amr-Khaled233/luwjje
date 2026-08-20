@@ -37,26 +37,26 @@ model Category {
 }
 
 model Product {
-  id             String  @id @default(cuid())
-  name           String
-  nameAr         String  @default("")
-  slug           String  @unique
-  description    String  @default("")
-  descriptionAr  String  @default("")
-  price          Float
-  compareAtPrice Float?
-  sku            String? @unique
-  categoryId     String?
-  status         String  @default("PUBLISHED") // DRAFT | PUBLISHED
-  isBestSeller   Boolean @default(false)
-  bestSellerOrder Int    @default(0)
-  hasSizes       Boolean @default(false)
-  soldCount      Int     @default(0)
-  viewCount      Int     @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  nameAr          String   @default("")
+  slug            String   @unique
+  description     String   @default("")
+  descriptionAr   String   @default("")
+  price           Float
+  compareAtPrice  Float?
+  sku             String?  @unique
+  categoryId      String?
+  status          String   @default("PUBLISHED") // DRAFT | PUBLISHED
+  isBestSeller    Boolean  @default(false)
+  bestSellerOrder Int      @default(0)
+  hasSizes        Boolean  @default(false)
+  soldCount       Int      @default(0)
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  category   Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   images     ProductImage[]
   variants   ProductVariant[]
   orderItems OrderItem[]
@@ -76,7 +76,6 @@ model ProductImage {
   isPrimary Boolean @default(false)
   /// Second image, revealed on card hover.
   isHover   Boolean @default(false)
-
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -129,9 +128,7 @@ model Order {
   /// Governorate name at time of order, kept even if the row is later renamed.
   governorate   String
   governorateId String?
-  status        String   @default("PENDING") // PENDING | PAID | SHIPPED | DELIVERED | CANCELLED
-  paymentStatus String   @default("UNPAID")  // UNPAID | PAID | REFUNDED
-  paymentRef    String?
+  status        String   @default("PENDING") // PENDING | SHIPPED | DELIVERED | CANCELLED
   subtotal      Float
   shippingCost  Float    @default(0)
   discount      Float    @default(0)
@@ -275,9 +272,9 @@ model SiteSettings {
   supportPhone String @default("")
 
   /// Language shown to a first-time visitor: "en" or "ar".
-  defaultLocale  String  @default("en")
+  defaultLocale String  @default("en")
   /// Turn the language switcher off to run the store in one language.
-  enableArabic   Boolean @default(true)
+  enableArabic  Boolean @default(true)
 
   currencyCode     String @default("EGP")
   currencySymbol   String @default("EGP")
@@ -302,8 +299,7 @@ model SiteSettings {
   metaDescriptionAr String @default("")
   ogImageUrl        String @default("")
 
-
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 /// Hero / promo banners. `slot` selects where it renders.

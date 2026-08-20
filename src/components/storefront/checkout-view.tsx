@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Loader2, CreditCard, Package } from 'lucide-react';
+import { Check, Loader2, Package } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, Select, Textarea } from '@/components/ui/field';
 import { Divider, EmptyState } from '@/components/ui/primitives';
@@ -25,13 +25,11 @@ export function CheckoutView({
   currencySymbol,
   locale,
   t,
-  stripeEnabled,
 }: {
   governorates: GovernorateOption[];
   currencySymbol: string;
   locale: Locale;
   t: Dictionary;
-  stripeEnabled: boolean;
 }) {
   const router = useRouter();
   const { items, clear, hydrated } = useCart();
@@ -42,7 +40,6 @@ export function CheckoutView({
   const [promoCode, setPromoCode] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = React.useState<'card' | 'cod'>('cod');
 
   const form = useForm<ShippingInput>({
     resolver: zodResolver(shippingSchema),
@@ -88,7 +85,6 @@ export function CheckoutView({
       shipping: form.getValues(),
       items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
       promoCode,
-      paymentMethod,
     });
 
     if (!result.ok) {
@@ -318,62 +314,13 @@ export function CheckoutView({
             <section className="animate-fade-in">
               <h2 className="font-display text-title-md sm:text-headline-sm">{t.checkout.paymentTitle}</h2>
 
-              {!stripeEnabled && (
-                <div className="mt-6 border border-outline-variant bg-surface-low p-4">
-                  <p className="text-body-sm text-secondary">{t.checkout.testMode}</p>
-                </div>
-              )}
-
-              <div className="mt-6 flex flex-col gap-3">
-                {(
-                  [
-                    { id: 'cod', label: t.checkout.cod, hint: t.checkout.codHint, icon: Package },
-                    { id: 'card', label: t.checkout.card, hint: t.checkout.cardHint, icon: CreditCard },
-                  ] as const
-                ).map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setPaymentMethod(option.id)}
-                    className={cn(
-                      'flex items-center gap-3 border p-4 text-start transition-colors duration-200 ease-scandi sm:gap-4 sm:p-5',
-                      paymentMethod === option.id
-                        ? 'border-navy bg-surface-lowest'
-                        : 'border-outline-variant hover:border-outline',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors',
-                        paymentMethod === option.id ? 'border-navy' : 'border-outline-variant',
-                      )}
-                    >
-                      {paymentMethod === option.id && (
-                        <span className="h-2 w-2 animate-scale-in rounded-full bg-navy" />
-                      )}
-                    </span>
-                    <option.icon className="h-5 w-5 shrink-0 text-secondary" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-label-md">{option.label}</span>
-                      <span className="block text-body-sm text-secondary">{option.hint}</span>
-                    </span>
-                  </button>
-                ))}
+              <div className="mt-6 flex items-center gap-3 border border-navy bg-surface-lowest p-4 sm:gap-4 sm:p-5">
+                <Package className="h-5 w-5 shrink-0 text-secondary" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-label-md">{t.checkout.cod}</span>
+                  <span className="block text-body-sm text-secondary">{t.checkout.codHint}</span>
+                </span>
               </div>
-
-              {paymentMethod === 'card' && (
-                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <Input
-                    label={t.checkout.cardNumber}
-                    placeholder="4242 4242 4242 4242"
-                    containerClassName="md:col-span-2"
-                    dir="ltr"
-                    disabled={!stripeEnabled}
-                    hint={stripeEnabled ? undefined : t.checkout.disabledInTest}
-                  />
-                  <Input label={t.checkout.expiry} placeholder="12 / 29" dir="ltr" disabled={!stripeEnabled} />
-                  <Input label={t.checkout.cvc} placeholder="123" dir="ltr" disabled={!stripeEnabled} />
-                </div>
-              )}
 
               {serverError && (
                 <div className="mt-6 border border-error p-4 text-body-sm text-error">

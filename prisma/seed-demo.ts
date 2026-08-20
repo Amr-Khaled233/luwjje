@@ -376,7 +376,7 @@ async function main() {
   if (governorates.length === 0) throw new Error('No governorates — run `npm run db:seed` first.');
 
   const statusFor = (daysAgo: number) =>
-    daysAgo < 3 ? 'PENDING' : daysAgo < 7 ? 'PAID' : daysAgo < 14 ? 'SHIPPED' : 'DELIVERED';
+    daysAgo < 7 ? 'PENDING' : daysAgo < 14 ? 'SHIPPED' : 'DELIVERED';
 
   let orderCount = 0;
   for (let daysAgo = 90; daysAgo >= 0; daysAgo--) {
@@ -417,7 +417,6 @@ async function main() {
           governorate: gov.name,
           governorateId: gov.id,
           status,
-          paymentStatus: status === 'CANCELLED' ? 'REFUNDED' : status === 'PENDING' ? 'UNPAID' : 'PAID',
           subtotal,
           shippingCost,
           discount,

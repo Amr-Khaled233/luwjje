@@ -355,10 +355,9 @@ Nothing to run it locally. For production:
    for you. Migrations in `prisma/migrations` are applied by the build.
 4. **Serve it over HTTPS.** Session cookies are marked `secure` in production; over plain HTTP
    the browser will drop them and the dashboard will not stay logged in.
-5. **Stripe (optional).** Checkout records a mock payment and marks the order paid. Set
-   `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to switch the card form on; the
-   payment step in `src/components/storefront/checkout-view.tsx` and the `paymentStatus` write
-   in `src/lib/orders.ts` are where the PaymentIntent goes.
+5. **Payment.** Cash on delivery is the only method the shop offers, so no payment provider is
+   configured and no card details are ever collected. The order is recorded and the courier
+   collects; `src/components/storefront/checkout-view.tsx` is the step that says so.
 6. **Image storage.** With `BLOB_READ_WRITE_TOKEN` set, uploads go to Vercel Blob; without it
    they are written to `public/uploads` on local disk. Both paths live in
    `src/app/api/dashboard/upload/route.ts`.

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Input, Textarea, FieldLabel, FieldError, FieldHint } from '@/components/ui/field';
-import { cn } from '@/lib/utils';
+import { cn, countWords } from '@/lib/utils';
 
 /**
  * An English/Arabic pair behind one label. Only one side is on screen at a
@@ -20,6 +20,7 @@ export function BilingualField({
   arabic,
   errorEn,
   errorAr,
+  maxWords,
   className,
 }: {
   label: string;
@@ -33,11 +34,15 @@ export function BilingualField({
   arabic: { value: string; onChange: (v: string) => void };
   errorEn?: string;
   errorAr?: string;
+  /** Shows a running word count, and says so when the text is over. */
+  maxWords?: number;
   className?: string;
 }) {
   const [lang, setLang] = React.useState<'en' | 'ar'>('en');
   const active = lang === 'en' ? english : arabic;
   const error = lang === 'en' ? errorEn : errorAr;
+  const words = maxWords ? countWords(active.value) : 0;
+  const over = maxWords ? words > maxWords : false;
 
   const shared = {
     value: active.value,
@@ -85,6 +90,17 @@ export function BilingualField({
       </div>
 
       {rows ? <Textarea rows={rows} {...shared} /> : <Input {...shared} />}
+
+      {maxWords && (
+        <p
+          className={cn(
+            'mt-1.5 text-body-sm tabular-nums',
+            over ? 'text-error' : 'text-tertiary',
+          )}
+        >
+          {words} / {maxWords}
+        </p>
+      )}
 
       <FieldError>{error}</FieldError>
       {!error && lang === 'ar' && !arabic.value.trim() && (

@@ -29,9 +29,9 @@ export default async function AdminOrdersPage({
     }),
   ]);
 
-  const active = orders.filter((o) => ['PENDING', 'PAID', 'SHIPPED'].includes(o.status)).length;
+  const active = orders.filter((o) => ['PENDING', 'SHIPPED'].includes(o.status)).length;
   const revenue = orders
-    .filter((o) => ['PAID', 'SHIPPED', 'DELIVERED'].includes(o.status))
+    .filter((o) => o.status !== 'CANCELLED')
     .reduce((s, o) => s + o.total, 0);
   const avg = orders.length ? revenue / orders.filter((o) => o.status !== 'CANCELLED').length : 0;
 
@@ -66,7 +66,6 @@ export default async function AdminOrdersPage({
           governorate: o.governorate,
           notes: o.notes,
           status: o.status,
-          paymentStatus: o.paymentStatus,
           subtotal: o.subtotal,
           shippingCost: o.shippingCost,
           discount: o.discount,

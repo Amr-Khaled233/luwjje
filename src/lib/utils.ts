@@ -105,4 +105,28 @@ export function percentChange(current: number, previous: number) {
   return ((current - previous) / previous) * 100;
 }
 
-export const ORDER_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const;
+/**
+ * How long a product description may be, in words.
+ *
+ * A description sits beside the buy button; past a couple of paragraphs it
+ * pushes the size picker off the screen and stops being read at all.
+ */
+export const DESCRIPTION_WORD_LIMIT = 250;
+
+/** Words, by any script — Arabic and English are both split on whitespace. */
+export function countWords(text: string) {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/s+/).length : 0;
+}
+
+/**
+ * Cuts a text to `limit` words. Used when rendering, so a description saved
+ * before the limit existed is still shown at a readable length.
+ */
+export function limitWords(text: string, limit = DESCRIPTION_WORD_LIMIT) {
+  const words = text.trim().split(/s+/);
+  if (words.length <= limit) return text;
+  return words.slice(0, limit).join(' ') + '…';
+}
+
+export const ORDER_STATUSES = ['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const;

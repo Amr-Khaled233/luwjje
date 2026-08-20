@@ -95,7 +95,9 @@ check(
   order?.total,
 );
 check('the buyer name and address were kept', order?.fullName === shipping.fullName && order?.street === shipping.street);
-check('a fresh order is marked paid', order?.status === 'PAID' && order?.paymentStatus === 'PAID', order?.status);
+// Nothing is collected at checkout — the courier does that.
+check('a fresh order waits to be delivered', order?.status === 'PENDING', order?.status);
+check('and carries no payment state at all', !('paymentStatus' in (order ?? {})), Object.keys(order ?? {}).join());
 
 // ---------------------------------------------------------------- stock
 console.log('\n▸ Stock and sales counters');
@@ -375,7 +377,7 @@ check(
   `${stockBeforeCancel} → ${cancelledStock}`,
 );
 
-await setStatus(target.id, 'PAID');
+await setStatus(target.id, 'PENDING');
 check(
   'reinstating takes the stock out again',
   (await prisma.productVariant.findUnique({ where: { id: variant.id } })).stock === stockBeforeCancel,
@@ -431,8 +433,7 @@ const edit = {
   area: shipping.area,
   governorate: shipping.governorate,
   notes: '',
-  status: 'PAID',
-  paymentStatus: 'PAID',
+  status: 'PENDING',
 };
 
 let edit1 = await applyOrderEdit({

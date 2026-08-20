@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DESCRIPTION_WORD_LIMIT, countWords } from './utils';
 
 export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid email address.');
 
@@ -51,7 +52,6 @@ export const placeOrderSchema = z.object({
   shipping: shippingSchema,
   items: z.array(cartLineSchema).min(1, 'Your bag is empty.'),
   promoCode: z.string().trim().max(40).optional().or(z.literal('')),
-  paymentMethod: z.enum(['card', 'cod']).default('cod'),
 });
 
 /**
@@ -86,8 +86,7 @@ export const editOrderSchema = z.object({
   shippingCost: z.coerce.number().min(0, 'Cannot be negative.').max(1000000),
   discount: z.coerce.number().min(0, 'Cannot be negative.').max(10000000),
   total: z.coerce.number().min(0, 'Cannot be negative.').max(10000000),
-  status: z.enum(['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
-  paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']),
+  status: z.enum(['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
 
 // ---------------------------------------------------------------- products
@@ -107,14 +106,24 @@ export const variantSchema = z.object({
   lowStockAt: z.coerce.number().int().min(0).max(10000).default(5),
 });
 
+const description = () =>
+  z
+    .string()
+    .trim()
+    .max(5000)
+    .default('')
+    .refine((v) => countWords(v) <= DESCRIPTION_WORD_LIMIT, {
+      message: `Keep the description to ${DESCRIPTION_WORD_LIMIT} words or fewer.`,
+    });
+
 export const productSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(2, 'Product name is required.').max(120),
   nameAr: z.string().trim().max(120).default(''),
   /** Derived from the name on save; the form no longer asks for it. */
   slug: z.string().trim().max(140).optional().or(z.literal('')),
-  description: z.string().trim().max(5000).default(''),
-  descriptionAr: z.string().trim().max(5000).default(''),
+  description: description(),
+  descriptionAr: description(),
   price: z.coerce.number().min(0.01, 'Price must be greater than zero.').max(10000000),
   compareAtPrice: z.coerce.number().min(0).max(10000000).optional().nullable(),
   sku: z.string().trim().max(60).optional().or(z.literal('')),

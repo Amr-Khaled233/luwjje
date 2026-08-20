@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ColorDot } from '@/components/ui/primitives';
 import { useCart } from '@/lib/cart-store';
 import { useToast } from '@/components/ui/toast';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn, limitWords } from '@/lib/utils';
 import { fmt } from '@/i18n/dictionaries';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
@@ -273,7 +273,7 @@ export function ProductDetail({
 
         {product.description && (
           <p className="mt-5 max-w-[52ch] whitespace-pre-line text-body-md leading-7 text-secondary md:mt-6">
-            {product.description}
+            {limitWords(product.description)}
           </p>
         )}
 

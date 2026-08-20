@@ -21,7 +21,6 @@ export interface EditableOrder {
   governorate: string;
   notes: string | null;
   status: string;
-  paymentStatus: string;
   subtotal: number;
   shippingCost: number;
   discount: number;
@@ -36,8 +35,7 @@ export interface EditableOrder {
   }[];
 }
 
-const STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const;
-const PAYMENTS = ['UNPAID', 'PAID', 'REFUNDED'] as const;
+const STATUSES = ['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const;
 
 /**
  * Everything about an order, after it was placed.
@@ -75,7 +73,6 @@ export function OrderEditor({
     governorate: order.governorate,
     notes: order.notes ?? '',
     status: order.status,
-    paymentStatus: order.paymentStatus,
     shippingCost: String(order.shippingCost),
     discount: String(order.discount),
     total: String(order.total),
@@ -117,7 +114,6 @@ export function OrderEditor({
       governorate: form.governorate,
       notes: form.notes,
       status: form.status,
-      paymentStatus: form.paymentStatus,
       shippingCost: num(form.shippingCost),
       discount: num(form.discount),
       total: num(form.total),
@@ -311,7 +307,7 @@ export function OrderEditor({
       </section>
 
       {/* ----------------------------------------------------- its state */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4">
         <Select
           label={d.common.status}
           value={form.status}
@@ -323,17 +319,6 @@ export function OrderEditor({
           }
         >
           {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0) + s.slice(1).toLowerCase()}
-            </option>
-          ))}
-        </Select>
-        <Select
-          label={d.orders.payment}
-          value={form.paymentStatus}
-          onChange={(e) => set({ paymentStatus: e.target.value })}
-        >
-          {PAYMENTS.map((s) => (
             <option key={s} value={s}>
               {s.charAt(0) + s.slice(1).toLowerCase()}
             </option>

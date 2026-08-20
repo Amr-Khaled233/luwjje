@@ -57,30 +57,29 @@ export function ProductCard({
     <article className={cn('group', className)}>
       <Link href={`/product/${product.slug}`} className="block">
         {/*
-          The photo sets the height. `width`/`height` of 0 with `sizes` is
-          next/image's form for "dimensions unknown" — it still builds the
-          responsive srcset, and the CSS below lays the image out at whatever
-          shape it actually is. Nothing is cropped, so nothing has to be
-          chosen: the photo appears exactly as it was uploaded.
+          Every card gets the same 3:4 window, whatever shape the photo is —
+          a grid where each card is as tall as its own picture reads as
+          broken, and the row below never lines up. The photo is fitted
+          inside that window with `object-contain`, so it is still shown
+          whole: nothing is cropped, only surrounded.
         */}
-        <div className="relative w-full overflow-hidden bg-surface-low">
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-low">
           {product.primaryImage && (
             <Image
               src={product.primaryImage}
               alt={product.name}
-              width={0}
-              height={0}
+              fill
               priority={priority}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={cn(
-                'block h-auto w-full transition-transform duration-500 ease-scandi',
+                'object-contain transition-transform duration-500 ease-scandi',
                 product.hoverImage && 'group-hover:opacity-0',
                 'group-hover:scale-[1.02]',
               )}
             />
           )}
           {product.hoverImage && (
-            // Sits over the first, so the card keeps the first photo's height.
+            // Sits over the first, in the same window.
             <Image
               src={product.hoverImage}
               alt=""
@@ -136,7 +135,7 @@ export function ProductCard({
         </div>
 
         <div className="pt-3 sm:pt-4">
-          <h3 className="font-display text-title-md leading-tight sm:text-headline-sm sm:leading-8">
+          <h3 className="line-clamp-1 font-display text-title-md leading-tight sm:text-headline-sm sm:leading-8">
             {product.name}
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -150,16 +149,19 @@ export function ProductCard({
             </span>
           </div>
 
-          {product.colors.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5 sm:mt-3">
-              {product.colors.slice(0, 5).map((c) => (
-                <ColorDot key={c.name} hex={c.hex} size="sm" title={c.name} />
-              ))}
-              {product.colors.length > 5 && (
-                <span className="text-body-sm text-tertiary">+{product.colors.length - 5}</span>
-              )}
-            </div>
-          )}
+          {/* Kept even when empty, so a card without swatches is not shorter. */}
+          <div className="mt-2.5 flex h-4 flex-wrap items-center gap-1.5 overflow-hidden sm:mt-3">
+            {product.colors.length > 0 && (
+              <>
+                {product.colors.slice(0, 5).map((c) => (
+                  <ColorDot key={c.name} hex={c.hex} size="sm" title={c.name} />
+                ))}
+                {product.colors.length > 5 && (
+                  <span className="text-body-sm text-tertiary">+{product.colors.length - 5}</span>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </Link>
     </article>

@@ -27,7 +27,6 @@ interface AdminOrder {
   governorate: string;
   notes: string | null;
   status: string;
-  paymentStatus: string;
   subtotal: number;
   shippingCost: number;
   discount: number;
@@ -74,10 +73,14 @@ export function OrdersManager({
     if (status && o.status !== status) return false;
     if (query) {
       const q = query.toLowerCase();
+      // Phones get typed with spaces, dashes and a +20 that may or may not be
+      // there, so both sides are reduced to digits before comparing.
+      const digits = q.replace(/D/g, '');
       return (
         o.orderNumber.toLowerCase().includes(q) ||
         o.fullName.toLowerCase().includes(q) ||
-        o.email.toLowerCase().includes(q)
+        o.email.toLowerCase().includes(q) ||
+        (!!digits && (o.phone ?? '').replace(/D/g, '').includes(digits))
       );
     }
     return true;
@@ -156,6 +159,11 @@ export function OrdersManager({
                   <Td>
                     <p className="text-label-md">{o.fullName}</p>
                     <p className="mt-0.5 text-body-sm text-tertiary">{o.email}</p>
+                    {o.phone && (
+                      <p className="mt-0.5 text-body-sm text-tertiary" dir="ltr">
+                        {o.phone}
+                      </p>
+                    )}
                   </Td>
                   <Td className="text-secondary">{formatDate(o.createdAt)}</Td>
                   <Td className="tabular-nums text-secondary">
@@ -236,10 +244,6 @@ export function OrdersManager({
               <div>
                 <p className="label-caps mb-2 text-secondary">{d.common.status}</p>
                 <StatusBadge status={open.status} />
-              </div>
-              <div>
-                <p className="label-caps mb-2 text-secondary">{d.orders.payment}</p>
-                <StatusBadge status={open.paymentStatus === 'PAID' ? 'PAID' : open.paymentStatus} />
               </div>
               <div className="ms-auto">
                 <label htmlFor="detail-status" className="label-caps mb-2 block text-secondary">

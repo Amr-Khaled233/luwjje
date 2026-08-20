@@ -102,6 +102,7 @@ export function EmptyState({
 
 const statusTones: Record<string, string> = {
   PENDING: 'border-outline-soft text-secondary',
+  // Still reached by the payment badge, which is a different field.
   PAID: 'border-navy text-navy',
   SHIPPED: 'border-navy text-navy',
   DELIVERED: 'border-navy bg-navy text-background',

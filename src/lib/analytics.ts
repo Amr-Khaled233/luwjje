@@ -11,7 +11,7 @@ import { getSettings } from './settings';
 import { percentChange } from './utils';
 
 /** Orders that count as revenue — cancelled ones never do. */
-const REVENUE_STATUSES = ['PAID', 'SHIPPED', 'DELIVERED'];
+const REVENUE_STATUSES = ['PENDING', 'SHIPPED', 'DELIVERED'];
 
 /**
  * The window every figure on the Analytics page is computed over.
@@ -57,7 +57,7 @@ export async function getOverviewStats(period: Period = periodFromDays()) {
         },
         select: { total: true },
       }),
-      prisma.order.count({ where: { status: { in: ['PENDING', 'PAID', 'SHIPPED'] } } }),
+      prisma.order.count({ where: { status: { in: ['PENDING', 'SHIPPED'] } } }),
       prisma.productVariant.findMany({ select: { stock: true, lowStockAt: true } }),
       prisma.pageView.groupBy({
         by: ['sessionId'],

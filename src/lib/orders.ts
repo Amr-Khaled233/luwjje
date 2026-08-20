@@ -90,9 +90,8 @@ export async function createOrder({
           governorate: shipping.governorate,
           governorateId: shippingCalc.governorateId,
           notes: shipping.notes || null,
-          status: 'PAID',
-          paymentStatus: 'PAID',
-          paymentRef: `mock_${Date.now().toString(36)}`,
+          // Cash on delivery: the order is waiting, the money is not in yet.
+          status: 'PENDING',
           subtotal,
           shippingCost: shippingCalc.cost,
           discount,
@@ -171,8 +170,7 @@ export interface EditOrderInput {
   shippingCost: number;
   discount: number;
   total: number;
-  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  paymentStatus: 'UNPAID' | 'PAID' | 'REFUNDED';
+  status: 'PENDING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 }
 
 export type EditOrderResult = { ok: true } | { ok: false; error: string };
@@ -311,7 +309,6 @@ export async function applyOrderEdit(data: EditOrderInput): Promise<EditOrderRes
           discount: data.discount,
           total: data.total,
           status: data.status,
-          paymentStatus: data.paymentStatus,
         },
       });
     });

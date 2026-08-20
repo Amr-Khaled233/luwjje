@@ -363,7 +363,7 @@ export async function updateStock(input: unknown): Promise<ActionResult> {
 
 const orderStatusSchema = z.object({
   orderId: z.string().min(1),
-  status: z.enum(['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  status: z.enum(['PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
 
 /** Authorised wrapper; the arithmetic lives in `applyOrderEdit`. */
@@ -428,14 +428,7 @@ export async function updateOrderStatus(input: unknown): Promise<ActionResult> {
         }
       }
 
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status,
-          paymentStatus:
-            status === 'CANCELLED' ? 'REFUNDED' : status === 'PENDING' ? order.paymentStatus : 'PAID',
-        },
-      });
+      await tx.order.update({ where: { id: orderId }, data: { status } });
     });
 
     revalidatePath('/dashboard/orders');

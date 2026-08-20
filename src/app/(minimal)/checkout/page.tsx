@@ -24,7 +24,6 @@ export default async function CheckoutPage() {
       currencySymbol={symbol}
       locale={locale}
       t={t}
-      stripeEnabled={Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)}
     />
   );
 }
