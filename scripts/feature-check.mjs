@@ -84,6 +84,11 @@ const bagAr = await html('/cart', AR);
 check('the bag can switch language', bagAr.includes('English'), 'no language switch');
 check('the bag chrome is translated', bagAr.includes('ارجع للمتجر'));
 
+const tracker = readSource('src/components/storefront/track-page-view.tsx', 'utf8');
+check('the tracker reads a ?ref= tag', tracker.includes("get('ref')"));
+check('the tag is sanitised before it is stored', tracker.includes('a-z0-9-'));
+check('the source is remembered first-touch', tracker.includes('luwjje-ref'));
+
 console.log('\n▸ Language switching');
 const en = await html('/', EN);
 const ar = await html('/', AR);
