@@ -94,11 +94,13 @@ export function TableWrap({ children, className }: { children: React.ReactNode; 
 }
 
 /**
- * Full grid rules. Every cell carries a bottom and an end border; the last
- * column drops its end border so the table's own outline is not doubled.
- * Logical properties (`-e-`) keep the lines on the correct side in RTL.
+ * Full grid rules, drawn the same way as the analytics tables so every table
+ * in the dashboard is one consistent grid. Each cell carries a bottom rule and
+ * a start-side divider; the first cell drops its start border so the divider
+ * sits between columns, not against the table's own outline. Logical
+ * properties (`-s-`) keep the lines on the correct side in Arabic.
  */
-const cellRules = 'border-b border-e border-outline-variant last:border-e-0';
+const cellRules = 'border-b border-s border-outline-variant first:border-s-0';
 
 export function Th({
   children,
