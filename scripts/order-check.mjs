@@ -11,7 +11,7 @@ import './load-env.ts';
 import { prisma } from '../src/lib/prisma.ts';
 import { createOrder, applyOrderEdit } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
-import { getFunnel } from '../src/lib/traffic.ts';
+import { getFunnel, getSocialClicks } from '../src/lib/traffic.ts';
 import { calculateShipping, validatePromoCode, getFreeShipping } from '../src/lib/commerce.ts';
 
 let pass = 0;
@@ -51,18 +51,29 @@ async function cleanup() {
 await cleanup(); // in case a previous run died mid-way
 
 const variant = await prisma.productVariant.findFirst({
-  where: { stock: { gte: 4 }, product: { status: 'PUBLISHED' } },
+  where: { product: { status: 'PUBLISHED' } },
   include: { product: true },
+  orderBy: { stock: 'desc' },
 });
 
 if (!variant) {
-  console.log('\nNo variant with enough stock to test against. Seed the catalogue first.\n');
+  console.log('\nNo published variant to test against. Seed the catalogue first.\n');
   await prisma.$disconnect();
   process.exit(1);
 }
 
-const startStock = variant.stock;
+const originalStock = variant.stock;
 const startSold = variant.product.soldCount;
+
+/*
+  The suite places, edits and raises orders on this one variant, so it stocks
+  the shelf itself rather than hoping the catalogue is deep enough. Both the
+  quantity and the sold counter are put back at the end, so a run leaves the
+  database exactly as it found it however many times it is repeated.
+*/
+const startStock = 40;
+await prisma.productVariant.update({ where: { id: variant.id }, data: { stock: startStock } });
+variant.stock = startStock;
 
 // ---------------------------------------------------------------- placing
 console.log('\n▸ Placing an order');
@@ -386,10 +397,16 @@ check(
 
 // ---------------------------------------------------------------- concurrency
 console.log('\n▸ Two shoppers, one last piece');
+/*
+  A different variant from the one the rest of the suite is trading on: this
+  section deliberately empties its shelf to one piece, and doing that to the
+  working variant left every later section failing on stock.
+*/
 const last = await prisma.productVariant.findFirst({
-  where: { product: { status: 'PUBLISHED' } },
+  where: { product: { status: 'PUBLISHED' }, id: { not: variant.id } },
   orderBy: { stock: 'desc' },
 });
+const lastOriginalStock = last.stock;
 await prisma.productVariant.update({ where: { id: last.id }, data: { stock: 1 } });
 const race = await Promise.all([
   createOrder({ shipping, items: [{ variantId: last.id, quantity: 1 }] }),
@@ -595,10 +612,10 @@ const visit = async (sessionId, paths, referrer = 'instagram.com') => {
 const backdate = (orderNumber) =>
   prisma.order.update({ where: { orderNumber }, data: { createdAt: inWindow } });
 
-await visit('check-browser', ['/', '/shop']);
-await visit('check-looker', ['/', '/product/a-thing']);
-await visit('check-nearly', ['/', '/product/a-thing', '/cart', '/checkout']);
-await visit('check-buyer', ['/', '/product/a-thing', '/cart', '/checkout']);
+await visit('check-browser', ['/', '/shop'], 'google.com');
+await visit('check-looker', ['/', '/product/a-thing'], 'instagram.com');
+await visit('check-nearly', ['/', '/product/a-thing', '/cart', '/checkout'], 'instagram.com');
+await visit('check-buyer', ['/', '/product/a-thing', '/cart', '/checkout'], 'l.facebook.com');
 
 const bought = await createOrder({
   shipping,
@@ -609,6 +626,10 @@ check('an order records the visit that placed it', bought.ok, bought.error);
 const boughtRow = await prisma.order.findUnique({ where: { orderNumber: bought.orderNumber } });
 check('the session id is stored', boughtRow?.sessionId === 'check-buyer', boughtRow?.sessionId);
 await backdate(bought.orderNumber);
+
+const social = await getSocialClicks(period);
+check('arrivals from Instagram are counted', social.instagram === 2, JSON.stringify(social));
+check('arrivals from Facebook are counted', social.facebook === 1, JSON.stringify(social));
 
 const funnel = await getFunnel(period);
 const stage = (key) => funnel.stages.find((s) => s.key === key)?.count;
@@ -638,10 +659,28 @@ await prisma.pageView.deleteMany({ where: { sessionId: { startsWith: 'check-' } 
 await cleanup();
 
 // ---------------------------------------------------------------- tidy up
-await prisma.productVariant.update({ where: { id: last.id }, data: { stock: 25 } });
+await prisma.productVariant.update({ where: { id: last.id }, data: { stock: lastOriginalStock } });
+
+/*
+  Deleting an order does not put its stock back, so the suite has to. Without
+  this every run eats a few pieces of the same variant and, several runs
+  later, fails on an empty shelf rather than on a real fault.
+*/
+await prisma.productVariant.update({
+  where: { id: variant.id },
+  data: { stock: originalStock },
+});
+await prisma.product.update({
+  where: { id: variant.productId },
+  data: { soldCount: startSold },
+});
+
 await cleanup();
 const leftovers = await prisma.order.count({ where: { email: EMAIL } });
 check('the test cleaned up after itself', leftovers === 0, leftovers);
+
+const restored = await prisma.productVariant.findUnique({ where: { id: variant.id } });
+check('and put the stock it borrowed back', restored?.stock === originalStock, restored?.stock);
 
 console.log(`\n${fail === 0 ? '✓' : '✗'} ${pass} passed, ${fail} failed\n`);
 await prisma.$disconnect();

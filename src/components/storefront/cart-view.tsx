@@ -332,30 +332,28 @@ export function CartView({
                 )}
               </div>
 
-              {/* free shipping nudge */}
-              <div className="mt-6 border border-outline-variant bg-surface-low p-4">
-                {remainingForFree > 0 ? (
+              {/*
+                Only ever a nudge towards a threshold that is actually within
+                reach. With no rule set at all it used to announce "free
+                shipping over EGP 0 — applied", which is not a thing.
+              */}
+              {remainingForFree > 0 && (
+                <div className="mt-6 border border-outline-variant bg-surface-low p-4">
                   <p className="text-body-sm text-secondary">
                     {fmt(t.cart.spendMore, {
                       amount: formatPrice(remainingForFree, currencySymbol, locale),
                     })}
                   </p>
-                ) : (
-                  <p className="text-body-sm">
-                    {fmt(t.cart.freeShippingApplied, {
-                      amount: formatPrice(freeShippingOver, currencySymbol, locale),
-                    })}
-                  </p>
-                )}
-                <div className="mt-3 h-px w-full bg-outline-variant">
-                  <div
-                    className="h-px bg-navy transition-all duration-500 ease-scandi"
-                    style={{
-                      width: `${Math.min(100, (pricing.subtotal / Math.max(1, freeShippingOver)) * 100)}%`,
-                    }}
-                  />
+                  <div className="mt-3 h-px w-full bg-outline-variant">
+                    <div
+                      className="h-px bg-navy transition-all duration-500 ease-scandi"
+                      style={{
+                        width: `${Math.min(100, (pricing.subtotal / Math.max(1, freeShippingOver)) * 100)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button
                 type="submit"

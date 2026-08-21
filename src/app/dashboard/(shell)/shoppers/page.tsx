@@ -2,8 +2,8 @@ import { StatCard, Panel } from '@/components/dashboard/admin-ui';
 import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 import { ShoppersHeader } from '@/components/dashboard/shoppers-header';
-import { FunnelPanel } from '@/components/dashboard/shoppers-panels';
-import { getFunnel } from '@/lib/traffic';
+import { FunnelPanel, SocialPanel } from '@/components/dashboard/shoppers-panels';
+import { getFunnel, getSocialClicks } from '@/lib/traffic';
 import { periodFromDays, type Period } from '@/lib/analytics';
 import { startOfDay, endOfDay, format } from 'date-fns';
 import { formatDate } from '@/lib/utils';
@@ -42,7 +42,7 @@ export default async function AdminShoppersPage({
 
   const periodLabel = `${formatDate(period.start, locale)} — ${formatDate(period.end, locale)}`;
 
-  const funnel = await getFunnel(period);
+  const [funnel, social] = await Promise.all([getFunnel(period), getSocialClicks(period)]);
   const stage = (key: string) => funnel.stages.find((s) => s.key === key)?.count ?? 0;
 
   return (
@@ -65,6 +65,14 @@ export default async function AdminShoppersPage({
 
       <Panel bodyClassName="p-4 md:p-6">
         <FunnelPanel stages={funnel.stages} periodLabel={periodLabel} />
+      </Panel>
+
+      <Panel bodyClassName="p-4 md:p-6">
+        <SocialPanel
+          instagram={social.instagram}
+          facebook={social.facebook}
+          periodLabel={periodLabel}
+        />
       </Panel>
     </div>
   );

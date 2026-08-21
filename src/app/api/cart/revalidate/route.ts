@@ -52,9 +52,11 @@ export async function POST(req: Request) {
     : governorate
     ? await calculateShipping(governorate, subtotal)
     : {
-        // No governorate chosen yet: quote the default rate so the shopper
-        // sees a number, and let the rules decide whether it is waived.
-        cost: freeShipping.free ? 0 : settings.defaultShippingRate,
+        // No governorate chosen yet, so nothing is charged for delivery.
+        // Quoting the default rate here made the total jump by a number the
+        // shopper had not been asked about, and it was wrong for most of the
+        // country anyway — the summary asks them to pick instead.
+        cost: 0,
         rate: settings.defaultShippingRate,
         threshold: freeShipping.nextThreshold,
         free: freeShipping.free,

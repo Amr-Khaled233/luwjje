@@ -49,17 +49,21 @@ export default async function HomePage() {
               className="block h-auto w-full animate-fade-in"
             />
           )}
-          {hero.imageUrl && <div className="absolute inset-0 bg-navy/15" />}
+          {hero.imageUrl && <div className="absolute inset-0 hidden bg-navy/15 md:block" />}
 
           {/*
-            Over the image when there is one, in flow when there is not — a
-            banner with only text would otherwise be positioned over a section
-            with no height, and disappear.
+            On a phone the copy sits under the photo rather than on top of it:
+            a card wide enough to be read covers a portrait banner almost
+            entirely, and the picture is the reason the banner exists. From
+            md up there is room for both, and it goes back over the image.
+
+            With no image at all it is simply in flow — a text-only banner
+            positioned over a section with no height would disappear.
           */}
           <div
             className={cn(
               'container-luwjje flex items-center',
-              hero.imageUrl ? 'absolute inset-0' : 'py-16 md:py-stack-lg',
+              hero.imageUrl ? 'py-6 md:absolute md:inset-0 md:py-0' : 'py-16 md:py-stack-lg',
             )}
           >
             <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/80 p-6 backdrop-blur-[20px] sm:p-8 md:p-12">

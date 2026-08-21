@@ -8,6 +8,42 @@ import type { FunnelStage } from '@/lib/traffic';
 const pct = (n: number) => `${n.toFixed(1)}%`;
 
 /**
+ * Which of the shop's two links is being clicked. Two numbers, side by side —
+ * the question is only ever which one is bigger.
+ */
+export function SocialPanel({
+  instagram,
+  facebook,
+  periodLabel,
+}: {
+  instagram: number;
+  facebook: number;
+  periodLabel: string;
+}) {
+  const { d } = useDash();
+  const v = d.shoppers;
+
+  return (
+    <div>
+      <header className="mb-5 md:mb-6">
+        <h2 className="font-display text-title-md md:text-headline-sm">{v.socialTitle}</h2>
+        <p className="mt-1.5 text-body-sm text-secondary">
+          {fmt(v.socialSubtitle, { period: periodLabel })}
+        </p>
+      </header>
+
+      <StatTable
+        columns={[v.platformCol, v.peopleFrom]}
+        rows={[
+          [v.instagram, instagram.toLocaleString()],
+          [v.facebook, facebook.toLocaleString()],
+        ]}
+      />
+    </div>
+  );
+}
+
+/**
  * The funnel: how many people reached each step, and what share of the step
  * before them that is — which is where the leak actually shows.
  */

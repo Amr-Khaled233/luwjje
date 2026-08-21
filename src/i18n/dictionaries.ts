@@ -93,7 +93,6 @@ const en = {
     promoPlaceholder: 'Enter code',
     apply: 'Apply',
     spendMore: 'Spend {amount} more for free shipping.',
-    freeShippingApplied: 'Free shipping over {amount} — applied.',
     proceed: 'Proceed to Checkout',
     updating: 'Updating…',
     completeDetails: 'Complete the delivery details above to continue.',
@@ -168,6 +167,11 @@ const en = {
     viewOrder: 'View order',
     items: '{n} item(s)',
     searchAgain: 'Search a different email',
+  },
+  minimal: {
+    returnToShop: 'Return to Shop',
+    privacy: 'Privacy',
+    terms: 'Terms',
   },
   footer: {
     customerCare: 'Customer Care',
@@ -275,7 +279,6 @@ const ar: Dictionary = {
     promoPlaceholder: 'أدخل الكود',
     apply: 'تطبيق',
     spendMore: 'أضِف {amount} للحصول على شحن مجاني.',
-    freeShippingApplied: 'شحن مجاني فوق {amount} — تم التطبيق.',
     proceed: 'إتمام الطلب',
     updating: 'جارٍ التحديث…',
     completeDetails: 'أكمل بيانات التوصيل بالأعلى للمتابعة.',
@@ -350,6 +353,11 @@ const ar: Dictionary = {
     viewOrder: 'عرض الطلب',
     items: '{n} قطعة',
     searchAgain: 'ابحث ببريد آخر',
+  },
+  minimal: {
+    returnToShop: 'ارجع للمتجر',
+    privacy: 'الخصوصية',
+    terms: 'الشروط',
   },
   footer: {
     customerCare: 'خدمة العملاء',

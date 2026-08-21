@@ -26,6 +26,64 @@ const raw = (p, h) => fetch(`${BASE}${p}`, { headers: h, cache: 'no-store' }).th
 const SCRIPT_TAGS = new RegExp('<script[\\s\\S]*?</script>', 'g');
 const html = async (p, h) => (await raw(p, h)).replace(SCRIPT_TAGS, '');
 
+console.log('\n▸ Delivery is only charged once it is known');
+/*
+  The summary used to quote the default rate before the shopper had picked a
+  governorate, so the total jumped by a number nobody had been asked about —
+  and one that was wrong for most of the country.
+*/
+const sample = await (await fetch(`${BASE}/api/products/the-classic-snood/default-variant`)).json();
+
+const priceCart = async (governorate) =>
+  (
+    await fetch(`${BASE}/api/cart/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [{ variantId: sample.variantId, quantity: 1 }], governorate }),
+    })
+  ).json();
+
+const unchosen = await priceCart(undefined);
+check('nothing is charged for delivery yet', unchosen.shipping?.cost === 0, unchosen.shipping?.cost);
+check(
+  'the total is the goods alone',
+  unchosen.total === unchosen.subtotal,
+  `${unchosen.total} vs ${unchosen.subtotal}`,
+);
+
+const chosen = await priceCart('Cairo');
+check('choosing a governorate prices the delivery', chosen.shipping?.cost > 0, chosen.shipping?.cost);
+check(
+  'and adds it to the total',
+  chosen.total === chosen.subtotal + chosen.shipping.cost,
+  `${chosen.total} vs ${chosen.subtotal} + ${chosen.shipping?.cost}`,
+);
+
+console.log('\n▸ Every shopper page is counted');
+/*
+  The bag and the payment step live in their own layout. It had no tracker,
+  so those two steps of the funnel could only ever read zero — the one bug
+  that makes the whole page lie rather than merely undercount.
+*/
+const { readFileSync: readSource, readdirSync } = await import('node:fs');
+const layouts = ['src/app/(storefront)/layout.tsx', 'src/app/(minimal)/layout.tsx'];
+for (const layout of layouts) {
+  check(`${layout} mounts the page-view tracker`, readSource(layout, 'utf8').includes('<TrackPageView />'));
+}
+check(
+  'no shopper-facing layout was missed',
+  readdirSync('src/app')
+    .filter((d) => d.startsWith('(') && d !== '(minimal)' && d !== '(storefront)')
+    .length === 0,
+  readdirSync('src/app').join(', '),
+);
+
+// The cart and checkout also have to carry the language switch and their own
+// words, not English hard-coded into the layout.
+const bagAr = await html('/cart', AR);
+check('the bag can switch language', bagAr.includes('English'), 'no language switch');
+check('the bag chrome is translated', bagAr.includes('ارجع للمتجر'));
+
 console.log('\n▸ Language switching');
 const en = await html('/', EN);
 const ar = await html('/', AR);

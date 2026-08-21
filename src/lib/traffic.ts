@@ -77,3 +77,32 @@ export async function getFunnel(period: Period = periodFromDays()) {
     abandonedCheckout: Math.max(0, counts.checkout - counts.ordered),
   };
 }
+
+/**
+ * People who arrived from Instagram against people who arrived from Facebook.
+ *
+ * Two numbers, because two is the question: which of the shop's own links is
+ * being clicked. Counted per person, from the referrer the browser reported
+ * on their first page.
+ */
+export async function getSocialClicks(period: Period = periodFromDays()) {
+  const views = await prisma.pageView.findMany({
+    where: {
+      createdAt: { gte: period.start, lte: period.end },
+      OR: [{ referrer: { contains: 'instagram' } }, { referrer: { contains: 'facebook' } }],
+    },
+    select: { sessionId: true, referrer: true },
+  });
+
+  const instagram = new Set<string>();
+  const facebook = new Set<string>();
+
+  for (const view of views) {
+    const from = view.referrer.toLowerCase();
+    // fb.com and l.facebook.com are both Facebook; ig.me is Instagram.
+    if (from.includes('instagram') || from.includes('ig.me')) instagram.add(view.sessionId);
+    else if (from.includes('facebook') || from.includes('fb.')) facebook.add(view.sessionId);
+  }
+
+  return { instagram: instagram.size, facebook: facebook.size };
+}

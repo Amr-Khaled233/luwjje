@@ -466,6 +466,13 @@ const en = {
     stageOrdered: 'Placed the order',
 
     noData: 'Nobody opened a product in this period yet.',
+
+    socialTitle: 'Instagram against Facebook',
+    socialSubtitle: 'People who arrived from each · {period}',
+    platformCol: 'Platform',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    peopleFrom: 'People who came from it',
   },
   settings: {
     title: 'Settings',
@@ -973,6 +980,13 @@ const ar: DashboardDictionary = {
     stageOrdered: 'أتمّ الطلب',
 
     noData: 'محدش فتح منتج في الفترة دي لسه.',
+
+    socialTitle: 'إنستجرام مقابل فيسبوك',
+    socialSubtitle: 'عدد اللي دخلوا من كل واحد · {period}',
+    platformCol: 'المنصة',
+    instagram: 'إنستجرام',
+    facebook: 'فيسبوك',
+    peopleFrom: 'دخلوا من هنا',
   },
   settings: {
     title: 'الإعدادات',
