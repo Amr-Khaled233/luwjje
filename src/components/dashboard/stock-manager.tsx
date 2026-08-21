@@ -26,7 +26,7 @@ export interface StockRow {
 }
 
 /** One inline-editable row. Saves on blur or Enter, never on every keystroke. */
-function Row({ row, showProduct }: { row: StockRow; showProduct: boolean }) {
+function Row({ row, startsProduct }: { row: StockRow; startsProduct: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const { d } = useDash();
@@ -76,34 +76,23 @@ function Row({ row, showProduct }: { row: StockRow; showProduct: boolean }) {
         // hunt for is not a warning.
         isOut ? 'bg-error/5 hover:bg-error/10' : isLow ? 'bg-warning/10 hover:bg-warning/20' : 'hover:bg-surface-low',
         // A heavier line where one product ends and the next begins.
-        showProduct && '[&>td]:border-t-2 [&>td]:border-t-outline-variant',
+        startsProduct && '[&>td]:border-t-2 [&>td]:border-t-outline-variant',
       )}
     >
       <Td>
-        {/* Only the first row of a product carries its name and picture, so a
-            product with nine sizes reads as one block rather than nine. The
-            SKU stays on every row — it is what identifies the row. */}
+        {/* Every row shows what it is a row of. The grouping is carried by the
+            order and by the rule between products, not by leaving cells blank. */}
         <div className="flex items-center gap-3">
-          {showProduct ? (
-            row.image ? (
-              <div className="relative h-12 w-9 shrink-0 overflow-hidden bg-surface-low">
-                <Image src={row.image} alt="" fill sizes="36px" className="object-cover" />
-              </div>
-            ) : (
-              <div className="h-12 w-9 shrink-0 bg-surface-container" />
-            )
+          {row.image ? (
+            <div className="relative h-12 w-9 shrink-0 overflow-hidden bg-surface-low">
+              <Image src={row.image} alt="" fill sizes="36px" className="object-cover" />
+            </div>
           ) : (
-            <div className="h-12 w-9 shrink-0" aria-hidden />
+            <div className="h-12 w-9 shrink-0 bg-surface-container" />
           )}
           <div className="min-w-0">
-            {showProduct ? (
-              <p className="truncate text-label-md">{row.productName}</p>
-            ) : (
-              <span className="sr-only">{row.productName}</span>
-            )}
-            <p className={cn('truncate text-body-sm text-tertiary', showProduct && 'mt-0.5')}>
-              {row.sku}
-            </p>
+            <p className="truncate text-label-md">{row.productName}</p>
+            <p className="mt-0.5 truncate text-body-sm text-tertiary">{row.sku}</p>
           </div>
         </div>
       </Td>
@@ -230,7 +219,7 @@ export function StockManager({ rows, initialFilter }: { rows: StockRow[]; initia
                 <Row
                   key={row.id}
                   row={row}
-                  showProduct={i === 0 || filtered[i - 1].productName !== row.productName}
+                  startsProduct={i > 0 && filtered[i - 1].productName !== row.productName}
                 />
               ))}
             </tbody>
