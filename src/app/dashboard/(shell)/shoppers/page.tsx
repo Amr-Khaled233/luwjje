@@ -1,10 +1,9 @@
 import { StatCard, Panel } from '@/components/dashboard/admin-ui';
 import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
-import { fmt } from '@/i18n/dictionaries';
 import { ShoppersHeader } from '@/components/dashboard/shoppers-header';
-import { SourcesPanel, FunnelPanel } from '@/components/dashboard/shoppers-panels';
-import { getFunnel, getSources } from '@/lib/traffic';
+import { FunnelPanel } from '@/components/dashboard/shoppers-panels';
+import { getFunnel } from '@/lib/traffic';
 import { periodFromDays, type Period } from '@/lib/analytics';
 import { startOfDay, endOfDay, format } from 'date-fns';
 import { formatDate } from '@/lib/utils';
@@ -43,7 +42,7 @@ export default async function AdminShoppersPage({
 
   const periodLabel = `${formatDate(period.start, locale)} — ${formatDate(period.end, locale)}`;
 
-  const [funnel, sources] = await Promise.all([getFunnel(period), getSources(period)]);
+  const funnel = await getFunnel(period);
   const stage = (key: string) => funnel.stages.find((s) => s.key === key)?.count ?? 0;
 
   return (
@@ -56,32 +55,17 @@ export default async function AdminShoppersPage({
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label={d.shoppers.openedProduct}
-          value={stage('product').toLocaleString()}
-          hint={d.shoppers.openedProductHint}
-        />
+        <StatCard label={d.shoppers.openedProduct} value={stage('product').toLocaleString()} />
         <StatCard label={d.shoppers.bought} value={stage('ordered').toLocaleString()} />
         <StatCard
           label={d.shoppers.abandoned}
           value={funnel.abandonedCheckout.toLocaleString()}
-          hint={d.shoppers.abandonedHint}
         />
       </div>
 
       <Panel bodyClassName="p-4 md:p-6">
         <FunnelPanel stages={funnel.stages} periodLabel={periodLabel} />
       </Panel>
-
-      <Panel bodyClassName="p-4 md:p-6">
-        <SourcesPanel sources={sources} periodLabel={periodLabel} />
-      </Panel>
-
-      <p className="max-w-[70ch] text-body-sm text-tertiary">
-        {d.shoppers.caveat}
-        {funnel.untrackedOrders > 0 &&
-          ` ${fmt(d.shoppers.untracked, { n: funnel.untrackedOrders })}`}
-      </p>
     </div>
   );
 }

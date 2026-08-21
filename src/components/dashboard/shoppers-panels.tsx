@@ -3,53 +3,9 @@
 import { StatTable } from './stat-table';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import type { SourceRow, FunnelStage } from '@/lib/traffic';
+import type { FunnelStage } from '@/lib/traffic';
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
-
-/**
- * Which places bring people who shop — and how many of them bought.
- *
- * `direct` and `internal` are the tracker's own words for "no referrer" and
- * "a link from our own pages"; they are translated here rather than shown raw.
- */
-export function SourcesPanel({
-  sources,
-  periodLabel,
-}: {
-  sources: SourceRow[];
-  periodLabel: string;
-}) {
-  const { d } = useDash();
-  const v = d.shoppers;
-
-  const label = (referrer: string) =>
-    referrer === 'direct' ? v.direct : referrer === 'internal' ? v.internal : referrer;
-
-  return (
-    <div>
-      <header className="mb-5 md:mb-6">
-        <h2 className="font-display text-title-md md:text-headline-sm">{v.sourcesTitle}</h2>
-        <p className="mt-1.5 text-body-sm text-secondary">
-          {fmt(v.sourcesSubtitle, { period: periodLabel })}
-        </p>
-      </header>
-
-      {sources.length === 0 ? (
-        <p className="text-body-sm text-secondary">{v.noData}</p>
-      ) : (
-        <StatTable
-          columns={[v.sourceCol, v.interestedCol, v.buyersCol]}
-          rows={sources.map((s) => [
-            label(s.referrer),
-            s.interested.toLocaleString(),
-            s.buyers.toLocaleString(),
-          ])}
-        />
-      )}
-    </div>
-  );
-}
 
 /**
  * The funnel: how many people reached each step, and what share of the step

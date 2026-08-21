@@ -148,9 +148,8 @@ check(
   ),
 );
 check('it does not count raw visits', !shoppers.includes('Pages read'));
-check('sources are ranked by who bought', shoppers.includes('Which places bring shoppers'));
+check('and does not rank traffic sources', !shoppers.includes('Came from'));
 check('abandoned checkouts are called out', shoppers.includes('Reached payment and did not order'));
-check('the limits of the figures are stated', shoppers.includes('Read them as the floor'));
 check('a period can be chosen', shoppers.includes('type="date"'));
 
 const shoppersPeriod = await html('/dashboard/shoppers?from=2026-01-05&to=2026-01-19', EN);

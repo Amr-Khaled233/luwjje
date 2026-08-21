@@ -181,7 +181,7 @@ if the password is lost.
 | `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
 | `/dashboard/analytics` | Revenue over time, top products, top categories, status breakdown, and the Excel export |
-| `/dashboard/shoppers` | The funnel from opening a product to placing the order, and which sources send people who buy. Counts people, not visits |
+| `/dashboard/shoppers` | The funnel from opening a product to placing the order, counted in people rather than visits |
 | `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages |
 
 ---

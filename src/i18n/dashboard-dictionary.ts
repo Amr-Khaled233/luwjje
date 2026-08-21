@@ -451,10 +451,8 @@ const en = {
     title: 'Shoppers',
 
     openedProduct: 'Opened a product',
-    openedProductHint: 'people, not visits',
     bought: 'Bought',
     abandoned: 'Reached payment and did not order',
-    abandonedHint: 'the ones worth a message',
 
     funnelTitle: 'How far they got',
     funnelSubtitle: 'Counted from the moment someone opens a product · {period}',
@@ -467,18 +465,7 @@ const en = {
     stageCheckout: 'Reached the payment step',
     stageOrdered: 'Placed the order',
 
-    sourcesTitle: 'Which places bring shoppers',
-    sourcesSubtitle: 'Counted among people who opened a product · {period}',
-    sourceCol: 'Came from',
-    interestedCol: 'Opened a product',
-    buyersCol: 'Bought',
-    direct: 'Typed the address',
-    internal: 'Moved within the site',
-
     noData: 'Nobody opened a product in this period yet.',
-    caveat:
-      'These count people, not visits — one browser tab is one person, and anyone blocking the counter is invisible to it. Read them as the floor, not the exact figure.',
-    untracked: '{n} orders in this period came from a browser that was not counted.',
   },
   settings: {
     title: 'Settings',
@@ -971,10 +958,8 @@ const ar: DashboardDictionary = {
     title: 'المتسوّقين',
 
     openedProduct: 'فتحوا منتج',
-    openedProductHint: 'أشخاص مش زيارات',
     bought: 'اشتروا',
     abandoned: 'وصلوا للدفع وما طلبوش',
-    abandonedHint: 'دول اللي يستاهلوا رسالة',
 
     funnelTitle: 'وصلوا لحد فين',
     funnelSubtitle: 'العدّ بيبدأ من أول ما حد يفتح منتج · {period}',
@@ -987,18 +972,7 @@ const ar: DashboardDictionary = {
     stageCheckout: 'وصل لخطوة الدفع',
     stageOrdered: 'أتمّ الطلب',
 
-    sourcesTitle: 'مين بيجيبلك متسوّقين',
-    sourcesSubtitle: 'محسوبة بين اللي فتحوا منتج · {period}',
-    sourceCol: 'المصدر',
-    interestedCol: 'فتحوا منتج',
-    buyersCol: 'اشتروا',
-    direct: 'كتب العنوان بنفسه',
-    internal: 'تنقّل داخل الموقع',
-
     noData: 'محدش فتح منتج في الفترة دي لسه.',
-    caveat:
-      'الأرقام دي بتعدّ أشخاص مش زيارات — التاب الواحد في المتصفح شخص واحد، ومين ما بيمنع العدّاد مش بيظهر خالص. اقراها كحد أدنى مش كرقم دقيق.',
-    untracked: 'في {n} طلب في الفترة دي جه من متصفح مش متحسوب.',
   },
   settings: {
     title: 'الإعدادات',

@@ -11,7 +11,7 @@ import './load-env.ts';
 import { prisma } from '../src/lib/prisma.ts';
 import { createOrder, applyOrderEdit } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
-import { getFunnel, getSources } from '../src/lib/traffic.ts';
+import { getFunnel } from '../src/lib/traffic.ts';
 import { calculateShipping, validatePromoCode, getFreeShipping } from '../src/lib/commerce.ts';
 
 let pass = 0;
@@ -597,8 +597,8 @@ const backdate = (orderNumber) =>
 
 await visit('check-browser', ['/', '/shop']);
 await visit('check-looker', ['/', '/product/a-thing']);
-await visit('check-nearly', ['/', '/product/a-thing', '/cart', '/checkout'], 'facebook.com');
-await visit('check-buyer', ['/', '/product/a-thing', '/cart', '/checkout'], 'facebook.com');
+await visit('check-nearly', ['/', '/product/a-thing', '/cart', '/checkout']);
+await visit('check-buyer', ['/', '/product/a-thing', '/cart', '/checkout']);
 
 const bought = await createOrder({
   shipping,
@@ -623,21 +623,16 @@ check(
   funnel.stages.find((s) => s.key === 'ordered')?.shareOfPrevious,
 );
 
-const sources = await getSources(period);
-const facebook = sources.find((s) => s.referrer === 'facebook.com');
-const instagram = sources.find((s) => s.referrer === 'instagram.com');
-check('a source counts the shoppers it sent', facebook?.interested === 2, JSON.stringify(sources));
-check('…and how many of them bought', facebook?.buyers === 1, JSON.stringify(sources));
-check('a source that sent no buyer says so', instagram?.buyers === 0, JSON.stringify(sources));
-check('the source that sells is listed first', sources[0]?.referrer === 'facebook.com', JSON.stringify(sources));
-
 // An order placed by an untracked browser is admitted to, not hidden.
 const untracked = await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 1 }] });
 check('an order without a visit is accepted', untracked.ok, untracked.error);
 await backdate(untracked.orderNumber);
 const afterUntracked = await getFunnel(period);
-check('…and is reported as untracked', afterUntracked.untrackedOrders >= 1, afterUntracked.untrackedOrders);
-check('…without inflating the last step', afterUntracked.stages.at(-1).count === 1, afterUntracked.stages.at(-1).count);
+check(
+  '…without inflating the last step',
+  afterUntracked.stages.at(-1).count === 1,
+  afterUntracked.stages.at(-1).count,
+);
 
 await prisma.pageView.deleteMany({ where: { sessionId: { startsWith: 'check-' } } });
 await cleanup();
