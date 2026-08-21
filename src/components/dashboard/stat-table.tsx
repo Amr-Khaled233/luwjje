@@ -31,17 +31,22 @@ export function StatTable({
         className,
       )}
     >
-      <table className="w-full border-collapse">
+      {/*
+        Fixed layout with every column the same share of the width. Left to
+        itself the browser gives the text column everything and squeezes the
+        figures against the end of the table; three even columns keep each
+        heading over its own figures with room to breathe.
+      */}
+      <table className="w-full table-fixed border-collapse">
+        <colgroup>
+          {columns.map((c) => (
+            <col key={c} style={{ width: `${100 / columns.length}%` }} />
+          ))}
+        </colgroup>
         <thead className="sticky top-0 z-10">
           <tr>
-            {columns.map((c, j) => (
-              // Everything after the name column is a figure: it takes the
-              // width of its own heading and no more, so the numbers sit
-              // beside their dividing lines instead of drifting across an
-              // empty third of the table.
-              <Th key={c} className={cn(j > 0 && 'w-px')}>
-                {c}
-              </Th>
+            {columns.map((c) => (
+              <Th key={c}>{c}</Th>
             ))}
           </tr>
         </thead>
@@ -55,7 +60,9 @@ export function StatTable({
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
-                <Td key={j} className={cn(j > 0 && 'whitespace-nowrap tabular-nums')}>
+                // A long name wraps rather than being cut off; the figures
+                // never need to, so they keep their line.
+                <Td key={j} className={cn(j === 0 ? 'break-words' : 'whitespace-nowrap tabular-nums')}>
                   {cell}
                 </Td>
               ))}
