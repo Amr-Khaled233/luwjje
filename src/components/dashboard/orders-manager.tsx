@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, Eye, Loader2 } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { Select } from '@/components/ui/field';
 import { StatusBadge, EmptyState, Divider } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
@@ -147,14 +147,32 @@ export function OrdersManager({
                 <Th>{d.orders.items}</Th>
                 <Th>{d.common.total}</Th>
                 <Th>{d.common.status}</Th>
-                <Th>{d.common.actions}</Th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((o) => (
-                <tr key={o.id} className="transition-colors hover:bg-surface-low">
+                /*
+                  The whole row opens the order — an icon at the end of it was
+                  a small target for something you do to every row you look at.
+                  It is focusable and answers Enter/Space, so the keyboard gets
+                  the same thing the mouse does.
+                */
+                <tr
+                  key={o.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
+                  onClick={() => setOpen(o)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpen(o);
+                    }
+                  }}
+                  className="cursor-pointer transition-colors hover:bg-surface-low focus-visible:bg-surface-low focus-visible:outline focus-visible:outline-1 focus-visible:outline-navy"
+                >
                   <Td>
-                    <span className="font-display text-body-lg">{o.orderNumber}</span>
+                    <span className="text-label-md">{o.orderNumber}</span>
                   </Td>
                   <Td>
                     <p className="text-label-md">{o.fullName}</p>
@@ -170,8 +188,13 @@ export function OrdersManager({
                     {o.items.reduce((s, i) => s + i.quantity, 0)}
                   </Td>
                   <Td className="tabular-nums">{formatPrice(o.total, currencySymbol)}</Td>
+                  {/* The status control belongs to the cell, not to the row. */}
                   <Td>
-                    <div className="flex items-center gap-2">
+                    <div
+                      className="flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <select
                         value={o.status}
                         onChange={(e) => changeStatus(o.id, e.target.value)}
@@ -188,17 +211,6 @@ export function OrdersManager({
                       {pendingId === o.id && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-secondary" />
                       )}
-                    </div>
-                  </Td>
-                  <Td>
-                    <div className="flex justify-start">
-                      <button
-                        onClick={() => setOpen(o)}
-                        aria-label={`${d.orders.viewOrder} ${o.orderNumber}`}
-                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </button>
                     </div>
                   </Td>
                 </tr>
@@ -344,7 +356,9 @@ export function OrdersManager({
                 )}
                 <div className="mt-2 flex items-baseline justify-between border-t border-outline-variant pt-4">
                   <dt className="label-caps text-secondary">{d.common.total}</dt>
-                  <dd className="font-display text-headline-sm">
+                  {/* Same face as every other figure in the dashboard — only
+                      larger. A serif here read as a different kind of number. */}
+                  <dd className="text-[22px] font-medium leading-none tabular-nums">
                     {formatPrice(open.total, currencySymbol)}
                   </dd>
                 </div>

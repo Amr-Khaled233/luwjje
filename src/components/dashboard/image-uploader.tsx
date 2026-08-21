@@ -100,6 +100,8 @@ export function ImageUploader({
           {uploading ? d.images.uploading : d.images.drop}
         </p>
         <p className="mt-1 text-body-sm text-tertiary">{d.images.formats}</p>
+        {/* The one thing worth knowing before picking a photo. */}
+        <p className="mt-1 text-body-sm text-tertiary">{d.images.bestSize}</p>
         <input
           ref={inputRef}
           type="file"
