@@ -1,10 +1,9 @@
 'use client';
 
-import { format } from 'date-fns';
 import { StatTable } from './stat-table';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, formatDate } from '@/lib/utils';
 
 interface Point {
   date: string;
@@ -58,7 +57,7 @@ export function RevenueTable({
       <StatTable
         columns={[a.dateCol, `${a.revenue} (${currencySymbol})`, a.ordersCol]}
         rows={data.map((d) => [
-          format(new Date(d.date), 'd MMM yyyy'),
+          formatDate(new Date(d.date), locale),
           d.revenue.toFixed(2),
           d.orders,
         ])}

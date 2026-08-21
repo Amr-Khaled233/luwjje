@@ -1,19 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { Th, Td } from './admin-ui';
 import { cn } from '@/lib/utils';
 
 /**
  * The table every figure on Analytics is read from.
  *
- * Built on the same `Th`/`Td` as the Orders and Products tables so a number
- * here sits exactly where a number sits everywhere else in the dashboard:
- * headings and values share one margin, and nothing is centred or pushed to
- * the far edge.
- *
- * It scrolls inside its own box rather than stretching the card, and the
- * heading row stays put while it does.
+ * `border-separate`, not `border-collapse`: the header is sticky, and a
+ * collapsed border does not travel with a sticky cell — which is what left
+ * the Revenue table with a header that lost its rules the moment it scrolled,
+ * and column dividers that came and went. With separate borders every cell
+ * carries its own, so the grid is whole whether or not the body has scrolled,
+ * and it mirrors cleanly in Arabic because the sides are logical (`-e`).
  */
 export function StatTable({
   columns,
@@ -24,6 +22,8 @@ export function StatTable({
   rows: (string | number)[][];
   className?: string;
 }) {
+  const width = `${100 / columns.length}%`;
+
   return (
     <div
       className={cn(
@@ -31,40 +31,48 @@ export function StatTable({
         className,
       )}
     >
-      {/*
-        Fixed layout with every column the same share of the width. Left to
-        itself the browser gives the text column everything and squeezes the
-        figures against the end of the table; three even columns keep each
-        heading over its own figures with room to breathe.
-      */}
-      <table className="w-full table-fixed border-collapse">
+      <table className="w-full table-fixed border-separate border-spacing-0">
         <colgroup>
           {columns.map((c) => (
-            <col key={c} style={{ width: `${100 / columns.length}%` }} />
+            <col key={c} style={{ width }} />
           ))}
         </colgroup>
-        <thead className="sticky top-0 z-10">
+        <thead>
           <tr>
-            {columns.map((c) => (
-              <Th key={c}>{c}</Th>
+            {columns.map((c, j) => (
+              <th
+                key={c}
+                scope="col"
+                className={cn(
+                  'label-caps sticky top-0 z-10 whitespace-nowrap border-b border-outline-variant bg-surface-low px-3 py-3 text-start text-secondary md:px-4',
+                  // Vertical divider on the end side of every column but the last.
+                  j < columns.length - 1 && 'border-e border-outline-variant',
+                )}
+              >
+                {c}
+              </th>
             ))}
           </tr>
         </thead>
-        {/*
-          The rule between rows is drawn by the row, not by its cells — a
-          cell-level border can stop short at a column that has nothing to
-          draw against, which left the last column's figures running into
-          each other.
-        */}
-        <tbody className="divide-y divide-outline-variant [&>tr:last-child>td]:border-b-0">
+        <tbody>
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
-                // A long name wraps rather than being cut off; the figures
-                // never need to, so they keep their line.
-                <Td key={j} className={cn(j === 0 ? 'break-words' : 'whitespace-nowrap tabular-nums')}>
+                <td
+                  key={j}
+                  className={cn(
+                    'px-3 py-3 align-middle text-body-sm md:px-4 md:py-4 md:text-body-md',
+                    // Row rule under every row but the last.
+                    i < rows.length - 1 && 'border-b border-outline-variant',
+                    // Column rule on the end side of every column but the last.
+                    j < columns.length - 1 && 'border-e border-outline-variant',
+                    // A long name wraps; the figures keep their line and align
+                    // on their digits.
+                    j === 0 ? 'break-words' : 'whitespace-nowrap tabular-nums',
+                  )}
+                >
                   {cell}
-                </Td>
+                </td>
               ))}
             </tr>
           ))}
