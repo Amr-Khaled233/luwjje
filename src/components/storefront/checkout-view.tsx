@@ -391,7 +391,7 @@ export function CheckoutView({
             <Divider className="my-5" />
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="label-caps text-secondary">{t.cart.total}</span>
-              <span className="font-display text-headline-sm tabular-nums sm:text-headline-md">
+              <span className="text-headline-sm font-medium tabular-nums sm:text-headline-md">
                 {formatPrice(pricing.total, currencySymbol, locale)}
               </span>
             </div>

@@ -164,7 +164,7 @@ export default async function OrderConfirmationPage({
               )}
               <div className="mt-2 flex items-baseline justify-between border-t border-outline-variant pt-4">
                 <dt className="label-caps text-secondary">{t.cart.total}</dt>
-                <dd className="font-display text-headline-sm">
+                <dd className="text-headline-sm font-medium tabular-nums">
                   {formatPrice(order.total, symbol, locale)}
                 </dd>
               </div>

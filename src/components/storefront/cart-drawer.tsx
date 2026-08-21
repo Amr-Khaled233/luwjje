@@ -152,7 +152,7 @@ export function CartDrawer({
             <footer className="shrink-0 border-t border-outline-variant px-margin-mobile py-4 pb-safe sm:px-6 sm:py-5">
               <div className="mb-3 flex items-baseline justify-between gap-3 sm:mb-4">
                 <span className="label-caps text-secondary">{t.cart.subtotal}</span>
-                <span className="font-display text-title-md tabular-nums sm:text-headline-sm">
+                <span className="text-title-md font-medium tabular-nums sm:text-headline-sm">
                   {formatPrice(subtotal, currencySymbol, locale)}
                 </span>
               </div>
