@@ -186,8 +186,8 @@ async function main() {
   console.log('\n▸ Dashboard analytics');
   const stats = await getOverviewStats(periodFromDays(30));
   check('sales figure computed', stats.sales > 0, stats.sales);
-  check('conversion rate computed', stats.conversion > 0, stats.conversion);
-  check('inventory level is a percentage', stats.inventoryLevel >= 0 && stats.inventoryLevel <= 100, stats.inventoryLevel);
+  check('order count computed', stats.orderCount > 0, stats.orderCount);
+  check('the currency comes from settings', Boolean(stats.currencySymbol), stats.currencySymbol);
 
   const series = await getRevenueSeries(periodFromDays(30));
   check('revenue series is gap-filled to 30 points', series.length === 30, series.length);

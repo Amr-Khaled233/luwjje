@@ -34,19 +34,28 @@ export function StatTable({
       <table className="w-full border-collapse">
         <thead className="sticky top-0 z-10">
           <tr>
-            {columns.map((c) => (
-              <Th key={c}>{c}</Th>
+            {columns.map((c, j) => (
+              // Everything after the name column is a figure: it takes the
+              // width of its own heading and no more, so the numbers sit
+              // beside their dividing lines instead of drifting across an
+              // empty third of the table.
+              <Th key={c} className={cn(j > 0 && 'w-px')}>
+                {c}
+              </Th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        {/*
+          The rule between rows is drawn by the row, not by its cells — a
+          cell-level border can stop short at a column that has nothing to
+          draw against, which left the last column's figures running into
+          each other.
+        */}
+        <tbody className="divide-y divide-outline-variant [&>tr:last-child>td]:border-b-0">
           {rows.map((row, i) => (
-            <tr key={i} className="last:[&>td]:border-b-0">
+            <tr key={i}>
               {row.map((cell, j) => (
-                // Figures are read down a column, so they are lined up on
-                // their digits — the label above them still starts at the
-                // same margin as the column itself.
-                <Td key={j} className={cn(j > 0 && 'tabular-nums')}>
+                <Td key={j} className={cn(j > 0 && 'whitespace-nowrap tabular-nums')}>
                   {cell}
                 </Td>
               ))}

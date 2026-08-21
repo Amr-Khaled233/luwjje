@@ -2,13 +2,11 @@ import {
   subDays,
   startOfDay,
   endOfDay,
-  differenceInCalendarDays,
   format,
   eachDayOfInterval,
 } from 'date-fns';
 import { prisma } from './prisma';
 import { getSettings } from './settings';
-import { percentChange } from './utils';
 
 /** Orders that count as revenue — cancelled ones never do. */
 const REVENUE_STATUSES = ['PENDING', 'SHIPPED', 'DELIVERED'];
@@ -31,70 +29,30 @@ export function periodFromDays(days = 30): Period {
   return { start: startOfDay(subDays(now, days - 1)), end: endOfDay(now) };
 }
 
-/** The equally long window immediately before, for the change figures. */
-function priorPeriod({ start, end }: Period): Period {
-  const length = differenceInCalendarDays(end, start) + 1;
-  return { start: startOfDay(subDays(start, length)), end: endOfDay(subDays(start, 1)) };
-}
-
+/**
+ * What the period sold, and how many orders it took.
+ *
+ * Three figures, because three are what the page shows. It used to also work
+ * out the change against the previous window, a conversion rate and a session
+ * count — five extra queries on every page load for numbers nobody read.
+ */
 export async function getOverviewStats(period: Period = periodFromDays()) {
   const { start: periodStart, end: periodEnd } = period;
-  const { start: priorStart, end: priorEnd } = priorPeriod(period);
 
-  const [current, prior, activeOrders, variants, currentViews, priorViews, settings] =
-    await Promise.all([
-      prisma.order.findMany({
-        where: {
-          createdAt: { gte: periodStart, lte: periodEnd },
-          status: { in: REVENUE_STATUSES },
-        },
-        select: { total: true, createdAt: true },
-      }),
-      prisma.order.findMany({
-        where: {
-          createdAt: { gte: priorStart, lte: priorEnd },
-          status: { in: REVENUE_STATUSES },
-        },
-        select: { total: true },
-      }),
-      prisma.order.count({ where: { status: { in: ['PENDING', 'SHIPPED'] } } }),
-      prisma.productVariant.findMany({ select: { stock: true, lowStockAt: true } }),
-      prisma.pageView.groupBy({
-        by: ['sessionId'],
-        where: { createdAt: { gte: periodStart, lte: periodEnd } },
-        _count: true,
-      }),
-      prisma.pageView.groupBy({
-        by: ['sessionId'],
-        where: { createdAt: { gte: priorStart, lte: priorEnd } },
-        _count: true,
-      }),
-      getSettings(),
-    ]);
-
-  const sales = current.reduce((s, o) => s + o.total, 0);
-  const priorSales = prior.reduce((s, o) => s + o.total, 0);
-
-  // Inventory level = share of SKUs sitting above their own low-stock mark.
-  const healthy = variants.filter((v) => v.stock > v.lowStockAt).length;
-  const inventoryLevel = variants.length ? (healthy / variants.length) * 100 : 0;
-
-  const sessions = currentViews.length;
-  const priorSessions = priorViews.length;
-  const conversion = sessions ? (current.length / sessions) * 100 : 0;
-  const priorConversion = priorSessions ? (prior.length / priorSessions) * 100 : 0;
+  const [orders, settings] = await Promise.all([
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: periodStart, lte: periodEnd },
+        status: { in: REVENUE_STATUSES },
+      },
+      select: { total: true },
+    }),
+    getSettings(),
+  ]);
 
   return {
-    sales,
-    salesChange: percentChange(sales, priorSales),
-    orderCount: current.length,
-    activeOrders,
-    ordersChange: percentChange(current.length, prior.length),
-    inventoryLevel,
-    lowStockCount: variants.filter((v) => v.stock <= v.lowStockAt).length,
-    conversion,
-    conversionChange: percentChange(conversion, priorConversion),
-    sessions,
+    sales: orders.reduce((s, o) => s + o.total, 0),
+    orderCount: orders.length,
     currencySymbol: settings.currencySymbol,
   };
 }

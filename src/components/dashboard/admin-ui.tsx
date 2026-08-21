@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function PageHeader({
@@ -29,37 +28,24 @@ export function PageHeader({
 export function StatCard({
   label,
   value,
-  change,
   hint,
   className,
 }: {
   label: string;
   value: string;
-  change?: number;
+  /** A word about what the figure counts. Nothing is drawn without one. */
   hint?: string;
   className?: string;
 }) {
-  const up = (change ?? 0) >= 0;
   return (
     <div className={cn('animate-fade-up border border-outline-variant bg-surface-lowest p-5 md:p-6', className)}>
       <p className="label-caps text-secondary">{label}</p>
       {/* Sans + proportional figures: a serif display face on a stat value
           reads as decoration, and tabular-nums looks loose at this size. */}
       <p className="mt-3 text-[26px] font-normal leading-none tracking-tight md:mt-4 md:text-[32px]">{value}</p>
-      <div className="mt-4 flex items-center gap-2">
-        {change !== undefined && (
-          <span
-            className={cn(
-              'flex items-center gap-1 text-body-sm',
-              up ? 'text-on-surface' : 'text-error',
-            )}
-          >
-            {up ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-            {Math.abs(change).toFixed(1)}%
-          </span>
-        )}
-        {hint && <span className="text-body-sm text-tertiary">{hint}</span>}
-      </div>
+      {/* Only when there is something to say — an empty strip of padding
+          under a lone figure makes the card look like it failed to load. */}
+      {hint && <p className="mt-4 text-body-sm text-tertiary">{hint}</p>}
     </div>
   );
 }

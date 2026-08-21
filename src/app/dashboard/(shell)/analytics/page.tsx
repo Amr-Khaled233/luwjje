@@ -68,26 +68,11 @@ export default async function AdminAnalyticsPage({
         }}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={d.analytics.revenue}
-          value={formatPrice(stats.sales, symbol)}
-          change={stats.salesChange}
-          hint={d.analytics.vsPrevious}
-        />
-        <StatCard
-          label={d.analytics.orders}
-          value={String(stats.orderCount)}
-          change={stats.ordersChange}
-          hint={d.analytics.vsPrevious}
-        />
+      {/* Three figures, three columns — nothing is left standing in a gap. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label={d.analytics.revenue} value={formatPrice(stats.sales, symbol)} />
+        <StatCard label={d.analytics.orders} value={String(stats.orderCount)} />
         <StatCard label={d.analytics.averageOrderValue} value={formatPrice(aov, symbol)} />
-        <StatCard
-          label={d.analytics.conversionRate}
-          value={`${stats.conversion.toFixed(2)}%`}
-          change={stats.conversionChange}
-          hint={fmt(d.analytics.sessions, { n: stats.sessions })}
-        />
       </div>
 
       <Panel bodyClassName="p-4 md:p-6">
