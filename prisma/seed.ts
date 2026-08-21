@@ -20,8 +20,6 @@ async function main() {
   await prisma.pageView.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
-  await prisma.discountProduct.deleteMany();
-  await prisma.discount.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();

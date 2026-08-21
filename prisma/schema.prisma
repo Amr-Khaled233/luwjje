@@ -56,11 +56,10 @@ model Product {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  category   Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   images     ProductImage[]
   variants   ProductVariant[]
   orderItems OrderItem[]
-  discounts  DiscountProduct[]
 
   @@index([status])
   @@index([isBestSeller])
@@ -209,33 +208,6 @@ model FreeShippingRule {
   createdAt DateTime  @default(now())
 
   @@index([active])
-}
-
-/// Automatic (non-code) discount campaign scoped to products or a category.
-model Discount {
-  id            String    @id @default(cuid())
-  name          String
-  nameAr        String    @default("")
-  discountType  String    @default("PERCENT") // PERCENT | FIXED
-  discountValue Float
-  scope         String    @default("PRODUCTS") // PRODUCTS | CATEGORY | ALL
-  categoryId    String?
-  startsAt      DateTime?
-  endsAt        DateTime?
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-
-  products DiscountProduct[]
-}
-
-model DiscountProduct {
-  discountId String
-  productId  String
-
-  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@id([discountId, productId])
 }
 
 // ---------------------------------------------------------------- shipping

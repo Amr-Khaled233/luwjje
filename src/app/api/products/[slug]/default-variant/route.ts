@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { applyDiscount, getActiveDiscountMap } from '@/lib/commerce';
 
 /**
  * Resolves the first in-stock variant for Quick Add. Price comes from the
@@ -24,13 +23,7 @@ export async function GET(_req: Request, { params }: { params: { slug: string } 
     return NextResponse.json({ error: 'Out of stock' }, { status: 409 });
   }
 
-  const discounts = await getActiveDiscountMap();
-  const { price } = applyDiscount(
-    variant.priceOverride ?? product.price,
-    product.id,
-    product.categoryId,
-    discounts,
-  );
+  const price = variant.priceOverride ?? product.price;
   const image = product.images.find((i) => i.isPrimary) ?? product.images[0];
 
   return NextResponse.json({

@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Pencil, Trash2, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input, Textarea, Select, Checkbox, FieldLabel } from '@/components/ui/field';
+import { Input, Checkbox } from '@/components/ui/field';
 import { StatusBadge, EmptyState } from '@/components/ui/primitives';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { ImageUploader } from '@/components/dashboard/image-uploader';
@@ -16,18 +16,11 @@ import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { bannerSchema, discountSchema } from '@/lib/validations';
-import {
-  saveBanner,
-  deleteBanner,
-  saveDiscount,
-  deleteDiscount,
-  savePaletteSwatches,
-} from '@/app/actions/dashboard';
+import { bannerSchema } from '@/lib/validations';
+import { saveBanner, deleteBanner, savePaletteSwatches } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
 type BannerInput = z.infer<typeof bannerSchema>;
-type DiscountInput = z.infer<typeof discountSchema>;
 
 interface Swatch {
   name: string;
@@ -55,30 +48,12 @@ const EMPTY_BANNER: BannerInput = {
   position: 0,
 };
 
-const EMPTY_DISCOUNT: DiscountInput = {
-  name: '',
-  nameAr: '',
-  discountType: 'PERCENT',
-  discountValue: 10,
-  scope: 'PRODUCTS',
-  categoryId: '',
-  productIds: [],
-  startsAt: '',
-  endsAt: '',
-  active: true,
-};
 
 export function OffersManager({
   banners,
-  discounts,
-  products,
-  categories,
   swatches: initialSwatches,
 }: {
   banners: BannerInput[];
-  discounts: DiscountInput[];
-  products: { id: string; name: string }[];
-  categories: { id: string; name: string }[];
   swatches: Swatch[];
 }) {
   const router = useRouter();
@@ -89,22 +64,12 @@ export function OffersManager({
     open: false,
     data: null,
   });
-  const [discountModal, setDiscountModal] = React.useState<{
-    open: boolean;
-    data: DiscountInput | null;
-  }>({ open: false, data: null });
-  const [confirm, setConfirm] = React.useState<{ kind: 'banner' | 'discount'; id: string } | null>(
-    null,
-  );
+  const [confirm, setConfirm] = React.useState<{ kind: 'banner'; id: string } | null>(null);
   const [pending, setPending] = React.useState(false);
 
   const bannerForm = useForm<BannerInput>({
     resolver: zodResolver(bannerSchema),
     defaultValues: EMPTY_BANNER,
-  });
-  const discountForm = useForm<DiscountInput>({
-    resolver: zodResolver(discountSchema),
-    defaultValues: EMPTY_DISCOUNT,
   });
 
   const [swatches, setSwatches] = React.useState<Swatch[]>(initialSwatches);
@@ -128,12 +93,6 @@ export function OffersManager({
     setBannerModal({ open: true, data });
   }
 
-  function openDiscount(data: DiscountInput | null) {
-    discountForm.reset(data ?? EMPTY_DISCOUNT);
-    setDiscountModal({ open: true, data });
-  }
-
-  const scope = discountForm.watch('scope');
   const bannerSlot = bannerForm.watch('slot');
   const bannerImage = bannerForm.watch('imageUrl');
 
@@ -241,72 +200,6 @@ export function OffersManager({
             <p className="text-body-sm text-secondary">{d.offers.noOffer}</p>
           ) : (
             <ul className="flex flex-col gap-4">{offerBanners.map(bannerCard)}</ul>
-          )}
-        </div>
-      </section>
-
-      {/* -------------------------------------------------- campaigns */}
-      <section className="border border-outline-variant bg-surface-lowest">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
-          <div>
-            <h2 className="font-display text-headline-sm">{d.offers.campaigns}</h2>
-            <p className="mt-1.5 text-body-sm text-secondary">
-              {d.offers.campaignsHint}
-            </p>
-          </div>
-        </header>
-
-        <div className="p-6">
-          {discounts.length === 0 ? (
-            <EmptyState
-              title={d.offers.noCampaigns}
-              body={d.offers.noCampaignsBody}
-              className="border-0"
-            />
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {discounts.map((campaign) => (
-                <li
-                  key={campaign.id}
-                  className="flex flex-wrap items-center gap-4 border border-outline-variant p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-3 text-label-md">
-                      {campaign.name}
-                      <StatusBadge status={campaign.active ? 'ACTIVE' : 'DISABLED'} />
-                    </p>
-                    <p className="mt-1 text-body-sm text-secondary">
-                      {campaign.discountType === 'PERCENT'
-                        ? `${campaign.discountValue}% off`
-                        : `$${campaign.discountValue.toFixed(2)} off`}{' '}
-                      ·{' '}
-                      {campaign.scope === 'ALL'
-                        ? 'the whole catalogue'
-                        : campaign.scope === 'CATEGORY'
-                          ? categories.find((c) => c.id === campaign.categoryId)?.name ?? 'a category'
-                          : `${campaign.productIds.length} products`}
-                      {(campaign.startsAt || campaign.endsAt) && ` · ${campaign.startsAt || '…'} to ${campaign.endsAt || '…'}`}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openDiscount(campaign)}
-                      aria-label={`${d.common.edit} — ${d.offers.campaignName}`}
-                      className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setConfirm({ kind: 'discount', id: campaign.id! })}
-                      aria-label={`${d.common.delete} — ${d.offers.campaignName}`}
-                      className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-error hover:text-error"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
           )}
         </div>
       </section>
@@ -570,155 +463,16 @@ export function OffersManager({
         </form>
       </Modal>
 
-      {/* -------------------------------------------------- discount modal */}
-      <Modal
-        open={discountModal.open}
-        onClose={() => setDiscountModal({ open: false, data: null })}
-        title={discountModal.data ? `${d.common.edit} — ${d.offers.campaignName}` : d.offers.newCampaign}
-        description={d.offers.campaignHint}
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setDiscountModal({ open: false, data: null })}
-            >{d.common.cancel}</Button>
-            <Button
-              disabled={discountForm.formState.isSubmitting}
-              onClick={discountForm.handleSubmit(async (values) => {
-                const ok = await run(() => saveDiscount(values), d.offers.campaignSaved);
-                if (ok) setDiscountModal({ open: false, data: null });
-              })}
-            >
-              {discountForm.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> {d.common.saving}
-                </>
-              ) : (
-                d.offers.saveCampaign
-              )}
-            </Button>
-          </>
-        }
-      >
-        <form className="flex flex-col gap-6" noValidate>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Controller
-              control={discountForm.control}
-              name="name"
-              render={({ field: en }) => (
-                <Controller
-                  control={discountForm.control}
-                  name="nameAr"
-                  render={({ field: ar }) => (
-                    <BilingualField
-                      label={d.offers.campaignName}
-                      required
-                      className="md:col-span-2"
-                      english={{ value: en.value, onChange: en.onChange }}
-                      arabic={{ value: ar.value, onChange: ar.onChange }}
-                      errorEn={discountForm.formState.errors.name?.message}
-                      errorAr={discountForm.formState.errors.nameAr?.message}
-                    />
-                  )}
-                />
-              )}
-            />
-            <Select label={d.common.type} {...discountForm.register('discountType')}>
-              <option value="PERCENT">{d.common.percentOff}</option>
-              <option value="FIXED">{d.common.fixedOff}</option>
-            </Select>
-            <Input
-              label={d.common.value}
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              error={discountForm.formState.errors.discountValue?.message}
-              {...discountForm.register('discountValue')}
-            />
-            <Select label={d.offers.appliesTo} {...discountForm.register('scope')}>
-              <option value="PRODUCTS">{d.offers.selectedProducts}</option>
-              <option value="CATEGORY">{d.offers.wholeCategory}</option>
-              <option value="ALL">{d.offers.entireCatalogue}</option>
-            </Select>
-            {scope === 'CATEGORY' && (
-              <Select label={d.products.category} {...discountForm.register('categoryId')}>
-                <option value="">{d.offers.chooseCategory}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-            <Input label={d.common.startsOn} type="date" {...discountForm.register('startsAt')} />
-            <Input label={d.common.endsOn} type="date" {...discountForm.register('endsAt')} />
-          </div>
-
-          {scope === 'PRODUCTS' && (
-            <div>
-              <FieldLabel>{d.offers.productsLabel}</FieldLabel>
-              <Controller
-                control={discountForm.control}
-                name="productIds"
-                render={({ field }) => (
-                  <div className="max-h-64 overflow-y-auto border border-outline-variant">
-                    {products.map((p) => (
-                      <label
-                        key={p.id}
-                        className={cn(
-                          'flex cursor-pointer items-center gap-3 border-b border-outline-variant px-4 py-2.5 transition-colors last:border-b-0 hover:bg-surface-low',
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={field.value.includes(p.id)}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.checked
-                                ? [...field.value, p.id]
-                                : field.value.filter((id: string) => id !== p.id),
-                            )
-                          }
-                          className="h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-sm border border-outline-variant checked:border-navy checked:bg-navy"
-                        />
-                        <span className="text-body-md">{p.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              />
-            </div>
-          )}
-
-          <Controller
-            control={discountForm.control}
-            name="active"
-            render={({ field }) => (
-              <Checkbox
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                label={d.common.active}
-              />
-            )}
-          />
-        </form>
-      </Modal>
-
       <ConfirmDialog
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         pending={pending}
-        title={confirm?.kind === 'banner' ? d.offers.deleteBanner : d.offers.deleteCampaign}
-        body={
-          confirm?.kind === 'banner'
-            ? d.offers.deleteBannerBody
-            : d.offers.deleteCampaignBody
-        }
+        title={d.offers.deleteBanner}
+        body={d.offers.deleteBannerBody}
         onConfirm={async () => {
           if (!confirm) return;
           const ok = await run(
-            () => (confirm.kind === 'banner' ? deleteBanner(confirm.id) : deleteDiscount(confirm.id)),
+            () => deleteBanner(confirm.id),
             d.common.deleted,
           );
           if (ok) setConfirm(null);

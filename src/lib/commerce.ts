@@ -21,58 +21,6 @@ export interface ResolvedLine {
 }
 
 /**
- * Automatic (non-code) campaigns currently in their window, indexed for
- * fast lookup while pricing a basket or rendering a grid.
- */
-export async function getActiveDiscountMap() {
-  const now = new Date();
-  const campaigns = await prisma.discount.findMany({
-    where: { active: true },
-    include: { products: { select: { productId: true } } },
-  });
-
-  const live = campaigns.filter(
-    (c) => (!c.startsAt || c.startsAt <= now) && (!c.endsAt || c.endsAt >= now),
-  );
-
-  return {
-    byProduct: new Map(
-      live
-        .filter((c) => c.scope === 'PRODUCTS')
-        .flatMap((c) => c.products.map((p) => [p.productId, c] as const)),
-    ),
-    byCategory: new Map(
-      live.filter((c) => c.scope === 'CATEGORY' && c.categoryId).map((c) => [c.categoryId!, c] as const),
-    ),
-    global: live.find((c) => c.scope === 'ALL') ?? null,
-  };
-}
-
-export type DiscountMap = Awaited<ReturnType<typeof getActiveDiscountMap>>;
-
-/** Applies the best matching campaign to a list price. */
-export function applyDiscount(
-  price: number,
-  productId: string,
-  categoryId: string | null,
-  map: DiscountMap,
-) {
-  const campaign =
-    map.byProduct.get(productId) ??
-    (categoryId ? map.byCategory.get(categoryId) : undefined) ??
-    map.global;
-  if (!campaign) return { price, discounted: false, campaignName: null as string | null };
-
-  const next =
-    campaign.discountType === 'PERCENT'
-      ? price * (1 - campaign.discountValue / 100)
-      : price - campaign.discountValue;
-
-  const final = Math.max(0, Math.round(next * 100) / 100);
-  return { price: final, discounted: final < price, campaignName: campaign.name };
-}
-
-/**
  * Turns client-side cart lines into server-verified rows. This is the single
  * source of truth for price and stock — the browser's copy is only a cache.
  */
@@ -86,7 +34,6 @@ export async function resolveCartLines(
     include: { product: { include: { images: { orderBy: { position: 'asc' } } } } },
   });
 
-  const discounts = await getActiveDiscountMap();
   const byId = new Map(variants.map((v) => [v.id, v]));
   const resolved: ResolvedLine[] = [];
 
@@ -96,7 +43,7 @@ export async function resolveCartLines(
     if (!v || v.product.status !== 'PUBLISHED') continue;
 
     const listPrice = v.priceOverride ?? v.product.price;
-    const { price } = applyDiscount(listPrice, v.productId, v.product.categoryId, discounts);
+    const price = listPrice;
     const primary = v.product.images.find((i) => i.isPrimary) ?? v.product.images[0];
 
     const quantity = Math.min(line.quantity, v.stock);

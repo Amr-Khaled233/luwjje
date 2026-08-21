@@ -320,7 +320,7 @@ export function OrderEditor({
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s.charAt(0) + s.slice(1).toLowerCase()}
+              {d.orders.statusLabels[s] ?? s}
             </option>
           ))}
         </Select>

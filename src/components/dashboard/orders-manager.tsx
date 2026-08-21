@@ -99,7 +99,7 @@ export function OrdersManager({
     toast(
       next === 'CANCELLED'
         ? d.orders.cancelledReturnsStock
-        : fmt(d.orders.markedAs, { status: next.toLowerCase() }),
+        : fmt(d.orders.markedAs, { status: d.orders.statusLabels[next] ?? next }),
     );
     setOpen((current) => (current ? { ...current, status: next } : null));
     router.refresh();
@@ -127,7 +127,7 @@ export function OrdersManager({
           <option value="">{d.orders.allStatuses}</option>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s.charAt(0) + s.slice(1).toLowerCase()}
+              {d.orders.statusLabels[s] ?? s}
             </option>
           ))}
         </Select>
@@ -204,7 +204,7 @@ export function OrdersManager({
                       >
                         {ORDER_STATUSES.map((s) => (
                           <option key={s} value={s}>
-                            {s.charAt(0) + s.slice(1).toLowerCase()}
+                            {d.orders.statusLabels[s] ?? s}
                           </option>
                         ))}
                       </select>
@@ -255,7 +255,7 @@ export function OrdersManager({
             <div className="flex flex-wrap items-end gap-6">
               <div>
                 <p className="label-caps mb-2 text-secondary">{d.common.status}</p>
-                <StatusBadge status={open.status} />
+                <StatusBadge status={open.status} label={d.orders.statusLabels[open.status] ?? open.status} />
               </div>
               <div className="ms-auto">
                 <label htmlFor="detail-status" className="label-caps mb-2 block text-secondary">
@@ -269,7 +269,7 @@ export function OrdersManager({
                 >
                   {ORDER_STATUSES.map((s) => (
                     <option key={s} value={s}>
-                      {s.charAt(0) + s.slice(1).toLowerCase()}
+                      {d.orders.statusLabels[s] ?? s}
                     </option>
                   ))}
                 </select>

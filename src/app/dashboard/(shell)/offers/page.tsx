@@ -5,17 +5,8 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOffersPage() {
-  const [banners, discounts, products, categories, swatches] = await Promise.all([
+  const [banners, swatches] = await Promise.all([
     prisma.banner.findMany({ orderBy: [{ slot: 'asc' }, { position: 'asc' }] }),
-    prisma.discount.findMany({
-      include: { products: { select: { productId: true } } },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.product.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.category.findMany({ select: { id: true, name: true }, orderBy: { position: 'asc' } }),
     prisma.paletteSwatch.findMany({ orderBy: { position: 'asc' } }),
   ]);
 
@@ -47,21 +38,6 @@ export default async function AdminOffersPage() {
           endsAt: iso(b.endsAt),
           position: b.position,
         }))}
-        discounts={discounts.map((d) => ({
-          id: d.id,
-          name: d.name,
-          nameAr: d.nameAr,
-          discountType: d.discountType as 'PERCENT' | 'FIXED',
-          discountValue: d.discountValue,
-          scope: d.scope as 'PRODUCTS' | 'CATEGORY' | 'ALL',
-          categoryId: d.categoryId ?? '',
-          productIds: d.products.map((p) => p.productId),
-          startsAt: iso(d.startsAt),
-          endsAt: iso(d.endsAt),
-          active: d.active,
-        }))}
-        products={products}
-        categories={categories}
         swatches={swatches.map((s) => ({ name: s.name, hex: s.hex }))}
       />
     </div>

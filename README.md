@@ -176,7 +176,7 @@ if the password is lost.
 | `/dashboard/categories` | Rename, reorder, translate, and show or hide each category in the Shop filter |
 | `/dashboard/stock` | Every SKU grouped by product and colour, inline quantity edit, amber under ten and red at zero |
 | `/dashboard/orders` | All orders, detail view, status changes (cancelling returns stock) |
-| `/dashboard/offers` | Hero banner, promo block, discount campaigns, home-page colour palette |
+| `/dashboard/offers` | Hero banner, promo block, home-page colour palette |
 | `/dashboard/shipping` | A delivery price per governorate (all 27), editable as one grid, plus per-governorate free-shipping thresholds |
 | `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
@@ -195,7 +195,7 @@ There is no content in the codebase. Each storefront section reads a table:
 | Hero, offer block | `Banner` (with optional start/end dates) |
 | Best Sellers row | `Product.isBestSeller` + `bestSellerOrder` |
 | Shop grid, product pages | `Product` / `ProductVariant` / `ProductImage` |
-| Prices shown | `Product.price`, adjusted by any live `Discount` |
+| Prices shown | `Product.price`, with `compareAtPrice` struck through when set |
 | Colour palette strip | `PaletteSwatch` |
 | Cart promo field | `PromoCode` |
 | Delivery cost & free-over | `Governorate`, falling back to `SiteSettings` |

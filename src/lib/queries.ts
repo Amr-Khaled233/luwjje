@@ -1,5 +1,4 @@
 import { prisma } from './prisma';
-import { applyDiscount, getActiveDiscountMap } from './commerce';
 import { pick, type Locale } from '@/i18n/config';
 import type { Prisma } from '@prisma/client';
 
@@ -39,14 +38,10 @@ const cardInclude = {
 
 type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
 
-function toCard(
-  p: ProductWithRelations,
-  discounts: Awaited<ReturnType<typeof getActiveDiscountMap>>,
-  locale: Locale,
-): ProductCardData {
+function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
   const hover = p.images.find((i) => i.isHover) ?? p.images[1] ?? null;
-  const { price } = applyDiscount(p.price, p.id, p.categoryId, discounts);
+  const price = p.price;
   const listPrice = strikeThrough(p.price, p.compareAtPrice, price);
 
   // De-duplicate colourways (a colour may span several sizes).
@@ -72,7 +67,6 @@ function toCard(
 }
 
 export async function getBestSellers(locale: Locale, limit = 4): Promise<ProductCardData[]> {
-  const discounts = await getActiveDiscountMap();
   const flagged = await prisma.product.findMany({
     where: { status: 'PUBLISHED', isBestSeller: true },
     include: cardInclude,
@@ -82,7 +76,7 @@ export async function getBestSellers(locale: Locale, limit = 4): Promise<Product
 
   // Fall back to actual sales only when nothing has been curated at all —
   // a deliberate selection of two should show two, not two plus filler.
-  if (flagged.length > 0) return flagged.map((p) => toCard(p, discounts, locale));
+  if (flagged.length > 0) return flagged.map((p) => toCard(p, locale));
 
   const filler = await prisma.product.findMany({
     where: { status: 'PUBLISHED' },
@@ -91,7 +85,7 @@ export async function getBestSellers(locale: Locale, limit = 4): Promise<Product
     take: limit,
   });
 
-  return filler.map((p) => toCard(p, discounts, locale));
+  return filler.map((p) => toCard(p, locale));
 }
 
 export interface ShopFilters {
@@ -104,7 +98,6 @@ export interface ShopFilters {
 }
 
 export async function getShopProducts(filters: ShopFilters, locale: Locale) {
-  const discounts = await getActiveDiscountMap();
   const perPage = filters.perPage ?? 12;
   const page = Math.max(1, filters.page ?? 1);
 
@@ -150,7 +143,7 @@ export async function getShopProducts(filters: ShopFilters, locale: Locale) {
   ]);
 
   return {
-    products: rows.map((p) => toCard(p, discounts, locale)),
+    products: rows.map((p) => toCard(p, locale)),
     total,
     page,
     perPage,
@@ -196,13 +189,7 @@ export async function getProductBySlug(slug: string, locale: Locale) {
   });
   if (!product || product.status !== 'PUBLISHED') return null;
 
-  const discounts = await getActiveDiscountMap();
-  const { price } = applyDiscount(
-    product.price,
-    product.id,
-    product.categoryId,
-    discounts,
-  );
+  const price = product.price;
 
   return {
     id: product.id,
@@ -233,7 +220,6 @@ export async function getRelatedProducts(
   locale: Locale,
   limit = 4,
 ) {
-  const discounts = await getActiveDiscountMap();
   const rows = await prisma.product.findMany({
     where: { status: 'PUBLISHED', id: { not: productId }, ...(categoryId ? { categoryId } : {}) },
     include: cardInclude,
@@ -241,7 +227,7 @@ export async function getRelatedProducts(
     take: limit,
   });
 
-  if (rows.length >= limit) return rows.map((p) => toCard(p, discounts, locale));
+  if (rows.length >= limit) return rows.map((p) => toCard(p, locale));
 
   const filler = await prisma.product.findMany({
     where: { status: 'PUBLISHED', id: { notIn: [productId, ...rows.map((r) => r.id)] } },
@@ -250,5 +236,5 @@ export async function getRelatedProducts(
     take: limit - rows.length,
   });
 
-  return [...rows, ...filler].map((p) => toCard(p, discounts, locale));
+  return [...rows, ...filler].map((p) => toCard(p, locale));
 }

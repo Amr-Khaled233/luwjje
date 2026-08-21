@@ -5,18 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Check,
-  ArrowUp,
-  ArrowDown,
-} from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Power, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Checkbox } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/primitives';
@@ -33,6 +22,7 @@ import {
   toggleCategoryVisible,
   reorderCategory,
   reorderPriceRange,
+  togglePriceRange,
 } from '@/app/actions/dashboard';
 import { cn } from '@/lib/utils';
 
@@ -210,7 +200,6 @@ export function FiltersManager({
                   <Th>{d.common.name}</Th>
                   <Th>{d.common.nameAr}</Th>
                   <Th>{d.categories.productsCount}</Th>
-                  <Th>{d.common.visible}</Th>
                   <Th>{d.common.actions}</Th>
                 </tr>
               </thead>
@@ -233,25 +222,28 @@ export function FiltersManager({
                       )}
                     </Td>
                     <Td>
-                      <button
-                        onClick={() =>
-                          run(
-                            () => toggleCategoryVisible(c.id),
-                            c.visible ? d.categories.hiddenToast : d.categories.shownToast,
-                          )
-                        }
-                        disabled={pending}
-                        aria-label={`${d.common.visible} — ${c.name}`}
-                      >
-                        {c.visible ? (
-                          <Eye className="h-4 w-4 text-navy" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-tertiary" />
-                        )}
-                      </button>
-                    </Td>
-                    <Td>
                       <div className="flex justify-start gap-2">
+                        {/* On/off for the Shop filter. A shown category is on;
+                            this switches it off without deleting it, and the
+                            row fades to say so. */}
+                        <button
+                          onClick={() =>
+                            run(
+                              () => toggleCategoryVisible(c.id),
+                              c.visible ? d.categories.hiddenToast : d.categories.shownToast,
+                            )
+                          }
+                          disabled={pending}
+                          aria-pressed={c.visible}
+                          aria-label={c.visible ? d.common.hide : d.common.show}
+                          title={c.visible ? d.common.hide : d.common.show}
+                          className={cn(
+                            'flex h-9 w-9 items-center justify-center border transition-colors disabled:opacity-40',
+                            c.visible ? 'border-navy text-navy' : 'border-outline-variant text-tertiary hover:border-navy',
+                          )}
+                        >
+                          <Power className="h-3.5 w-3.5" />
+                        </button>
                         <button
                           onClick={() => run(() => reorderCategory(c.id, 'up'), d.common.saved)}
                           disabled={pending || i === 0}
@@ -280,11 +272,7 @@ export function FiltersManager({
 
       {tab === 'ranges' && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-[70ch] text-body-md text-secondary">
-              The buckets in the price dropdown. Leave the upper bound blank for an
-              “and above” bucket. Delete them all to remove the price filter.
-            </p>
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <Button
               onClick={() => {
                 rangeForm.reset(EMPTY_RANGE);
@@ -306,10 +294,9 @@ export function FiltersManager({
                 <thead>
                   <tr>
                     <Th>{d.filters.label}</Th>
-                    <Th>Arabic label</Th>
+                    <Th>{d.common.nameAr}</Th>
                     <Th>{d.filters.from}</Th>
                     <Th>{d.filters.to}</Th>
-                    <Th>{d.common.visible}</Th>
                     <Th>{d.common.actions}</Th>
                   </tr>
                 </thead>
@@ -335,14 +322,26 @@ export function FiltersManager({
                           : `${currencySymbol} ${r.max.toLocaleString()}`}
                       </Td>
                       <Td>
-                        {r.visible ? (
-                          <Eye className="h-4 w-4 text-navy" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-tertiary" />
-                        )}
-                      </Td>
-                      <Td>
                         <div className="flex gap-2">
+                          {/* On/off for the Shop filter, without deleting it. */}
+                          <button
+                            onClick={() =>
+                              run(
+                                () => togglePriceRange(r.id),
+                                r.visible ? d.categories.hiddenToast : d.categories.shownToast,
+                              )
+                            }
+                            disabled={pending}
+                            aria-pressed={r.visible}
+                            aria-label={r.visible ? d.common.hide : d.common.show}
+                            title={r.visible ? d.common.hide : d.common.show}
+                            className={cn(
+                              'flex h-9 w-9 items-center justify-center border transition-colors disabled:opacity-40',
+                              r.visible ? 'border-navy text-navy' : 'border-outline-variant text-tertiary hover:border-navy',
+                            )}
+                          >
+                            <Power className="h-3.5 w-3.5" />
+                          </button>
                           {/* The buckets appear in the dropdown in this order. */}
                           <button
                             onClick={() => run(() => reorderPriceRange(r.id, 'up'), d.common.saved)}

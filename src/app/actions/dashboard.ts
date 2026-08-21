@@ -14,8 +14,7 @@ import {
   governorateRatesSchema,
   priceRangeSchema,
   filterVisibilitySchema,
-  bannerSchema,
-  discountSchema,
+  bannerSchema,
   settingsSchema,
   pageSchema,
   categorySchema,
@@ -681,6 +680,17 @@ export async function reorderCategory(id: string, direction: 'up' | 'down'): Pro
   }) as Promise<ActionResult>;
 }
 
+export async function togglePriceRange(id: string): Promise<ActionResult> {
+  return guard(async () => {
+    const row = await prisma.priceRange.findUnique({ where: { id }, select: { visible: true } });
+    if (!row) return { ok: false, error: 'Price range not found.' };
+    await prisma.priceRange.update({ where: { id }, data: { visible: !row.visible } });
+    revalidateStorefront();
+    revalidatePath('/dashboard/filters');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
 export async function reorderPriceRange(
   id: string,
   direction: 'up' | 'down',
@@ -746,61 +756,6 @@ export async function saveBanner(input: unknown): Promise<ActionResult> {
 export async function deleteBanner(id: string): Promise<ActionResult> {
   return guard(async () => {
     await prisma.banner.delete({ where: { id } });
-    revalidateStorefront();
-    revalidatePath('/dashboard/offers');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-// ================================================================ discounts
-
-export async function saveDiscount(input: unknown): Promise<ActionResult> {
-  return guard(async () => {
-    const parsed = discountSchema.safeParse(input);
-    if (!parsed.success) return zodErrors(parsed.error);
-
-    const d = parsed.data;
-    if (d.scope === 'CATEGORY' && !d.categoryId) {
-      return { ok: false, error: 'Choose a category for this campaign.' };
-    }
-    if (d.scope === 'PRODUCTS' && d.productIds.length === 0) {
-      return { ok: false, error: 'Choose at least one product for this campaign.' };
-    }
-
-    const payload = {
-      name: d.name,
-      nameAr: d.nameAr,
-      discountType: d.discountType,
-      discountValue: d.discountValue,
-      scope: d.scope,
-      categoryId: d.scope === 'CATEGORY' ? d.categoryId || null : null,
-      startsAt: parseDate(d.startsAt),
-      endsAt: parseDate(d.endsAt),
-      active: d.active,
-    };
-
-    await prisma.$transaction(async (tx) => {
-      const campaign = d.id
-        ? await tx.discount.update({ where: { id: d.id }, data: payload })
-        : await tx.discount.create({ data: payload });
-
-      await tx.discountProduct.deleteMany({ where: { discountId: campaign.id } });
-      if (d.scope === 'PRODUCTS' && d.productIds.length) {
-        await tx.discountProduct.createMany({
-          data: d.productIds.map((productId) => ({ discountId: campaign.id, productId })),
-        });
-      }
-    });
-
-    revalidateStorefront();
-    revalidatePath('/dashboard/offers');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-export async function deleteDiscount(id: string): Promise<ActionResult> {
-  return guard(async () => {
-    await prisma.discount.delete({ where: { id } });
     revalidateStorefront();
     revalidatePath('/dashboard/offers');
     return { ok: true };

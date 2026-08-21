@@ -241,20 +241,6 @@ export const freeShippingSchema = z
     { message: 'The end date cannot be before the start date.', path: ['endsAt'] },
   );
 
-export const discountSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().trim().min(2, 'Campaign name is required.').max(120),
-  nameAr: z.string().trim().max(120).default(''),
-  discountType: z.enum(['PERCENT', 'FIXED']),
-  discountValue: z.coerce.number().min(0.01),
-  scope: z.enum(['PRODUCTS', 'CATEGORY', 'ALL']),
-  categoryId: z.string().optional().or(z.literal('')),
-  productIds: z.array(z.string()).default([]),
-  startsAt: z.string().optional().or(z.literal('')),
-  endsAt: z.string().optional().or(z.literal('')),
-  active: z.boolean().default(true),
-});
-
 // ---------------------------------------------------------------- banners
 
 export const bannerSchema = z.object({

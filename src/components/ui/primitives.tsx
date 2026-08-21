@@ -114,7 +114,7 @@ const statusTones: Record<string, string> = {
   DISABLED: 'border-outline-variant text-tertiary',
 };
 
-export function StatusBadge({ status, className }: { status: string; className?: string }) {
+export function StatusBadge({ status, label, className }: { status: string; label?: string; className?: string }) {
   return (
     <span
       className={cn(
@@ -123,7 +123,7 @@ export function StatusBadge({ status, className }: { status: string; className?:
         className,
       )}
     >
-      {status.toLowerCase()}
+      {label ?? status.toLowerCase()}
     </span>
   );
 }
