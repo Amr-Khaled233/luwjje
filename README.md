@@ -174,13 +174,14 @@ if the password is lost.
 | `/dashboard` | Redirects to Orders — there is no separate Overview page |
 | `/dashboard/products` | Full CRUD, multi-image upload, colourways + per-SKU stock, draft/publish, Best Sellers curation and ordering. Every text field has an EN/ع toggle |
 | `/dashboard/categories` | Rename, reorder, translate, and show or hide each category in the Shop filter |
-| `/dashboard/stock` | Every SKU, inline quantity edit, per-SKU low-stock alert level |
+| `/dashboard/stock` | Every SKU grouped by product and colour, inline quantity edit, amber under ten and red at zero |
 | `/dashboard/orders` | All orders, detail view, status changes (cancelling returns stock) |
 | `/dashboard/offers` | Hero banner, promo block, discount campaigns, home-page colour palette |
 | `/dashboard/shipping` | A delivery price per governorate (all 27), editable as one grid, plus per-governorate free-shipping thresholds |
 | `/dashboard/filters` | Which filter controls the customer sees at all, which colours are offered, and the price buckets |
 | `/dashboard/promo-codes` | Codes, type, minimum spend, window, usage limits, enable/disable |
 | `/dashboard/analytics` | Revenue over time, top products, top categories, status breakdown, and the Excel export |
+| `/dashboard/shoppers` | The funnel from opening a product to placing the order, and which sources send people who buy. Counts people, not visits |
 | `/dashboard/settings` | Store identity, default language, currency, commerce defaults, socials, SEO, content pages |
 
 ---

@@ -15,6 +15,7 @@ import {
   Truck,
   Ticket,
   BarChart3,
+  Users,
   Settings,
   LogOut,
   Menu,
@@ -38,6 +39,7 @@ const LINKS: { href: string; key: keyof DashboardDictionary['nav']; icon: typeof
   { href: '/dashboard/filters', key: 'filters', icon: SlidersHorizontal },
   { href: '/dashboard/promo-codes', key: 'promoCodes', icon: Ticket },
   { href: '/dashboard/analytics', key: 'analytics', icon: BarChart3 },
+  { href: '/dashboard/shoppers', key: 'shoppers', icon: Users },
   { href: '/dashboard/settings', key: 'settings', icon: Settings },
 ];
 

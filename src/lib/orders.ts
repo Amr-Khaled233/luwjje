@@ -9,6 +9,8 @@ export interface CreateOrderInput {
   items: { variantId: string; quantity: number }[];
   promoCode?: string;
   locale?: Locale;
+  /** The visit that placed it, for the funnel on Visitors. */
+  sessionId?: string;
 }
 
 export interface CreateOrderResult {
@@ -30,6 +32,7 @@ export async function createOrder({
   items,
   promoCode,
   locale = 'en',
+  sessionId,
 }: CreateOrderInput): Promise<CreateOrderResult> {
   const msg = (en: string, ar: string) => (locale === 'ar' ? ar : en);
 
@@ -92,6 +95,7 @@ export async function createOrder({
           notes: shipping.notes || null,
           // Cash on delivery: the order is waiting, the money is not in yet.
           status: 'PENDING',
+          sessionId: sessionId || null,
           subtotal,
           shippingCost: shippingCalc.cost,
           discount,

@@ -15,12 +15,10 @@ export interface AnalyticsRange {
 }
 
 /**
- * The period every panel below is computed over, and the two exports of it.
- *
- * One control rather than presets beside a date range: two ways to say the
- * same thing meant the page could show a period the fields did not agree with.
+ * From / to / Apply, pushed into the URL so the period survives a refresh and
+ * can be linked to. Used by every page that is about a stretch of time.
  */
-export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
+export function PeriodPicker({ range }: { range: AnalyticsRange }) {
   const { d } = useDash();
   const router = useRouter();
   const pathname = usePathname();
@@ -34,8 +32,44 @@ export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
     setTo(range.to);
   }, [range.from, range.to]);
 
-  const go = (query: string) =>
-    startTransition(() => router.push(`${pathname}?${query}`));
+  return (
+    <div className={cn('flex items-end gap-2', pending && 'opacity-60')}>
+      <label className="flex flex-col">
+        <span className="label-caps mb-1 text-secondary">{d.analytics.from}</span>
+        <input
+          type="date"
+          value={from}
+          max={to}
+          onChange={(e) => setFrom(e.target.value)}
+          className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
+        />
+      </label>
+      <label className="flex flex-col">
+        <span className="label-caps mb-1 text-secondary">{d.analytics.to}</span>
+        <input
+          type="date"
+          value={to}
+          min={from}
+          onChange={(e) => setTo(e.target.value)}
+          className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
+        />
+      </label>
+      <Button
+        variant="secondary"
+        onClick={() =>
+          startTransition(() => router.push(`${pathname}?from=${from}&to=${to}`))
+        }
+        disabled={!from || !to}
+      >
+        {d.analytics.apply}
+      </Button>
+    </div>
+  );
+}
+
+/** The period the panels below are computed over, and the two exports of it. */
+export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
+  const { d } = useDash();
 
   /** The exports cover whatever period is on screen. */
   const exportQuery = `from=${range.from}&to=${range.to}`;
@@ -44,38 +78,8 @@ export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
     <PageHeader
       title={d.analytics.title}
       actions={
-        <div className={cn('flex flex-col gap-3', pending && 'opacity-60')}>
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="flex items-end gap-2">
-              <label className="flex flex-col">
-                <span className="label-caps mb-1 text-secondary">{d.analytics.from}</span>
-                <input
-                  type="date"
-                  value={from}
-                  max={to}
-                  onChange={(e) => setFrom(e.target.value)}
-                  className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
-                />
-              </label>
-              <label className="flex flex-col">
-                <span className="label-caps mb-1 text-secondary">{d.analytics.to}</span>
-                <input
-                  type="date"
-                  value={to}
-                  min={from}
-                  onChange={(e) => setTo(e.target.value)}
-                  className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
-                />
-              </label>
-              <Button
-                variant="secondary"
-                onClick={() => go(`from=${from}&to=${to}`)}
-                disabled={!from || !to}
-              >
-                {d.analytics.apply}
-              </Button>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3">
+          <PeriodPicker range={range} />
 
           {/* Two files: how it went, and what was ordered. */}
           <div className="flex flex-wrap gap-2">

@@ -35,6 +35,7 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
     shipping: parsed.data.shipping,
     items: parsed.data.items,
     promoCode: parsed.data.promoCode,
+    sessionId: parsed.data.sessionId,
     locale,
   });
 

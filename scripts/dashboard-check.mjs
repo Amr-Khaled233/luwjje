@@ -136,5 +136,38 @@ check('an unparseable period falls back to the default', nonsense.status === 200
 
 check('report rejects without a session', (await fetch(`${BASE}/api/dashboard/report`)).status === 401);
 
+console.log('\n▸ Shoppers');
+const shoppers = await html('/dashboard/shoppers', EN);
+check('the page renders', shoppers.includes('Shoppers'));
+check('sidebar links to it', shoppers.includes('/dashboard/shoppers'));
+check('the funnel panel is there', shoppers.includes('How far they got'));
+check(
+  'every step is named',
+  ['Opened a product', 'Reached the bag', 'Reached the payment step', 'Placed the order'].every(
+    (s) => shoppers.includes(s),
+  ),
+);
+check('it does not count raw visits', !shoppers.includes('Pages read'));
+check('sources are ranked by who bought', shoppers.includes('Which places bring shoppers'));
+check('abandoned checkouts are called out', shoppers.includes('Reached payment and did not order'));
+check('the limits of the figures are stated', shoppers.includes('Read them as the floor'));
+check('a period can be chosen', shoppers.includes('type="date"'));
+
+const shoppersPeriod = await html('/dashboard/shoppers?from=2026-01-05&to=2026-01-19', EN);
+check(
+  'a chosen period is honoured',
+  shoppersPeriod.includes('Jan 05, 2026 — Jan 19, 2026'),
+  'no period label',
+);
+
+const shoppersAr = await html('/dashboard/shoppers', AR);
+check('Arabic reads right to left', shoppersAr.includes('dir="rtl"'));
+check('…and is translated', shoppersAr.includes('وصلوا لحد فين'));
+
+check(
+  'it needs a session like every other page',
+  (await raw('/dashboard/shoppers')).status === 307,
+);
+
 console.log(`\n${fail === 0 ? '✓' : '✗'} ${pass} passed, ${fail} failed\n`);
 process.exitCode = fail ? 1 : 0;

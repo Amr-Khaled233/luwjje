@@ -52,6 +52,8 @@ export const placeOrderSchema = z.object({
   shipping: shippingSchema,
   items: z.array(cartLineSchema).min(1, 'Your bag is empty.'),
   promoCode: z.string().trim().max(40).optional().or(z.literal('')),
+  /** Written by the tracking script; absent when a browser blocks it. */
+  sessionId: z.string().trim().max(80).optional().or(z.literal('')),
 });
 
 /**

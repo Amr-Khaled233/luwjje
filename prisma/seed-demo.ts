@@ -7,7 +7,7 @@
  * draw. Safe to delete everything afterwards from the dashboard.
  */
 import { PrismaClient } from '@prisma/client';
-import { subDays, startOfDay } from 'date-fns';
+import { subDays, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { ensureOutDir, makeProductImages, makeEditorial } from './placeholders';
 
 const prisma = new PrismaClient();
@@ -243,7 +243,7 @@ async function main() {
   }
 
   console.log('▸ Products…');
-  const created: { id: string; price: number; variantIds: string[]; name: string; nameAr: string; image: string }[] = [];
+  const created: { id: string; slug: string; price: number; variantIds: string[]; name: string; nameAr: string; image: string }[] = [];
 
   for (const p of PRODUCTS) {
     const slug = slugify(p.name);
@@ -302,6 +302,7 @@ async function main() {
 
     created.push({
       id: product.id,
+      slug,
       price: product.price,
       variantIds,
       name: product.name,
@@ -452,20 +453,56 @@ async function main() {
   console.log('▸ Traffic…');
   const referrers = ['direct', 'instagram.com', 'google.com', 'facebook.com', 'newsletter'];
   const views: { path: string; referrer: string; sessionId: string; createdAt: Date }[] = [];
+
+  /**
+   * Each demo visitor walks a plausible path and stops somewhere along it, so
+   * the funnel on Visitors has a shape instead of a single bar: everyone opens
+   * the site, about a third open a product, and a few reach the payment step.
+   */
+  const reachedCheckout = new Map<number, string[]>();
+
   for (let daysAgo = 90; daysAgo >= 0; daysAgo--) {
     const day = startOfDay(subDays(new Date(), daysAgo));
     const n = 40 + Math.floor(Math.random() * 60) + Math.round((90 - daysAgo) / 2);
+
     for (let i = 0; i < n; i++) {
-      views.push({
-        path: Math.random() > 0.5 ? '/' : '/shop',
-        referrer: referrers[Math.floor(Math.random() * referrers.length)],
-        sessionId: `demo-${daysAgo}-${i}`,
-        createdAt: new Date(day.getTime() + Math.floor(Math.random() * 86_400_000)),
-      });
+      const sessionId = `demo-${daysAgo}-${i}`;
+      const referrer = referrers[Math.floor(Math.random() * referrers.length)];
+      const at = () => new Date(day.getTime() + Math.floor(Math.random() * 86_400_000));
+
+      const journey = ['/', Math.random() > 0.5 ? '/shop' : '/'];
+      const depth = Math.random();
+      if (depth < 0.34) {
+        const product = created[Math.floor(Math.random() * created.length)];
+        journey.push(`/product/${product.slug}`);
+        if (depth < 0.13) journey.push('/cart');
+        if (depth < 0.07) {
+          journey.push('/checkout');
+          reachedCheckout.set(daysAgo, [...(reachedCheckout.get(daysAgo) ?? []), sessionId]);
+        }
+      }
+
+      for (const path of journey) {
+        views.push({ path, referrer, sessionId, createdAt: at() });
+      }
     }
   }
   for (let i = 0; i < views.length; i += 500) {
     await prisma.pageView.createMany({ data: views.slice(i, i + 500) });
+  }
+
+  // Most orders came from a visit that was tracked; a few did not, which is
+  // what a real week looks like once ad-blockers are counted.
+  const placed = await prisma.order.findMany({ select: { id: true, createdAt: true } });
+  for (const order of placed) {
+    if (Math.random() > 0.75) continue;
+    const daysAgo = differenceInCalendarDays(new Date(), order.createdAt);
+    const pool = reachedCheckout.get(daysAgo);
+    if (!pool?.length) continue;
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { sessionId: pool[Math.floor(Math.random() * pool.length)] },
+    });
   }
 
   console.log('\n✓ Demo catalogue ready');

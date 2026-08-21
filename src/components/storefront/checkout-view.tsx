@@ -85,6 +85,9 @@ export function CheckoutView({
       shipping: form.getValues(),
       items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
       promoCode,
+      // Ties the order to the visit that produced it. Same key the tracking
+      // script writes; missing simply means this browser was not tracked.
+      sessionId: sessionStorage.getItem('luwjje-session') ?? '',
     });
 
     if (!result.ok) {
