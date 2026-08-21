@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea, Checkbox } from '@/components/ui/field';
-import { EmptyState, StatusBadge } from '@/components/ui/primitives';
+import { EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Modal, ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
@@ -70,13 +70,11 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
     return true;
   }
 
-  const visibleCount = categories.filter((c) => c.visible).length;
-
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-body-md text-secondary">
-          {fmt(d.categories.summary, { total: categories.length, visible: visibleCount })}
+          {fmt(d.categories.summary, { total: categories.length })}
         </p>
         <Button
           onClick={() => {
@@ -110,7 +108,6 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                 <Th>{d.common.name}</Th>
                 <Th>{d.common.nameAr}</Th>
                 <Th>{d.categories.productsCount}</Th>
-                <Th>{d.categories.inFilter}</Th>
                 <Th>{d.common.actions}</Th>
               </tr>
             </thead>
@@ -149,27 +146,32 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
                   </Td>
                   <Td className="tabular-nums text-secondary">{c.productCount}</Td>
                   <Td>
-                    <button
-                      onClick={() =>
-                        run(
-                          () => toggleCategoryVisible(c.id),
-                          c.visible ? d.categories.hiddenToast : d.categories.shownToast,
-                        )
-                      }
-                      disabled={pending}
-                      className="flex items-center gap-2"
-                      title={d.categories.inFilter}
-                    >
-                      {c.visible ? (
-                        <Eye className="h-4 w-4 text-navy" />
-                      ) : (
-                        <EyeOff className="h-4 w-4 text-tertiary" />
-                      )}
-                      <StatusBadge status={c.visible ? 'ACTIVE' : 'DISABLED'} />
-                    </button>
-                  </Td>
-                  <Td>
                     <div className="flex justify-start gap-2">
+                      {/*
+                        A category you have added is shown; this switches it
+                        off again without deleting it, and the row fades to
+                        say so. It sits with the other actions rather than
+                        holding a column of its own.
+                      */}
+                      <button
+                        onClick={() =>
+                          run(
+                            () => toggleCategoryVisible(c.id),
+                            c.visible ? d.categories.hiddenToast : d.categories.shownToast,
+                          )
+                        }
+                        disabled={pending}
+                        aria-pressed={c.visible}
+                        aria-label={c.visible ? d.common.hide : d.common.show}
+                        title={c.visible ? d.common.hide : d.common.show}
+                        className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy disabled:opacity-40"
+                      >
+                        {c.visible ? (
+                          <Eye className="h-3.5 w-3.5 text-navy" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5 text-tertiary" />
+                        )}
+                      </button>
                       <Link
                         href={`/shop?category=${c.slug}`}
                         target="_blank"

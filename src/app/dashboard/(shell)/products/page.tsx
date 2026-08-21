@@ -49,7 +49,6 @@ export default async function AdminProductsPage() {
             size: v.size,
             sku: v.sku,
             stock: v.stock,
-            lowStockAt: v.lowStockAt,
           })),
         }))}
         categories={categories.map((c) => ({ id: c.id, name: c.name, description: c.description ?? '' }))}

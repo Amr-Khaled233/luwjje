@@ -147,8 +147,6 @@ const en = {
   },
   orders: {
     title: 'Orders',
-    description:
-      'Every order placed on the storefront. Changing a status here updates the figures on Analytics, and cancelling returns the stock.',
     totalOrders: 'Total orders',
     activeOrders: 'Active orders',
     activeHint: 'pending or shipped',
@@ -187,8 +185,6 @@ const en = {
   },
   products: {
     title: 'Products',
-    description:
-      'Everything here drives the storefront directly — the Best Sellers row, the Shop grid and every product page read from this table.',
     addNew: 'Add New Product',
     searchPlaceholder: 'Search products…',
     allStatuses: 'All statuses',
@@ -245,13 +241,10 @@ const en = {
   },
   categories: {
     title: 'Categories',
-    description:
-      'What appears in the Shop category filter, in what order, and in both languages. Hiding a category keeps its products on sale — it only drops out of the filter.',
     addNew: 'Add category',
-    summary: '{total} categories · {visible} shown in the Shop filter',
+    summary: '{total} categories',
     order: 'Order',
     productsCount: 'Products',
-    inFilter: 'In Shop filter',
     emptyTitle: 'No categories yet.',
     emptyBody: 'Add one, then assign products to it from Products.',
     showInFilter: 'Show in the Shop category filter',
@@ -267,12 +260,11 @@ const en = {
   },
   stock: {
     title: 'Stock',
-    description:
-      'Every purchasable SKU. Edit a quantity inline — the storefront respects it on the next add-to-bag.',
     colour: 'Colour',
     size: 'Size',
-    alertAt: 'Alert at',
     inStock: 'In stock',
+    allStock: 'All stock',
+    searchPlaceholder: 'Search by product, colour, size or SKU…',
     low: 'Low',
     outOfStock: 'Out of stock',
     unsaved: 'Unsaved',
@@ -281,8 +273,6 @@ const en = {
   },
   shipping: {
     title: 'Shipping',
-    description:
-      'One delivery price per governorate. The cart and checkout charge exactly what you set here.',
     addNew: 'Add governorate',
     savePrices: 'Save prices',
     searchPlaceholder: 'Search governorates…',
@@ -305,8 +295,6 @@ const en = {
   },
   freeShipping: {
     title: 'Free Shipping',
-    description:
-      'When delivery is free. A rule can be a spend, a date range, or both — and any rule the basket matches applies, so they stack rather than override.',
     addRule: 'Add rule',
     editRule: 'Edit rule',
     modalHint: 'Leave a field blank to leave that side open.',
@@ -328,8 +316,6 @@ const en = {
   },
   filters: {
     title: 'Shop Filters',
-    description:
-      'Exactly what the customer can filter by: which controls appear at all, which colours are offered, and the price buckets.',
     tabControls: 'Controls',
     categoriesHint:
       'Which categories the shopper can filter by, and the order they appear in. The same switch as on the Categories page.',
@@ -359,8 +345,6 @@ const en = {
   },
   promo: {
     title: 'Promo Codes',
-    description:
-      'Codes customers type in the cart. Every code entered at checkout is validated against this table.',
     addNew: 'New promo code',
     code: 'Code',
     discount: 'Discount',
@@ -390,8 +374,6 @@ const en = {
   },
   offers: {
     title: 'Offers',
-    description:
-      'The hero banner, the promotional block and any running discount campaign — all rendered straight onto the home page.',
     heroTitle: 'Hero Banner',
     heroHint: 'The full-width image and glass card at the top of the home page.',
     addHero: 'Add hero',
@@ -445,7 +427,6 @@ const en = {
   },
   analytics: {
     title: 'Analytics',
-    description: 'Sales, products and categories — computed from the orders in your database.',
     revenue: 'Revenue',
     orders: 'Orders',
     averageOrderValue: 'Average order value',
@@ -455,7 +436,6 @@ const en = {
     unitsSoldIn: 'Units sold · {period}',
     revenueIn: 'Revenue · {period}',
     units: 'Units',
-    unitsCount: '{n} units',
     noData: 'No data in this period yet.',
     revenueAcross: '{amount} across {period}',
     peak: 'peak {date}',
@@ -468,8 +448,6 @@ const en = {
   },
   settings: {
     title: 'Settings',
-    description:
-      'Store identity, language, currency, shipping defaults, social links and content pages.',
     slugHint: 'The address this page lives at, e.g. /pages/about.',
     tabStore: 'Store',
     tabPages: 'Content Pages',
@@ -658,8 +636,6 @@ const ar: DashboardDictionary = {
   },
   orders: {
     title: 'الطلبات',
-    description:
-      'كل الطلبات على المتجر. تغيير الحالة هنا بيحدّث أرقام الإحصائيات، وإلغاء الطلب بيرجّع الكمية للمخزون.',
     totalOrders: 'إجمالي الطلبات',
     activeOrders: 'طلبات جارية',
     activeHint: 'قيد الانتظار أو مشحونة',
@@ -697,8 +673,6 @@ const ar: DashboardDictionary = {
   },
   products: {
     title: 'المنتجات',
-    description:
-      'كل ما هنا بيظهر في المتجر مباشرة — صف الأكثر مبيعاً وشبكة المتجر وكل صفحة منتج بتقرأ من هذا الجدول.',
     addNew: 'إضافة منتج',
     searchPlaceholder: 'ابحث في المنتجات…',
     allStatuses: 'كل الحالات',
@@ -755,13 +729,10 @@ const ar: DashboardDictionary = {
   },
   categories: {
     title: 'الفئات',
-    description:
-      'ما يظهر في فلتر الفئات بالمتجر، وبأي ترتيب، وباللغتين. إخفاء فئة لا يوقف بيع منتجاتها — هي فقط تختفي من الفلتر.',
     addNew: 'إضافة فئة',
-    summary: '{total} فئة · {visible} ظاهرة في فلتر المتجر',
+    summary: '{total} فئة',
     order: 'الترتيب',
     productsCount: 'المنتجات',
-    inFilter: 'في فلتر المتجر',
     emptyTitle: 'لا توجد فئات بعد.',
     emptyBody: 'أضِف واحدة، ثم اربط بها المنتجات من صفحة المنتجات.',
     showInFilter: 'إظهار في فلتر الفئات بالمتجر',
@@ -777,11 +748,11 @@ const ar: DashboardDictionary = {
   },
   stock: {
     title: 'المخزون',
-    description: 'كل SKU متاح للبيع. عدّل الكمية مباشرة — المتجر هيحترمها في أول إضافة للحقيبة.',
     colour: 'اللون',
     size: 'المقاس',
-    alertAt: 'تنبيه عند',
     inStock: 'متوفر',
+    allStock: 'كل المخزون',
+    searchPlaceholder: 'ابحث بالمنتج أو اللون أو المقاس أو الكود…',
     low: 'منخفض',
     outOfStock: 'نفدت الكمية',
     unsaved: 'غير محفوظ',
@@ -790,7 +761,6 @@ const ar: DashboardDictionary = {
   },
   shipping: {
     title: 'الشحن',
-    description: 'سعر توصيل لكل محافظة. الحقيبة وصفحة الدفع بيحسبوا بالظبط اللي تحدده هنا.',
     addNew: 'إضافة محافظة',
     savePrices: 'حفظ الأسعار',
     searchPlaceholder: 'ابحث في المحافظات…',
@@ -812,8 +782,6 @@ const ar: DashboardDictionary = {
   },
   freeShipping: {
     title: 'الشحن المجاني',
-    description:
-      'متى يكون التوصيل مجاني. القاعدة ممكن تكون مبلغ، أو فترة، أو الاتنين — وأي قاعدة تنطبق على الطلب تشتغل، يعني بيتجمعوا مش بيلغوا بعض.',
     addRule: 'إضافة قاعدة',
     editRule: 'تعديل القاعدة',
     modalHint: 'اترك الحقل فارغاً لتترك هذا الجانب مفتوحاً.',
@@ -835,8 +803,6 @@ const ar: DashboardDictionary = {
   },
   filters: {
     title: 'فلاتر المتجر',
-    description:
-      'بالظبط ما يستطيع الزبون التصفية به: أي أدوات تظهر أصلاً، وأي ألوان تُعرض، وشرائح السعر.',
     tabControls: 'الأدوات',
     categoriesHint:
       'الفئات اللي الزبون يقدر يفلتر بيها، وترتيب ظهورها. نفس زر الإظهار الموجود في صفحة الفئات.',
@@ -866,7 +832,6 @@ const ar: DashboardDictionary = {
   },
   promo: {
     title: 'أكواد الخصم',
-    description: 'الأكواد التي يكتبها الزبون في الحقيبة. كل كود يُتحقق منه من هذا الجدول.',
     addNew: 'كود خصم جديد',
     code: 'الكود',
     discount: 'الخصم',
@@ -896,7 +861,6 @@ const ar: DashboardDictionary = {
   },
   offers: {
     title: 'العروض',
-    description: 'بانر الصفحة الرئيسية، الكارت الترويجي، وأي حملة خصم — كلها تظهر في الرئيسية.',
     heroTitle: 'البانر الرئيسي',
     heroHint: 'الصورة العريضة والكارت الزجاجي أعلى الصفحة الرئيسية.',
     addHero: 'إضافة بانر',
@@ -949,7 +913,6 @@ const ar: DashboardDictionary = {
   },
   analytics: {
     title: 'الإحصائيات',
-    description: 'المبيعات والمنتجات والفئات — محسوبة من الطلبات في قاعدة بياناتك.',
     revenue: 'الإيرادات',
     orders: 'الطلبات',
     averageOrderValue: 'متوسط قيمة الطلب',
@@ -959,7 +922,6 @@ const ar: DashboardDictionary = {
     unitsSoldIn: 'القطع المباعة · {period}',
     revenueIn: 'الإيرادات · {period}',
     units: 'قطعة',
-    unitsCount: '{n} قطعة',
     noData: 'لا توجد بيانات في هذه الفترة بعد.',
     revenueAcross: '{amount} خلال {period}',
     peak: 'الأعلى {date}',
@@ -972,8 +934,6 @@ const ar: DashboardDictionary = {
   },
   settings: {
     title: 'الإعدادات',
-    description:
-      'هوية المتجر واللغة والعملة وإعدادات الشحن وروابط السوشيال وصفحات المحتوى.',
     slugHint: 'العنوان الذي تظهر عليه الصفحة، مثل ‎/pages/about.',
     tabStore: 'المتجر',
     tabPages: 'صفحات المحتوى',

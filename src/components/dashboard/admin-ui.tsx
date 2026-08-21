@@ -3,22 +3,19 @@ import { cn } from '@/lib/utils';
 
 export function PageHeader({
   title,
-  description,
   actions,
   className,
 }: {
   title: string;
-  description?: string;
   actions?: React.ReactNode;
   className?: string;
 }) {
   return (
     <header className={cn('flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6', className)}>
       <div>
+        {/* The title alone. A paragraph explaining the page to the person who
+            runs the shop is read once and then in the way of the work. */}
         <h1 className="font-display text-headline-md md:text-headline-lg">{title}</h1>
-        {description && (
-          <p className="mt-2 max-w-[60ch] text-body-sm text-secondary md:text-body-md">{description}</p>
-        )}
       </div>
       {actions && <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">{actions}</div>}
     </header>

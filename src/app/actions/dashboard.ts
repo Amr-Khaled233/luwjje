@@ -174,7 +174,6 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
             size: v.size || null,
             sku: v.sku!,
             stock: v.stock,
-            lowStockAt: v.lowStockAt,
             position: i,
           };
           if (v.id) {
@@ -198,7 +197,6 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
               size: v.size || null,
               sku: v.sku!,
               stock: v.stock,
-              lowStockAt: v.lowStockAt,
               position: i,
             })),
           },
@@ -338,7 +336,6 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 const stockSchema = z.object({
   variantId: z.string().min(1),
   stock: z.coerce.number().int().min(0).max(1000000),
-  lowStockAt: z.coerce.number().int().min(0).max(10000).optional(),
 });
 
 export async function updateStock(input: unknown): Promise<ActionResult> {
@@ -346,11 +343,8 @@ export async function updateStock(input: unknown): Promise<ActionResult> {
     const parsed = stockSchema.safeParse(input);
     if (!parsed.success) return zodErrors(parsed.error);
 
-    const { variantId, stock, lowStockAt } = parsed.data;
-    await prisma.productVariant.update({
-      where: { id: variantId },
-      data: { stock, ...(lowStockAt !== undefined ? { lowStockAt } : {}) },
-    });
+    const { variantId, stock } = parsed.data;
+    await prisma.productVariant.update({ where: { id: variantId }, data: { stock } });
 
     revalidateStorefront();
     revalidatePath('/dashboard/stock');

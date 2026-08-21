@@ -7,6 +7,7 @@ import {
 } from 'date-fns';
 import { prisma } from './prisma';
 import { getSettings } from './settings';
+import { LOW_STOCK_AT } from './utils';
 
 /** Orders that count as revenue — cancelled ones never do. */
 const REVENUE_STATUSES = ['PENDING', 'SHIPPED', 'DELIVERED'];
@@ -104,7 +105,7 @@ export async function getLowStockVariants(limit = 6) {
   });
 
   return variants
-    .filter((v) => v.stock <= v.lowStockAt)
+    .filter((v) => v.stock < LOW_STOCK_AT)
     .slice(0, limit)
     .map((v) => ({
       id: v.id,
@@ -115,7 +116,6 @@ export async function getLowStockVariants(limit = 6) {
       colorName: v.colorName,
       size: v.size,
       stock: v.stock,
-      lowStockAt: v.lowStockAt,
     }));
 }
 

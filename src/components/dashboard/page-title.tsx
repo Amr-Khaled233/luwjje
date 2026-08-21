@@ -6,8 +6,8 @@ import { useDash } from './dashboard-i18n';
 import type { DashboardDictionary } from '@/i18n/dashboard-dictionary';
 
 /**
- * A PageHeader whose title and description come from the dashboard
- * dictionary, so the server pages stay free of translation plumbing.
+ * A PageHeader whose title comes from the dashboard dictionary, so the server
+ * pages stay free of translation plumbing.
  */
 export function PageTitle({
   section,
@@ -30,6 +30,5 @@ export function PageTitle({
   actions?: React.ReactNode;
 }) {
   const { d } = useDash();
-  const copy = d[section];
-  return <PageHeader title={copy.title} description={copy.description} actions={actions} />;
+  return <PageHeader title={d[section].title} actions={actions} />;
 }

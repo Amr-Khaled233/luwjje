@@ -103,7 +103,6 @@ export const variantSchema = z.object({
   /** Generated on save. An internal key, never something to type in. */
   sku: z.string().trim().max(60).optional(),
   stock: z.coerce.number().int().min(0, 'Stock cannot be negative.').max(100000),
-  lowStockAt: z.coerce.number().int().min(0).max(10000).default(5),
 });
 
 const description = () =>

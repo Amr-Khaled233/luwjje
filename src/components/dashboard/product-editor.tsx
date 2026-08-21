@@ -49,7 +49,6 @@ export interface EditableProduct {
     size: string | null;
     sku: string;
     stock: number;
-    lowStockAt: number;
   }[];
 }
 
@@ -252,7 +251,6 @@ export function ProductEditor({
         colorHex: c.colorHex,
         size: s.size || null,
         stock: s.stock,
-        lowStockAt: 5,
       })),
     );
 

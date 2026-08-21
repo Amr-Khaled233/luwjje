@@ -92,7 +92,6 @@ model ProductVariant {
   size          String? // null when the product has no sizes
   sku           String  @unique
   stock         Int     @default(0)
-  lowStockAt    Int     @default(5)
   priceOverride Float?
   position      Int     @default(0)
 

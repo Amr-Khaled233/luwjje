@@ -52,6 +52,10 @@ const config: Config = {
         },
         primary: '#5b5f61',
         error: '#ba1a1a',
+        // "Running low" — an amber that still passes contrast as text on the
+        // pale background, which the tint itself is too light to do.
+        warning: '#b8860b',
+        'warning-ink': '#7a5900',
         'inverse-surface': '#213145',
       },
       fontFamily: {

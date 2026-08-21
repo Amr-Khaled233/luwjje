@@ -23,22 +23,15 @@ export function RankedTable({
   data,
   valueLabel,
   secondaryLabel,
-  format = 'number',
-  currencySymbol = '$',
 }: {
   title: string;
   subtitle?: string;
   data: Row[];
   valueLabel: string;
+  /** Already formatted by the caller — money knows its own currency. */
   secondaryLabel?: string;
-  /** Serializable — a formatter function cannot cross the server/client boundary. */
-  format?: 'number' | 'currency';
-  currencySymbol?: string;
 }) {
   const { d } = useDash();
-
-  const valueFormatter = (v: number) =>
-    format === 'currency' ? `${currencySymbol} ${v.toLocaleString()}` : v.toLocaleString();
 
   return (
     <div>
@@ -54,7 +47,7 @@ export function RankedTable({
           columns={[d.analytics.nameCol, valueLabel, ...(secondaryLabel ? [secondaryLabel] : [])]}
           rows={data.map((row) => [
             row.name,
-            valueFormatter(row.value),
+            row.value.toLocaleString(),
             ...(secondaryLabel ? [row.secondary ?? '—'] : []),
           ])}
         />

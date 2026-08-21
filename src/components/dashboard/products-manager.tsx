@@ -30,7 +30,7 @@ import {
   toggleBestSeller,
   reorderBestSeller,
 } from '@/app/actions/dashboard';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn, LOW_STOCK_AT } from '@/lib/utils';
 
 export interface AdminCategory {
   id: string;
@@ -222,7 +222,7 @@ export function ProductsManager({
             <tbody>
               {filtered.map((p) => {
                 const stock = p.variants.reduce((s, v) => s + v.stock, 0);
-                const low = p.variants.some((v) => v.stock <= v.lowStockAt);
+                const low = p.variants.some((v) => v.stock < LOW_STOCK_AT);
                 return (
                   <tr
                     key={p.id}

@@ -43,7 +43,6 @@ export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
   return (
     <PageHeader
       title={d.analytics.title}
-      description={d.analytics.description}
       actions={
         <div className={cn('flex flex-col gap-3', pending && 'opacity-60')}>
           <div className="flex flex-wrap items-end gap-2">

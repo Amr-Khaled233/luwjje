@@ -108,6 +108,16 @@ export function generateOrderNumber() {
  */
 export const DESCRIPTION_WORD_LIMIT = 250;
 
+/**
+ * Fewer than this many of a size left and it is treated as running low —
+ * amber on the Stock page, and on the low-stock list on the dashboard.
+ *
+ * One number for the whole shop rather than a threshold per size: nobody was
+ * ever going to set nine of them by hand, and the default made the setting a
+ * lie anyway.
+ */
+export const LOW_STOCK_AT = 10;
+
 /** Words, by any script — Arabic and English are both split on whitespace. */
 export function countWords(text: string) {
   const trimmed = text.trim();

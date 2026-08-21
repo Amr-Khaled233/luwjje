@@ -94,19 +94,19 @@ export default async function AdminAnalyticsPage({
           />
         </Panel>
 
+        {/* Same three columns in the same order as Top Products, so the two
+            panels can be read side by side without re-learning them. */}
         <Panel bodyClassName="p-4 md:p-6">
           <RankedTable
             title={d.analytics.topCategories}
             subtitle={fmt(d.analytics.revenueIn, { period: periodLabel })}
-            valueLabel={`${d.analytics.revenue} (${symbol})`}
+            valueLabel={d.analytics.units}
             data={categories.map((c) => ({
               name: c.name,
-              value: c.revenue,
-              secondary: fmt(d.analytics.unitsCount, { n: c.units }),
+              value: c.units,
+              secondary: formatPrice(c.revenue, symbol),
             }))}
-            secondaryLabel={d.analytics.units}
-            format="currency"
-            currencySymbol={symbol}
+            secondaryLabel={d.analytics.revenue}
           />
         </Panel>
 

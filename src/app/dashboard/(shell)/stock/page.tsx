@@ -24,26 +24,39 @@ export default async function AdminStockPage({
         },
       },
     },
-    orderBy: [{ stock: 'asc' }, { sku: 'asc' }],
   });
 
-  const rows = variants.map((v) => ({
-    id: v.id,
-    sku: v.sku,
-    productName: v.product.name,
-    productSlug: v.product.slug,
-    productStatus: v.product.status,
-    image: v.product.images[0]?.url ?? '',
-    colorName: v.colorName,
-    colorHex: v.colorHex,
-    size: v.size,
-    stock: v.stock,
-    lowStockAt: v.lowStockAt,
-  }));
+  /**
+   * Every size of a colour together, every colour of a product together.
+   * Sorting by quantity scattered one product across the whole page, which
+   * made "how many of this do I have?" a search rather than a glance.
+   */
+  const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  const sizeRank = (size: string | null) => {
+    const i = SIZE_ORDER.indexOf((size ?? '').toUpperCase());
+    return i === -1 ? SIZE_ORDER.length : i;
+  };
 
-  const outOfStock = rows.filter((r) => r.stock === 0).length;
-  const low = rows.filter((r) => r.stock > 0 && r.stock <= r.lowStockAt).length;
-  const units = rows.reduce((s, r) => s + r.stock, 0);
+  const rows = variants
+    .map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      productName: v.product.name,
+      productSlug: v.product.slug,
+      productStatus: v.product.status,
+      image: v.product.images[0]?.url ?? '',
+      colorName: v.colorName,
+      colorHex: v.colorHex,
+      size: v.size,
+      stock: v.stock,
+    }))
+    .sort(
+      (a, b) =>
+        a.productName.localeCompare(b.productName) ||
+        a.colorName.localeCompare(b.colorName) ||
+        sizeRank(a.size) - sizeRank(b.size) ||
+        (a.size ?? '').localeCompare(b.size ?? ''),
+    );
 
   return (
     <div className="flex flex-col gap-8">

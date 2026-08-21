@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea, Select, Checkbox } from '@/components/ui/field';
 import { StatusBadge, EmptyState } from '@/components/ui/primitives';
@@ -331,14 +331,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
                         </Td>
                         <Td>
                           <div className="flex justify-start gap-2">
-                            <Link
-                              href={href}
-                              target="_blank"
-                              aria-label={`View ${p.title}`}
-                              className="flex h-9 w-9 items-center justify-center border border-outline-variant transition-colors hover:border-navy"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Link>
                             <button
                               onClick={() => {
                                 pageForm.reset(p);

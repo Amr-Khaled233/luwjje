@@ -293,7 +293,6 @@ async function main() {
             size,
             sku,
             stock: Math.max(1, Math.round(v.stock / sizes.length)),
-            lowStockAt: 5,
             position: pos++,
           },
         });
