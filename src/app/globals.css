@@ -43,8 +43,20 @@
     line-height: 1.45;
   }
 
-  /* Latin numerals inside Arabic copy should not flip direction. */
-  html[data-locale='ar'] .tabular-nums,
+  /*
+    Latin numerals inside Arabic copy read left-to-right, but they must not
+    drag their container's direction with them: setting `direction: ltr` on a
+    number cell also flips `text-align: start` and `border-inline-start` to the
+    physical left, which stranded every figure at the wrong edge and drew the
+    column dividers on the wrong side. `unicode-bidi: isolate` keeps the digits
+    in order without touching the cell's direction, so the value stays at the
+    start (the right, in Arabic) and the grid mirrors correctly.
+  */
+  html[data-locale='ar'] .tabular-nums {
+    unicode-bidi: isolate;
+  }
+
+  /* Something explicitly marked LTR (an order number, a date range) still is. */
   html[data-locale='ar'] [dir='ltr'] {
     direction: ltr;
   }

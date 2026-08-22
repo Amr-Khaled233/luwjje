@@ -127,7 +127,9 @@ export function PromoManager({
                     <Td>
                       <p className="font-mono text-label-md tracking-wider">{c.code}</p>
                       {c.description && (
-                        <p className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
+                        // Owner-entered text — let it read in its own language's
+                        // direction rather than forcing the page's.
+                        <p dir="auto" className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
                       )}
                     </Td>
                     <Td className="tabular-nums">
@@ -151,9 +153,16 @@ export function PromoManager({
                       )}
                     </Td>
                     <Td className="text-body-sm text-secondary">
-                      {c.startsAt || c.expiresAt
-                        ? `${c.startsAt || '…'} → ${c.expiresAt || '…'}`
-                        : d.promo.always}
+                      {c.startsAt || c.expiresAt ? (
+                        // Two dates and an arrow are a single left-to-right
+                        // phrase; without this the RTL flow swaps them and the
+                        // arrow ends up pointing from the end date to the start.
+                        <span dir="ltr" className="inline-block">
+                          {`${c.startsAt || '…'} → ${c.expiresAt || '…'}`}
+                        </span>
+                      ) : (
+                        d.promo.always
+                      )}
                     </Td>
                     <Td>
                       <div className="flex gap-2">
