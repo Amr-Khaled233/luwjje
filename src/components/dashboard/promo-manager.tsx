@@ -127,9 +127,13 @@ export function PromoManager({
                     <Td>
                       <p className="font-mono text-label-md tracking-wider">{c.code}</p>
                       {c.description && (
-                        // Owner-entered text — let it read in its own language's
-                        // direction rather than forcing the page's.
-                        <p dir="auto" className="mt-0.5 text-body-sm text-tertiary">{c.description}</p>
+                        // Owner-entered text: <bdi> isolates it so it reads in
+                        // its own language's direction while still sitting at the
+                        // start of the cell (the right, in Arabic) — dir="auto"
+                        // on the block would have pulled English text left.
+                        <p className="mt-0.5 text-body-sm text-tertiary">
+                          <bdi>{c.description}</bdi>
+                        </p>
                       )}
                     </Td>
                     <Td className="tabular-nums">
