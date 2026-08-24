@@ -296,6 +296,8 @@ model Banner {
   badge        String    @default("")
   badgeAr      String    @default("")
   active       Boolean   @default(true)
+  /// HERO only: whether the text card is shown over the image.
+  showText     Boolean   @default(true)
   startsAt     DateTime?
   endsAt       DateTime?
   position     Int       @default(0)

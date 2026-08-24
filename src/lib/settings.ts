@@ -109,5 +109,7 @@ export async function getActiveBanners(slot: 'HERO' | 'OFFER', locale: Locale) {
       imageUrl: b.imageUrl,
       badge: pick(locale, b.badge, b.badgeAr),
       endsAt: b.endsAt,
+      // Whether the text card sits over the hero, or the image stands alone.
+      showText: b.showText,
     }));
 }

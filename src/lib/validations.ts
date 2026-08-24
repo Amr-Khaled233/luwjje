@@ -260,6 +260,8 @@ export const bannerSchema = z.object({
   badge: z.string().trim().max(60).default(''),
   badgeAr: z.string().trim().max(60).default(''),
   active: z.boolean().default(true),
+  /** HERO only: show the text card over the image, or the image alone. */
+  showText: z.boolean().default(true),
   startsAt: z.string().optional().or(z.literal('')),
   endsAt: z.string().optional().or(z.literal('')),
   position: z.coerce.number().int().min(0).default(0),

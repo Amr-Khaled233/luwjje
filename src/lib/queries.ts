@@ -11,7 +11,6 @@ export interface ProductCardData {
   discounted: boolean;
   categoryName: string | null;
   primaryImage: string;
-  hoverImage: string | null;
   colors: { name: string; hex: string }[];
   inStock: boolean;
 }
@@ -40,7 +39,6 @@ type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof cardInclu
 
 function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
-  const hover = p.images.find((i) => i.isHover) ?? p.images[1] ?? null;
   const price = p.price;
   const listPrice = strikeThrough(p.price, p.compareAtPrice, price);
 
@@ -60,7 +58,6 @@ function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
     discounted: listPrice > price,
     categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
     primaryImage: primary?.url ?? '',
-    hoverImage: hover?.url ?? null,
     colors,
     inStock: p.variants.some((v) => v.stock > 0),
   };

@@ -35,7 +35,7 @@ export default async function HomePage() {
         // The banner is as tall as the image is: it is shown whole, the same
         // as every other photo in the shop. The copy sits over it, which is
         // why the section is a positioning context and the image is in flow.
-        <section className="relative w-full overflow-hidden bg-surface-low">
+        <section className="group relative w-full overflow-hidden bg-surface-low">
           {hero.imageUrl && (
             <Image
               src={hero.imageUrl}
@@ -44,12 +44,16 @@ export default async function HomePage() {
               height={0}
               priority
               sizes="100vw"
-              // A slow drift in gives the still image some life without
-              // moving anything the reader is trying to read.
-              className="block h-auto w-full animate-fade-in"
+              // A slow drift in gives the still image some life. On hover it
+              // eases in a little more, so the photograph comes forward as the
+              // text card softens.
+              className="block h-auto w-full animate-fade-in transition-transform duration-700 ease-scandi group-hover:scale-[1.03]"
             />
           )}
-          {hero.imageUrl && <div className="absolute inset-0 hidden bg-navy/15 md:block" />}
+          {/* The dim over the photo lifts on hover so the image reads clearer. */}
+          {hero.imageUrl && (
+            <div className="absolute inset-0 hidden bg-navy/15 transition-colors duration-500 group-hover:bg-navy/5 md:block" />
+          )}
 
           {/*
             On a phone the copy sits under the photo rather than on top of it:
@@ -60,13 +64,19 @@ export default async function HomePage() {
             With no image at all it is simply in flow — a text-only banner
             positioned over a section with no height would disappear.
           */}
+          {hero.showText && (
           <div
             className={cn(
               'container-luwjje flex items-center',
               hero.imageUrl ? 'py-6 md:absolute md:inset-0 md:py-0' : 'py-16 md:py-stack-lg',
             )}
           >
-            <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/80 p-6 backdrop-blur-[20px] sm:p-8 md:p-12">
+            {/*
+              A touch see-through at rest so the photo behind is still felt;
+              on hover it softens further and blurs more, letting the image
+              take over while the words recede.
+            */}
+            <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/60 p-6 backdrop-blur-[20px] transition-[background-color,backdrop-filter] duration-500 ease-scandi group-hover:bg-background/40 group-hover:backdrop-blur-[28px] sm:p-8 md:p-12">
               {hero.eyebrow && (
                 <p className="label-caps mb-4 text-secondary md:mb-5">{hero.eyebrow}</p>
               )}
@@ -87,6 +97,7 @@ export default async function HomePage() {
               </ButtonLink>
             </div>
           </div>
+          )}
         </section>
       )}
 

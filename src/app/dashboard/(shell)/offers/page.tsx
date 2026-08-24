@@ -34,6 +34,7 @@ export default async function AdminOffersPage() {
           badge: b.badge,
           badgeAr: b.badgeAr,
           active: b.active,
+          showText: b.showText,
           startsAt: iso(b.startsAt),
           endsAt: iso(b.endsAt),
           position: b.position,

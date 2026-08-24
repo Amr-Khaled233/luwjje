@@ -12,8 +12,8 @@ export interface UploadedImage {
 }
 
 /**
- * Multi-image uploader. Position 1 is the card's primary shot, position 2 the
- * lifestyle image revealed on hover — the order here is the order shown.
+ * Multi-image uploader. Position 1 is the card's primary shot; the rest fill
+ * the product-page gallery — the order here is the order shown.
  *
  * A photo is shown exactly as it was uploaded, at its own shape. There is
  * nothing to crop, position or configure: the focal point and the fill/fit
@@ -149,7 +149,7 @@ export function ImageUploader({
                   </button>
 
                   <span className="label-caps ms-1 text-tertiary">
-                    {i === 0 ? d.images.primary : i === 1 ? d.images.hover : `#${i + 1}`}
+                    {i === 0 ? d.images.primary : d.images.gallery}
                   </span>
 
                   <button

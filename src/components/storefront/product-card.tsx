@@ -65,28 +65,16 @@ export function ProductCard({
         */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-low">
           {product.primaryImage && (
+            // Hover simply zooms the one photo in — it never swaps to a second
+            // image, even when the product has more than one, so the card stays
+            // steady and the movement is only the gentle scale.
             <Image
               src={product.primaryImage}
               alt={product.name}
               fill
               priority={priority}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className={cn(
-                'object-contain transition-transform duration-500 ease-scandi',
-                product.hoverImage && 'group-hover:opacity-0',
-                'group-hover:scale-[1.02]',
-              )}
-            />
-          )}
-          {product.hoverImage && (
-            // Sits over the first, in the same window.
-            <Image
-              src={product.hoverImage}
-              alt=""
-              aria-hidden
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="scale-[1.02] object-contain opacity-0 transition-opacity duration-500 ease-scandi group-hover:opacity-100"
+              className="object-contain transition-transform duration-500 ease-scandi group-hover:scale-105"
             />
           )}
 

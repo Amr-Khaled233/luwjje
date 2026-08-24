@@ -43,6 +43,7 @@ const EMPTY_BANNER: BannerInput = {
   badge: '',
   badgeAr: '',
   active: true,
+  showText: true,
   startsAt: '',
   endsAt: '',
   position: 0,
@@ -460,6 +461,21 @@ export function OffersManager({
               />
             )}
           />
+
+          {/* The hero can stand as the image alone, without its text card. */}
+          {bannerSlot === 'HERO' && (
+            <Controller
+              control={bannerForm.control}
+              name="showText"
+              render={({ field }) => (
+                <Checkbox
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  label={d.offers.showHeroText}
+                />
+              )}
+            />
+          )}
         </form>
       </Modal>
 
