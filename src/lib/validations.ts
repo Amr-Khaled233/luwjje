@@ -292,6 +292,8 @@ export const settingsSchema = z.object({
   supportPhone: z.string().trim().max(40).default(''),
   defaultLocale: z.enum(['en', 'ar']).default('en'),
   enableArabic: z.boolean().default(true),
+  showAbout: z.boolean().default(true),
+  showJournal: z.boolean().default(true),
   currencyCode: z.string().trim().min(1).max(8).default('EGP'),
   currencySymbol: z.string().trim().min(1).max(8).default('EGP'),
   currencySymbolAr: z.string().trim().min(1).max(8).default('ج.م'),

@@ -14,6 +14,8 @@ export default async function StorefrontLayout({ children }: { children: React.R
         locale={locale}
         t={t}
         showLanguageSwitcher={settings.enableArabic}
+        showAbout={settings.showAbout}
+        showJournal={settings.showJournal}
       />
       <main className="flex-1">{children}</main>
       <SiteFooter />

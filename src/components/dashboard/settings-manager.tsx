@@ -196,6 +196,35 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
+            <h2 className="font-display text-headline-sm">{d.settings.navigation}</h2>
+            <p className="mt-2 text-body-sm text-secondary">{d.settings.navigationHint}</p>
+            <div className="mt-6 flex flex-col gap-4">
+              <Controller
+                control={settingsForm.control}
+                name="showAbout"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    label={d.settings.showAbout}
+                  />
+                )}
+              />
+              <Controller
+                control={settingsForm.control}
+                name="showJournal"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    label={d.settings.showJournal}
+                  />
+                )}
+              />
+            </div>
+          </section>
+
+          <section className="border border-outline-variant bg-surface-lowest p-6">
             <h2 className="font-display text-headline-sm">{d.settings.commerce}</h2>
             <p className="mt-2 text-body-sm text-secondary">
               Per-governorate prices in{' '}

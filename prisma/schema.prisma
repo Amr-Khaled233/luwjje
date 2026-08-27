@@ -252,6 +252,10 @@ model SiteSettings {
   /// Turn the language switcher off to run the store in one language.
   enableArabic  Boolean @default(true)
 
+  /// Whether the About and Journal links appear in the top nav and footer.
+  showAbout   Boolean @default(true)
+  showJournal Boolean @default(true)
+
   currencyCode     String @default("EGP")
   currencySymbol   String @default("EGP")
   currencySymbolAr String @default("ج.م")

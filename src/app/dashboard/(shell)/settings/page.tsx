@@ -25,6 +25,8 @@ export default async function DashboardSettingsPage() {
           supportPhone: settings.supportPhone,
           defaultLocale: settings.defaultLocale === 'ar' ? 'ar' : 'en',
           enableArabic: settings.enableArabic,
+          showAbout: settings.showAbout,
+          showJournal: settings.showJournal,
           currencyCode: settings.currencyCode,
           currencySymbol: settings.currencySymbol,
           currencySymbolAr: settings.currencySymbolAr,

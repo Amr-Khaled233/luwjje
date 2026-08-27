@@ -35,6 +35,8 @@ function fallbackSettings(): Settings {
     supportPhone: '',
     defaultLocale: 'en',
     enableArabic: true,
+    showAbout: true,
+    showJournal: true,
     currencyCode: 'EGP',
     currencySymbol: 'EGP',
     currencySymbolAr: 'ج.م',

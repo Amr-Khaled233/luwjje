@@ -21,11 +21,15 @@ export function SiteHeader({
   locale,
   t,
   showLanguageSwitcher,
+  showAbout,
+  showJournal,
 }: {
   storeName: string;
   locale: Locale;
   t: Dictionary;
   showLanguageSwitcher: boolean;
+  showAbout: boolean;
+  showJournal: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -62,8 +66,8 @@ export function SiteHeader({
 
   const NAV = [
     { href: '/shop', label: t.nav.shop },
-    { href: '/about', label: t.nav.about },
-    { href: '/journal', label: t.nav.journal },
+    ...(showAbout ? [{ href: '/about', label: t.nav.about }] : []),
+    ...(showJournal ? [{ href: '/journal', label: t.nav.journal }] : []),
   ];
 
   React.useEffect(() => setMobileOpen(false), [pathname]);
