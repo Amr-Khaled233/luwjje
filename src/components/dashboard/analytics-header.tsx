@@ -33,25 +33,27 @@ export function PeriodPicker({ range }: { range: AnalyticsRange }) {
   }, [range.from, range.to]);
 
   return (
-    <div className={cn('flex items-end gap-2', pending && 'opacity-60')}>
-      <label className="flex flex-col">
+    // Wraps on a phone: the two dates share a row and shrink to fit, and Apply
+    // drops to a full-width line beneath them rather than overflowing.
+    <div className={cn('flex w-full flex-wrap items-end gap-2 sm:w-auto', pending && 'opacity-60')}>
+      <label className="flex min-w-0 flex-1 flex-col sm:flex-none">
         <span className="label-caps mb-1 text-secondary">{d.analytics.from}</span>
         <input
           type="date"
           value={from}
           max={to}
           onChange={(e) => setFrom(e.target.value)}
-          className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
+          className="h-11 w-full border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
         />
       </label>
-      <label className="flex flex-col">
+      <label className="flex min-w-0 flex-1 flex-col sm:flex-none">
         <span className="label-caps mb-1 text-secondary">{d.analytics.to}</span>
         <input
           type="date"
           value={to}
           min={from}
           onChange={(e) => setTo(e.target.value)}
-          className="h-11 border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
+          className="h-11 w-full border border-outline-variant bg-background px-3 text-body-sm transition-colors focus:border-navy focus:outline-none"
         />
       </label>
       <Button
@@ -60,6 +62,7 @@ export function PeriodPicker({ range }: { range: AnalyticsRange }) {
           startTransition(() => router.push(`${pathname}?from=${from}&to=${to}`))
         }
         disabled={!from || !to}
+        className="w-full sm:w-auto"
       >
         {d.analytics.apply}
       </Button>
@@ -81,11 +84,13 @@ export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
         <div className="flex flex-col gap-3">
           <PeriodPicker range={range} />
 
-          {/* Two files: how it went, and what was ordered. */}
-          <div className="flex flex-wrap gap-2">
+          {/* Two files: how it went, and what was ordered. Full width and
+              stacked on a phone, side by side from sm up. */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               variant="secondary"
               onClick={() => window.open(`/api/dashboard/report?report=summary&${exportQuery}`)}
+              className="w-full sm:w-auto"
             >
               <Download className="h-4 w-4" />
               {d.report.downloadAnalytics}
@@ -93,6 +98,7 @@ export function AnalyticsHeader({ range }: { range: AnalyticsRange }) {
             <Button
               variant="secondary"
               onClick={() => window.open(`/api/dashboard/report?report=orders&${exportQuery}`)}
+              className="w-full sm:w-auto"
             >
               <Download className="h-4 w-4" />
               {d.report.downloadOrders}

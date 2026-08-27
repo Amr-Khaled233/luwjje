@@ -35,11 +35,16 @@ export function StatTable({
   return (
     <div
       className={cn(
-        'max-h-[280px] w-full overflow-auto overscroll-contain border border-outline-variant md:max-h-[320px]',
+        'max-h-[280px] w-full overflow-x-auto overflow-y-auto overscroll-contain border border-outline-variant md:max-h-[320px]',
         className,
       )}
     >
-      <table className="w-full table-fixed border-collapse">
+      {/*
+        `min-w` so the columns keep a legible width on a phone and the box
+        scrolls sideways instead of squeezing three or four columns into
+        360px; from there up `w-full` fills the card.
+      */}
+      <table className="w-full min-w-[440px] table-fixed border-collapse">
         <colgroup>
           {columns.map((c) => (
             <col key={c} style={{ width }} />

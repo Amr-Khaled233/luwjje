@@ -178,8 +178,12 @@ export function OrdersManager({
                     <p className="text-label-md">{o.fullName}</p>
                     <p className="mt-0.5 text-body-sm text-tertiary">{o.email}</p>
                     {o.phone && (
-                      <p className="mt-0.5 text-body-sm text-tertiary" dir="ltr">
-                        {o.phone}
+                      // <bdi> keeps the number left-to-right while it still
+                      // sits at the start (the right, in Arabic) like the name
+                      // and email above it — dir="ltr" on the block pulled it
+                      // to the left.
+                      <p className="mt-0.5 text-body-sm text-tertiary">
+                        <bdi>{o.phone}</bdi>
                       </p>
                     )}
                   </Td>
