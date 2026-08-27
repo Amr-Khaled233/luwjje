@@ -77,12 +77,12 @@ export default async function HomePage() {
               take over while the words recede.
             */}
             {/*
-              At rest the card is 45% — the photo behind is felt. On hover it
+              At rest the card is 50% — the photo behind is felt. On hover it
               all but disappears (10%, border and blur fading with it), so the
               banner becomes the image and only a faint trace of the card and
               its words remains.
             */}
-            <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/45 p-6 backdrop-blur-[20px] transition-[background-color,backdrop-filter,border-color] duration-500 ease-scandi group-hover:border-background/10 group-hover:bg-background/10 group-hover:backdrop-blur-0 sm:p-8 md:p-12">
+            <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/50 p-6 backdrop-blur-[20px] transition-[background-color,backdrop-filter,border-color] duration-500 ease-scandi group-hover:border-background/10 group-hover:bg-background/10 group-hover:backdrop-blur-0 sm:p-8 md:p-12">
               {hero.eyebrow && (
                 <p className="label-caps mb-4 text-secondary md:mb-5">{hero.eyebrow}</p>
               )}
