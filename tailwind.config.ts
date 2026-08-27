@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 
 /**
  * luwjje — Scandinavian Minimalism design tokens.
@@ -164,7 +165,14 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `hoverable:` guards an effect behind a real hovering pointer, so a
+    // touch phone or tablet — where `:hover` sticks after a tap — never
+    // triggers it. Stack it before a hover variant: `hoverable:group-hover:…`.
+    plugin(({ addVariant }) => {
+      addVariant('hoverable', '@media (hover: hover)');
+    }),
+  ],
 };
 
 export default config;
