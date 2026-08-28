@@ -225,6 +225,94 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
+            <h2 className="font-display text-headline-sm">{d.settings.footer}</h2>
+            <p className="mt-2 text-body-sm text-secondary">{d.settings.footerHint}</p>
+
+            <div className="mt-6 flex flex-col gap-4">
+              <Controller
+                control={settingsForm.control}
+                name="showFooterLinks"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    label={d.settings.showFooterLinks}
+                  />
+                )}
+              />
+              <Controller
+                control={settingsForm.control}
+                name="showFooterSocial"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    label={d.settings.showFooterSocial}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Controller
+                control={settingsForm.control}
+                name="footerLinksHeading"
+                render={({ field: en }) => (
+                  <Controller
+                    control={settingsForm.control}
+                    name="footerLinksHeadingAr"
+                    render={({ field: ar }) => (
+                      <BilingualField
+                        label={d.settings.footerLinksHeadingLabel}
+                        hint={d.settings.footerBlankHint}
+                        english={{ value: en.value, onChange: en.onChange }}
+                        arabic={{ value: ar.value, onChange: ar.onChange }}
+                      />
+                    )}
+                  />
+                )}
+              />
+              <Controller
+                control={settingsForm.control}
+                name="footerSocialHeading"
+                render={({ field: en }) => (
+                  <Controller
+                    control={settingsForm.control}
+                    name="footerSocialHeadingAr"
+                    render={({ field: ar }) => (
+                      <BilingualField
+                        label={d.settings.footerSocialHeadingLabel}
+                        hint={d.settings.footerBlankHint}
+                        english={{ value: en.value, onChange: en.onChange }}
+                        arabic={{ value: ar.value, onChange: ar.onChange }}
+                      />
+                    )}
+                  />
+                )}
+              />
+              <Controller
+                control={settingsForm.control}
+                name="footerRights"
+                render={({ field: en }) => (
+                  <Controller
+                    control={settingsForm.control}
+                    name="footerRightsAr"
+                    render={({ field: ar }) => (
+                      <BilingualField
+                        label={d.settings.footerRightsLabel}
+                        hint={d.settings.footerBlankHint}
+                        className="md:col-span-2"
+                        english={{ value: en.value, onChange: en.onChange }}
+                        arabic={{ value: ar.value, onChange: ar.onChange }}
+                      />
+                    )}
+                  />
+                )}
+              />
+            </div>
+          </section>
+
+          <section className="border border-outline-variant bg-surface-lowest p-6">
             <h2 className="font-display text-headline-sm">{d.settings.commerce}</h2>
             <p className="mt-2 text-body-sm text-secondary">
               Per-governorate prices in{' '}

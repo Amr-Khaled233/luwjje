@@ -256,6 +256,17 @@ model SiteSettings {
   showAbout   Boolean @default(true)
   showJournal Boolean @default(true)
 
+  /// Footer: which columns show, their headings (blank falls back to the
+  /// built-in wording), and the rights line beside the copyright.
+  showFooterLinks       Boolean @default(true)
+  showFooterSocial      Boolean @default(true)
+  footerLinksHeading    String  @default("")
+  footerLinksHeadingAr  String  @default("")
+  footerSocialHeading   String  @default("")
+  footerSocialHeadingAr String  @default("")
+  footerRights          String  @default("")
+  footerRightsAr        String  @default("")
+
   currencyCode     String @default("EGP")
   currencySymbol   String @default("EGP")
   currencySymbolAr String @default("ج.م")
