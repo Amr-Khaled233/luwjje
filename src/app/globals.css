@@ -10,6 +10,60 @@
     --font-heading: var(--font-playfair);
     /* Drawers slide in from the trailing edge; the RTL rule flips the sign. */
     --slide-from: 100%;
+
+    /*
+      The light palette — used by the dashboard and as the default. Each is an
+      "R G B" triplet so Tailwind can inject an alpha for the /opacity
+      utilities. The storefront overrides these under .theme-dark below.
+    */
+    --c-background: 248 249 255;
+    --c-surface: 248 249 255;
+    --c-surface-lowest: 255 255 255;
+    --c-surface-low: 239 244 255;
+    --c-surface-container: 229 238 255;
+    --c-surface-bright: 248 249 255;
+    --c-on-surface: 11 28 48;
+    --c-navy: 11 28 48;
+    --c-navy-soft: 33 49 69;
+    --c-secondary: 86 94 116;
+    --c-tertiary: 116 120 121;
+    --c-outline: 89 95 102;
+    --c-outline-soft: 116 120 121;
+    --c-outline-variant: 196 199 201;
+    --c-primary: 91 95 97;
+    --c-error: 186 26 26;
+    --c-warning: 184 134 11;
+    --c-warning-ink: 122 89 0;
+    --c-inverse-surface: 33 49 69;
+  }
+
+  /*
+    The dark palette — the customer storefront. Near-black navy ground with a
+    pale blue-white ink; the accent (navy) inverts to the ink colour so a
+    dark-on-light button becomes light-on-dark, and surfaces step up from the
+    ground rather than down from white. Applied on the storefront and checkout
+    layout roots, so the dashboard is untouched.
+  */
+  .theme-dark {
+    --c-background: 2 10 29;
+    --c-surface: 2 10 29;
+    --c-surface-lowest: 10 21 38;
+    --c-surface-low: 15 29 51;
+    --c-surface-container: 23 39 63;
+    --c-surface-bright: 15 29 51;
+    --c-on-surface: 230 240 247;
+    --c-navy: 230 240 247;
+    --c-navy-soft: 199 214 230;
+    --c-secondary: 159 177 198;
+    --c-tertiary: 111 128 152;
+    --c-outline: 59 76 102;
+    --c-outline-soft: 76 93 119;
+    --c-outline-variant: 38 55 79;
+    --c-primary: 139 152 171;
+    --c-error: 255 138 138;
+    --c-warning: 226 173 70;
+    --c-warning-ink: 240 198 116;
+    --c-inverse-surface: 230 240 247;
   }
 
   html[data-locale='ar'] {
@@ -62,13 +116,13 @@
   }
 
   ::selection {
-    background: #0b1c30;
-    color: #f8f9ff;
+    background: rgb(var(--c-on-surface));
+    color: rgb(var(--c-background));
   }
 
   /* Sharp, minimal focus ring consistent with the 1px-outline language. */
   *:focus-visible {
-    outline: 1px solid #0b1c30;
+    outline: 1px solid rgb(var(--c-on-surface));
     outline-offset: 2px;
   }
 

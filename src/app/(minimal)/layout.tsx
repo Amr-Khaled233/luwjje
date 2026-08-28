@@ -14,7 +14,7 @@ export default async function MinimalLayout({ children }: { children: React.Reac
   const [settings, { locale, t }] = await Promise.all([getSettings(), getI18n()]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="theme-dark flex min-h-screen flex-col bg-background text-on-background">
       <header className="border-b border-outline-variant">
         <div className="container-luwjje flex h-[72px] items-center justify-between gap-4">
           <Link href="/" className="font-display text-[26px] leading-none">

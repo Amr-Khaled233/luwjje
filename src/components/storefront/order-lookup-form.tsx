@@ -17,7 +17,7 @@ function SubmitButton({ t }: { t: Dictionary }) {
     <button
       type="submit"
       disabled={pending}
-      className="label-caps mt-2 flex h-12 w-full items-center justify-center gap-2 border border-navy bg-navy text-background transition-[background-color,transform] hover:bg-[#060f1c] active:scale-[0.98] disabled:opacity-60 sm:h-14"
+      className="label-caps mt-2 flex h-12 w-full items-center justify-center gap-2 border border-navy bg-navy text-background transition-[background-color,transform] hover:bg-navy-soft active:scale-[0.98] disabled:opacity-60 sm:h-14"
     >
       {pending ? (
         <>

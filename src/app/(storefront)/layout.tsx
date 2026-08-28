@@ -8,7 +8,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const [settings, { locale, t }] = await Promise.all([getSettings(), getI18n()]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="theme-dark flex min-h-screen flex-col bg-background text-on-background">
       <SiteHeader
         storeName={settings.storeName}
         locale={locale}

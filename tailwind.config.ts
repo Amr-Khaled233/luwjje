@@ -29,35 +29,37 @@ const config: Config = {
         // between them and `sm` is where single-column layouts start to work.
         xs: '400px',
       },
+      // Every colour is a CSS variable holding an "R G B" triplet, so the same
+      // token resolves light on the dashboard (:root) and dark on the
+      // storefront (.theme-dark) — see globals.css. `rgb(var / <alpha-value>)`
+      // keeps the /opacity utilities (bg-background/60) working.
       colors: {
-        background: '#f8f9ff',
+        background: 'rgb(var(--c-background) / <alpha-value>)',
         surface: {
-          DEFAULT: '#f8f9ff',
-          lowest: '#ffffff',
-          low: '#eff4ff',
-          container: '#e5eeff',
-          bright: '#f8f9ff',
+          DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
+          lowest: 'rgb(var(--c-surface-lowest) / <alpha-value>)',
+          low: 'rgb(var(--c-surface-low) / <alpha-value>)',
+          container: 'rgb(var(--c-surface-container) / <alpha-value>)',
+          bright: 'rgb(var(--c-surface-bright) / <alpha-value>)',
         },
-        'on-background': '#0b1c30',
-        'on-surface': '#0b1c30',
+        'on-background': 'rgb(var(--c-on-surface) / <alpha-value>)',
+        'on-surface': 'rgb(var(--c-on-surface) / <alpha-value>)',
         navy: {
-          DEFAULT: '#0b1c30',
-          soft: '#213145',
+          DEFAULT: 'rgb(var(--c-navy) / <alpha-value>)',
+          soft: 'rgb(var(--c-navy-soft) / <alpha-value>)',
         },
-        secondary: '#565e74',
-        tertiary: '#747879',
+        secondary: 'rgb(var(--c-secondary) / <alpha-value>)',
+        tertiary: 'rgb(var(--c-tertiary) / <alpha-value>)',
         outline: {
-          DEFAULT: '#595f66',
-          soft: '#747879',
-          variant: '#c4c7c9',
+          DEFAULT: 'rgb(var(--c-outline) / <alpha-value>)',
+          soft: 'rgb(var(--c-outline-soft) / <alpha-value>)',
+          variant: 'rgb(var(--c-outline-variant) / <alpha-value>)',
         },
-        primary: '#5b5f61',
-        error: '#ba1a1a',
-        // "Running low" — an amber that still passes contrast as text on the
-        // pale background, which the tint itself is too light to do.
-        warning: '#b8860b',
-        'warning-ink': '#7a5900',
-        'inverse-surface': '#213145',
+        primary: 'rgb(var(--c-primary) / <alpha-value>)',
+        error: 'rgb(var(--c-error) / <alpha-value>)',
+        warning: 'rgb(var(--c-warning) / <alpha-value>)',
+        'warning-ink': 'rgb(var(--c-warning-ink) / <alpha-value>)',
+        'inverse-surface': 'rgb(var(--c-inverse-surface) / <alpha-value>)',
       },
       fontFamily: {
         // --font-heading / --font-body are swapped per locale in globals.css,
