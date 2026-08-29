@@ -29,10 +29,23 @@ function sender() {
   return process.env.MAIL_FROM || 'luwjje <onboarding@resend.dev>';
 }
 
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
 /** Where reset links go. One fixed address, never taken from a form. */
 export function recoveryAddress(): string | null {
   const value = process.env.PASSWORD_RESET_EMAIL?.trim();
-  return value && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value) ? value : null;
+  return value && EMAIL_RE.test(value) ? value : null;
+}
+
+/**
+ * Where a "new order" alert goes. `ORDER_NOTIFICATION_EMAIL` if set, otherwise
+ * the recovery address the owner already configured — so a store that set up
+ * password resets gets order alerts with no extra config.
+ */
+export function notificationAddress(): string | null {
+  const value = process.env.ORDER_NOTIFICATION_EMAIL?.trim();
+  if (value && EMAIL_RE.test(value)) return value;
+  return recoveryAddress();
 }
 
 /**

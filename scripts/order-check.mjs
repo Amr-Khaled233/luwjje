@@ -12,6 +12,7 @@ import { prisma } from '../src/lib/prisma.ts';
 import { createOrder, applyOrderEdit } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
 import { getFunnel, getSocialClicks } from '../src/lib/traffic.ts';
+import { buildOwnerNotification } from '../src/lib/order-email.ts';
 import { calculateShipping, validatePromoCode, getFreeShipping } from '../src/lib/commerce.ts';
 
 let pass = 0;
@@ -657,6 +658,20 @@ check(
 
 await prisma.pageView.deleteMany({ where: { sessionId: { startsWith: 'check-' } } });
 await cleanup();
+
+// --------------------------------------------------- owner notification
+console.log('\n▸ Owner order notification');
+process.env.ORDER_NOTIFICATION_EMAIL = 'owner@luwjje.test';
+// A fresh order — earlier sections have cleaned up everything before this.
+const notifOrder = await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 1 }] });
+const notif = await buildOwnerNotification(notifOrder.orderNumber);
+check('a notification is built for a placed order', Boolean(notif), notif);
+check('it is addressed to the configured owner', notif?.to === 'owner@luwjje.test', notif?.to);
+check('the subject carries the order number', notif?.subject.includes(notifOrder.orderNumber), notif?.subject);
+check('the body names the customer', notif?.text.includes(shipping.fullName), 'no name');
+check('the body links to the dashboard order', notif?.html.includes('/dashboard/orders'));
+check('it states cash on delivery', /cash on delivery|عند الاستلام/i.test(notif?.text ?? ''));
+delete process.env.ORDER_NOTIFICATION_EMAIL;
 
 // ---------------------------------------------------------------- tidy up
 await prisma.productVariant.update({ where: { id: last.id }, data: { stock: lastOriginalStock } });

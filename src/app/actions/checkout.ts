@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { placeOrderSchema } from '@/lib/validations';
 import { createOrder } from '@/lib/orders';
 import { grantOrderAccess } from '@/lib/order-access';
-import { sendOrderConfirmation } from '@/lib/order-email';
+import { sendOrderConfirmation, sendOrderNotification } from '@/lib/order-email';
 import { getLocale } from '@/i18n/server';
 
 export interface PlaceOrderResult {
@@ -44,10 +44,14 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
     await grantOrderAccess(result.orderNumber);
 
     // Awaited rather than left floating: a serverless function can be frozen
-    // the moment it responds, which would drop the send. `sendOrderConfirmation`
-    // has its own timeout and swallows its own errors, so the order is never
-    // put at risk by the mail provider — the shopper has already paid.
-    await sendOrderConfirmation(result.orderNumber, locale);
+    // the moment it responds, which would drop the send. Both have their own
+    // timeout and swallow their own errors, so the order is never put at risk
+    // by the mail provider — the shopper has already paid. In parallel: the
+    // shopper's receipt, and the owner's "new order" alert.
+    await Promise.all([
+      sendOrderConfirmation(result.orderNumber, locale),
+      sendOrderNotification(result.orderNumber),
+    ]);
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/orders');

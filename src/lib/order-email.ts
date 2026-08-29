@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { sendMail } from './mailer';
+import { sendMail, notificationAddress } from './mailer';
 import { formatPrice } from './utils';
 import { pick, type Locale } from '@/i18n/config';
 
@@ -283,6 +283,171 @@ export async function buildOrderEmail(
   </table>
 </body></html>`;
     return { to: order.email, subject: t.subject, text, html };
+  }
+}
+
+/**
+ * The "you have a new order" alert the owner receives — separate from the
+ * shopper's confirmation, and written for whoever runs the shop: the customer's
+ * details, what they ordered, what to collect, and a link straight to the order
+ * in the dashboard. In the store's own language.
+ */
+export async function buildOwnerNotification(
+  orderNumber: string,
+): Promise<{ to: string; subject: string; text: string; html: string } | null> {
+  const [order, settings] = await Promise.all([
+    prisma.order.findUnique({ where: { orderNumber }, include: { items: true } }),
+    prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: {
+        storeName: true,
+        currencySymbol: true,
+        currencySymbolAr: true,
+        supportEmail: true,
+        defaultLocale: true,
+      },
+    }),
+  ]);
+
+  if (!order) return null;
+
+  const to = notificationAddress() || settings?.supportEmail || '';
+  if (!to) return null; // nowhere to send it — the shop has set no owner address
+
+  const locale: Locale = settings?.defaultLocale === 'ar' ? 'ar' : 'en';
+  const storeName = settings?.storeName ?? 'luwjje';
+  const symbol = (locale === 'ar' ? settings?.currencySymbolAr : settings?.currencySymbol) || 'EGP';
+  const money = (v: number) => formatPrice(v, symbol, locale);
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  const align = locale === 'ar' ? 'right' : 'left';
+  const dashUrl = `${baseUrl()}/dashboard/orders`;
+
+  const c =
+    locale === 'ar'
+      ? {
+          subject: `طلب جديد ${order.orderNumber} — ${money(order.total)}`,
+          heading: 'طلب جديد',
+          intro: `وصل طلب جديد على ${storeName}.`,
+          orderNumber: 'رقم الطلب',
+          customer: 'العميل',
+          phone: 'الموبايل',
+          email: 'البريد',
+          deliverTo: 'التوصيل إلى',
+          items: 'الطلب',
+          total: 'الإجمالي',
+          payment: 'الدفع: عند الاستلام',
+          open: 'افتح الطلب في اللوحة',
+          note: 'التفاصيل الكاملة في لوحة التحكم.',
+        }
+      : {
+          subject: `New order ${order.orderNumber} — ${money(order.total)}`,
+          heading: 'New order',
+          intro: `A new order came in on ${storeName}.`,
+          orderNumber: 'Order number',
+          customer: 'Customer',
+          phone: 'Phone',
+          email: 'Email',
+          deliverTo: 'Delivering to',
+          items: 'Items',
+          total: 'Total',
+          payment: 'Payment: cash on delivery',
+          open: 'Open the order in the dashboard',
+          note: 'The full details are in the dashboard.',
+        };
+
+  const address = [order.street, order.area, order.governorate].filter(Boolean).join('، ');
+  const itemLines = order.items.map(
+    (i) =>
+      `  ${pick(locale, i.name, i.nameAr)}${[i.colorName, i.size].filter(Boolean).length ? ` (${[i.colorName, i.size].filter(Boolean).join(' · ')})` : ''} × ${i.quantity} — ${money(i.unitPrice * i.quantity)}`,
+  );
+
+  const text = [
+    c.heading,
+    '',
+    c.intro,
+    '',
+    `${c.orderNumber}: ${order.orderNumber}`,
+    `${c.customer}: ${order.fullName}`,
+    order.phone ? `${c.phone}: ${order.phone}` : null,
+    `${c.email}: ${order.email}`,
+    `${c.deliverTo}: ${address}`,
+    '',
+    `${c.items}:`,
+    ...itemLines,
+    '',
+    `${c.total}: ${money(order.total)}`,
+    c.payment,
+    '',
+    c.open,
+    dashUrl,
+  ]
+    .filter((l) => l !== null)
+    .join('\n');
+
+  const rows = order.items
+    .map((i) => {
+      const detail = escapeHtml([i.colorName, i.size].filter(Boolean).join(' · '));
+      return `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #e5eeff;text-align:${align};font-size:14px;color:#0b1c30">${escapeHtml(pick(locale, i.name, i.nameAr))}${detail ? `<br><span style="font-size:12px;color:#747879">${detail}</span>` : ''}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e5eeff;text-align:center;font-size:14px;color:#565e74;white-space:nowrap">×${i.quantity}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #e5eeff;text-align:${locale === 'ar' ? 'left' : 'right'};font-size:14px;color:#0b1c30;white-space:nowrap">${escapeHtml(money(i.unitPrice * i.quantity))}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const line = (label: string, value: string) =>
+    `<tr><td style="padding:2px 0;text-align:${align};font-size:13px;color:#747879">${escapeHtml(label)}</td><td style="padding:2px 0;text-align:${locale === 'ar' ? 'left' : 'right'};font-size:13px;color:#0b1c30">${escapeHtml(value)}</td></tr>`;
+
+  const html = `<!doctype html><html dir="${dir}" lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8f9ff;-webkit-font-smoothing:antialiased">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff"><tr><td align="center" style="padding:32px 16px">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0b1c30">
+      <tr><td style="background:#0b1c30;color:#f8f9ff;padding:20px 24px;text-align:${align}">
+        <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.75">${escapeHtml(storeName)}</div>
+        <div style="font-size:20px;font-weight:600;margin-top:4px">${escapeHtml(c.heading)} · <span dir="ltr">${escapeHtml(order.orderNumber)}</span></div>
+      </td></tr>
+      <tr><td style="background:#ffffff;border:1px solid #c4c7c9;border-top:0;padding:24px">
+        <p style="margin:0 0 20px;font-size:15px;color:#565e74;text-align:${align}">${escapeHtml(c.intro)}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px">
+          ${line(c.customer, order.fullName)}
+          ${order.phone ? line(c.phone, order.phone) : ''}
+          ${line(c.email, order.email)}
+          ${line(c.deliverTo, address)}
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+          <tr><td colspan="3" style="padding:0 0 6px;text-align:${align};font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#747879;border-bottom:1px solid #0b1c30">${escapeHtml(c.items)}</td></tr>
+          ${rows}
+          <tr><td colspan="2" style="padding:12px 0 0;text-align:${align};font-size:15px;font-weight:600;border-top:1px solid #c4c7c9">${escapeHtml(c.total)}</td><td style="padding:12px 0 0;text-align:${locale === 'ar' ? 'left' : 'right'};font-size:15px;font-weight:600;border-top:1px solid #c4c7c9;white-space:nowrap">${escapeHtml(money(order.total))}</td></tr>
+        </table>
+        <p style="margin:16px 0 24px;font-size:13px;color:#565e74;text-align:${align}">${escapeHtml(c.payment)}</p>
+        <a href="${dashUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:13px 26px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">${escapeHtml(c.open)}</a>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+
+  return { to, subject: c.subject, text, html };
+}
+
+/** Emails the owner that an order came in. Never throws. */
+export async function sendOrderNotification(orderNumber: string) {
+  try {
+    const message = await buildOwnerNotification(orderNumber);
+    if (!message) return false;
+
+    const result = await Promise.race([
+      sendMail(message),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), SEND_TIMEOUT_MS)),
+    ]);
+
+    if (result === null) {
+      console.warn(`order ${orderNumber}: owner notification timed out`);
+      return false;
+    }
+    return result.ok;
+  } catch (error) {
+    console.error(`order ${orderNumber}: owner notification failed`, error);
+    return false;
   }
 }
 
