@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound, redirect } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { Banknote, Check } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Divider } from '@/components/ui/primitives';
 import { prisma } from '@/lib/prisma';
@@ -185,9 +185,12 @@ export default async function OrderConfirmationPage({
             </dl>
           </div>
 
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-outline-variant px-6 pt-6">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-outline-variant px-6 pt-6">
             <p className="label-caps text-secondary">{t.order.payment}</p>
-            <p className="text-body-md">{t.order.cashOnDelivery}</p>
+            <span className="inline-flex items-center gap-2 border border-navy bg-navy/5 px-3 py-1.5 text-body-md font-medium text-navy">
+              <Banknote className="h-4 w-4 shrink-0" aria-hidden />
+              {t.order.cashOnDelivery}
+            </span>
           </div>
 
           <div className="p-6">
