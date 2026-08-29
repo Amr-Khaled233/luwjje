@@ -34,6 +34,7 @@
     --c-error: 186 26 26;
     --c-warning: 184 134 11;
     --c-warning-ink: 122 89 0;
+    --c-success: 22 122 78;
     --c-inverse-surface: 33 49 69;
   }
 
@@ -63,6 +64,7 @@
     --c-error: 255 138 138;
     --c-warning: 226 173 70;
     --c-warning-ink: 240 198 116;
+    --c-success: 109 219 160;
     --c-inverse-surface: 230 240 247;
   }
 

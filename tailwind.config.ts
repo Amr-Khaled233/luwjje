@@ -57,6 +57,7 @@ const config: Config = {
         },
         primary: 'rgb(var(--c-primary) / <alpha-value>)',
         error: 'rgb(var(--c-error) / <alpha-value>)',
+        success: 'rgb(var(--c-success) / <alpha-value>)',
         warning: 'rgb(var(--c-warning) / <alpha-value>)',
         'warning-ink': 'rgb(var(--c-warning-ink) / <alpha-value>)',
         'inverse-surface': 'rgb(var(--c-inverse-surface) / <alpha-value>)',

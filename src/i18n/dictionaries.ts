@@ -148,7 +148,7 @@ const en = {
     payment: 'Payment',
     cashOnDelivery: 'Cash on delivery',
     statuses: {
-      PENDING: 'Cash on delivery',
+      PENDING: 'Being prepared',
       SHIPPED: 'Shipped',
       DELIVERED: 'Delivered',
       CANCELLED: 'Cancelled',
@@ -334,7 +334,7 @@ const ar: Dictionary = {
     payment: 'طريقة الدفع',
     cashOnDelivery: 'الدفع عند الاستلام',
     statuses: {
-      PENDING: 'الدفع عند الاستلام',
+      PENDING: 'قيد التجهيز',
       SHIPPED: 'تم الشحن',
       DELIVERED: 'تم التوصيل',
       CANCELLED: 'ملغي',

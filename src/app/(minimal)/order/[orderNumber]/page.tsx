@@ -15,6 +15,14 @@ import { fmt } from '@/i18n/dictionaries';
 
 export const dynamic = 'force-dynamic';
 
+// Border + ink per delivery state, so the status badge reads at a glance.
+const STATUS_TONE: Record<string, string> = {
+  PENDING: 'border-navy text-navy',
+  SHIPPED: 'border-warning text-warning-ink',
+  DELIVERED: 'border-success text-success',
+  CANCELLED: 'border-error text-error',
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.order.confirmed, robots: { index: false } };
@@ -92,12 +100,18 @@ export default async function OrderConfirmationPage({
             </div>
             <div>
               {/*
-                Nothing has been charged — the courier collects. So an order
-                waiting to be delivered reads "Cash on delivery" rather than
-                "Paid", which would tell the shopper they had already paid.
+                Where the order is right now, in the shopper's own words. It is
+                the delivery state — Being prepared → Shipped → Delivered, or
+                Cancelled — and is coloured so it reads at a glance. Payment is
+                a separate line below: nothing is charged here, the courier
+                collects on delivery.
               */}
               <p className="label-caps mb-2 text-secondary">{t.order.status}</p>
-              <span className="label-caps inline-flex items-center border border-navy px-2.5 py-1">
+              <span
+                className={`label-caps inline-flex items-center border px-2.5 py-1 ${
+                  STATUS_TONE[order.status] ?? 'border-navy text-navy'
+                }`}
+              >
                 {t.order.statuses[order.status] ?? order.status}
               </span>
             </div>

@@ -27,7 +27,7 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
     return {
       subject: `${storeName} — تأكيد طلبك ${orderNumber}`,
       heading: 'تم استلام طلبك',
-      intro: 'شكراً لك. هذه تفاصيل طلبك، ونتواصل معك عند الشحن.',
+      intro: 'شكراً لك. هذه تفاصيل طلبك.',
       orderNumber: 'رقم الطلب',
       placed: 'تاريخ الطلب',
       items: 'القطع',
@@ -38,21 +38,19 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
       discount: 'الخصم',
       total: 'الإجمالي',
       payment: 'طريقة الدفع',
-      cashOnDelivery: 'الدفع عند الاستلام — تدفع للمندوب نقداً عند وصول طلبك',
+      cashOnDelivery: 'الدفع عند الاستلام',
       deliverTo: 'التوصيل إلى',
       notes: 'ملاحظات التوصيل',
       track: 'تتبّع طلبك',
       trackTitle: 'تابع طلبك في أي وقت',
-      trackHint:
-        'ادخل على صفحة تتبّع الطلبات في الموقع واكتب بريدك الإلكتروني — ستظهر لك كل طلباتك وحالة كل واحد منها. لا تحتاج حساباً ولا كلمة مرور.',
+      trackHint: 'ادخل على صفحة تتبّع الطلبات في الموقع واكتب بريدك الإلكتروني.',
       questions: 'لأي استفسار',
-      footer: 'إذا لم تطلب هذا، تجاهل الرسالة أو تواصل معنا.',
     };
   }
   return {
     subject: `${storeName} — order ${orderNumber} confirmed`,
     heading: 'We have your order',
-    intro: 'Thank you. Here is what you ordered — we will be in touch when it ships.',
+    intro: 'Thank you. Here is what you ordered.',
     orderNumber: 'Order number',
     placed: 'Placed',
     items: 'Items',
@@ -63,15 +61,13 @@ function copy(locale: Locale, storeName: string, orderNumber: string) {
     discount: 'Discount',
     total: 'Total',
     payment: 'Payment',
-    cashOnDelivery: 'Cash on delivery — pay the courier in cash when your order arrives',
+    cashOnDelivery: 'Cash on delivery',
     deliverTo: 'Delivering to',
     notes: 'Delivery notes',
     track: 'Track your order',
     trackTitle: 'Follow your order any time',
-    trackHint:
-      'Go to the order tracking page on the site and enter your email address — every order you have placed will be listed with its current status. No account, no password.',
+    trackHint: 'Go to the order tracking page on the site and enter your email address.',
     questions: 'Any questions',
-    footer: 'If you did not place this order, ignore this email or get in touch.',
   };
 }
 
@@ -161,7 +157,6 @@ export async function buildOrderEmail(
       trackUrl,
       '',
       settings?.supportEmail ? `${t.questions}: ${settings.supportEmail}` : null,
-      t.footer,
     ]
       .filter((line) => line !== null)
       .join('\n');
@@ -273,7 +268,6 @@ export async function buildOrderEmail(
           <tr>
             <td style="padding:24px 4px 0;text-align:${align}">
               ${settings?.supportEmail ? `<div style="font-size:13px;line-height:1.7;color:#565e74">${escapeHtml(t.questions)}: <a href="mailto:${escapeHtml(settings.supportEmail)}" style="color:#0b1c30">${escapeHtml(settings.supportEmail)}</a>${settings.supportPhone ? ` · <span dir="ltr">${escapeHtml(settings.supportPhone)}</span>` : ''}</div>` : ''}
-              <div style="margin-top:10px;font-size:12px;line-height:1.7;color:#747879">${escapeHtml(t.footer)}</div>
             </td>
           </tr>
 
@@ -325,7 +319,7 @@ export async function buildOwnerNotification(
   const c =
     locale === 'ar'
       ? {
-          subject: `طلب جديد ${order.orderNumber} — ${money(order.total)}`,
+          subject: `طلب جديد ${order.orderNumber} · ${money(order.total)}`,
           heading: 'طلب جديد',
           intro: `وصل طلب جديد على ${storeName}.`,
           orderNumber: 'رقم الطلب',
@@ -337,10 +331,9 @@ export async function buildOwnerNotification(
           total: 'الإجمالي',
           payment: 'الدفع: عند الاستلام',
           open: 'افتح الطلب في اللوحة',
-          note: 'التفاصيل الكاملة في لوحة التحكم.',
         }
       : {
-          subject: `New order ${order.orderNumber} — ${money(order.total)}`,
+          subject: `New order ${order.orderNumber} · ${money(order.total)}`,
           heading: 'New order',
           intro: `A new order came in on ${storeName}.`,
           orderNumber: 'Order number',
@@ -352,7 +345,6 @@ export async function buildOwnerNotification(
           total: 'Total',
           payment: 'Payment: cash on delivery',
           open: 'Open the order in the dashboard',
-          note: 'The full details are in the dashboard.',
         };
 
   const address = [order.street, order.area, order.governorate].filter(Boolean).join('، ');
