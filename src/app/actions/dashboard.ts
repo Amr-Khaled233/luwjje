@@ -48,10 +48,15 @@ async function guard<T>(fn: () => Promise<T>): Promise<T | ActionResult> {
   return fn();
 }
 
-function parseDate(value?: string | null) {
+function parseDate(value?: string | null, endOfDay = false) {
   if (!value) return null;
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
+  if (Number.isNaN(d.getTime())) return null;
+  // A bare "YYYY-MM-DD" from a date input parses to UTC midnight. For an end
+  // date that would drop the banner the instant its last day begins, so an
+  // end date is pushed to the close of that day and stays inclusive of it.
+  if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(value)) d.setUTCHours(23, 59, 59, 999);
+  return d;
 }
 
 /**
@@ -446,7 +451,7 @@ export async function saveFreeShippingRule(input: unknown): Promise<ActionResult
       nameAr: d.nameAr,
       minOrder: d.minOrder ?? null,
       startsAt: parseDate(d.startsAt),
-      endsAt: parseDate(d.endsAt),
+      endsAt: parseDate(d.endsAt, true),
       active: d.active,
     };
 
@@ -741,7 +746,7 @@ export async function saveBanner(input: unknown): Promise<ActionResult> {
       active: d.active,
       showText: d.showText,
       startsAt: parseDate(d.startsAt),
-      endsAt: parseDate(d.endsAt),
+      endsAt: parseDate(d.endsAt, true),
       position: d.position,
     };
 
