@@ -196,6 +196,41 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
           </section>
 
           <section className="border border-outline-variant bg-surface-lowest p-6">
+            <h2 className="font-display text-headline-sm">{d.settings.announcement}</h2>
+            <p className="mt-2 text-body-sm text-secondary">{d.settings.announcementHint}</p>
+            <div className="mt-6 flex flex-col gap-6">
+              <Controller
+                control={settingsForm.control}
+                name="showAnnouncement"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    label={d.settings.showAnnouncement}
+                  />
+                )}
+              />
+              <Controller
+                control={settingsForm.control}
+                name="announcementText"
+                render={({ field: en }) => (
+                  <Controller
+                    control={settingsForm.control}
+                    name="announcementTextAr"
+                    render={({ field: ar }) => (
+                      <BilingualField
+                        label={d.settings.announcementText}
+                        english={{ value: en.value, onChange: en.onChange }}
+                        arabic={{ value: ar.value, onChange: ar.onChange }}
+                      />
+                    )}
+                  />
+                )}
+              />
+            </div>
+          </section>
+
+          <section className="border border-outline-variant bg-surface-lowest p-6">
             <h2 className="font-display text-headline-sm">{d.settings.navigation}</h2>
             <p className="mt-2 text-body-sm text-secondary">{d.settings.navigationHint}</p>
             <div className="mt-6 flex flex-col gap-4">

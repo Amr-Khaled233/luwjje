@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { Banknote, Check } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { Divider } from '@/components/ui/primitives';
+import { OrderProgress } from '@/components/storefront/order-progress';
 import { prisma } from '@/lib/prisma';
 import { getCurrencySymbol } from '@/lib/settings';
 import { canViewOrder } from '@/lib/order-access';
@@ -119,6 +120,11 @@ export default async function OrderConfirmationPage({
               <p className="label-caps text-secondary">{t.order.placed}</p>
               <p className="mt-1 text-body-md">{formatDate(order.createdAt, locale)}</p>
             </div>
+          </div>
+
+          {/* Where the order is on its way to the door. */}
+          <div className="border-b border-outline-variant px-5 py-7 md:px-8">
+            <OrderProgress status={order.status} labels={t.order.statuses} />
           </div>
 
           <div className="p-5 md:p-6">

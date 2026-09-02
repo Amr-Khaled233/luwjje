@@ -252,6 +252,11 @@ model SiteSettings {
   /// Turn the language switcher off to run the store in one language.
   enableArabic  Boolean @default(true)
 
+  /// Announcement strip above the header: a marketing line the shop controls.
+  showAnnouncement   Boolean @default(false)
+  announcementText   String  @default("")
+  announcementTextAr String  @default("")
+
   /// Whether the About and Journal links appear in the top nav and footer.
   showAbout   Boolean @default(true)
   showJournal Boolean @default(true)
