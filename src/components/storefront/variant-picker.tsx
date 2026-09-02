@@ -30,11 +30,12 @@ interface Data {
 }
 
 /**
- * Quick Add for a product with more than one choice. Rather than silently
- * dropping a default colourway in the bag, it asks: the colours are shown as
- * swatches (sold-out ones dimmed and unpickable), sizes appear for the chosen
- * colour, and only a real, in-stock combination can be added. Colours, prices
- * and stock are fetched fresh from the server when it opens.
+ * Quick Add for a product with more than one choice. When the piece has sizes,
+ * the size is chosen first and the colours appear only afterwards — showing
+ * just the colourways that come in that size, with sold-out ones dimmed. A
+ * piece sold in one size (or none) shows its colours straight away. Only a
+ * real, in-stock combination can be added; colours, prices and stock are
+ * fetched fresh from the server when it opens.
  */
 export function VariantPicker({
   open,
@@ -62,8 +63,13 @@ export function VariantPicker({
   const [data, setData] = React.useState<Data | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(false);
-  const [color, setColor] = React.useState('');
   const [size, setSize] = React.useState<string | null>(null);
+  const [color, setColor] = React.useState('');
+
+  const hasSizes = React.useMemo(
+    () => (data?.variants ?? []).some((v) => v.size !== null),
+    [data],
+  );
 
   // Fetch the colourways once the picker opens.
   React.useEffect(() => {
@@ -79,9 +85,16 @@ export function VariantPicker({
       .then((d: Data) => {
         if (cancelled) return;
         setData(d);
-        const first = d.variants.find((v) => v.stock > 0) ?? d.variants[0];
-        setColor(first?.colorName ?? '');
-        setSize(first?.size ?? null);
+        const withSizes = d.variants.some((v) => v.size !== null);
+        if (withSizes) {
+          // Size leads; colours wait until one is picked.
+          setSize(null);
+          setColor('');
+        } else {
+          const first = d.variants.find((v) => v.stock > 0) ?? d.variants[0];
+          setSize(null);
+          setColor(first?.colorName ?? '');
+        }
       })
       .catch(() => !cancelled && setError(true))
       .finally(() => !cancelled && setLoading(false));
@@ -98,35 +111,40 @@ export function VariantPicker({
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  const variants = data?.variants ?? [];
+
+  // Distinct sizes, in source order.
+  const sizes = React.useMemo(() => {
+    const out: string[] = [];
+    for (const v of variants) if (v.size && !out.includes(v.size)) out.push(v.size);
+    return out;
+  }, [variants]);
+
+  const sizeSoldOut = (s: string) => !variants.some((v) => v.size === s && v.stock > 0);
+
+  // Colours to offer: for the chosen size when there are sizes, otherwise all.
   const colors = React.useMemo(() => {
+    const src = variants.filter((v) => !hasSizes || v.size === size);
     const out: { name: string; hex: string }[] = [];
-    for (const v of data?.variants ?? []) {
+    for (const v of src) {
       if (!out.some((c) => c.name === v.colorName)) out.push({ name: v.colorName, hex: v.colorHex });
     }
     return out;
-  }, [data]);
+  }, [variants, hasSizes, size]);
 
-  const sizesForColor = React.useMemo(
-    () => (data?.variants ?? []).filter((v) => v.colorName === color && v.size !== null),
-    [data, color],
-  );
+  // Picking a size lands on its first in-stock colour so the choice is ready.
+  function pickSize(s: string) {
+    setSize(s);
+    const forSize = variants.filter((v) => v.size === s);
+    const first = forSize.find((v) => v.stock > 0) ?? forSize[0];
+    setColor(first?.colorName ?? '');
+  }
 
-  // Keep the selected size valid when the colourway changes.
-  React.useEffect(() => {
-    if (!data) return;
-    if (sizesForColor.length === 0) {
-      setSize(null);
-      return;
-    }
-    if (!sizesForColor.some((v) => v.size === size)) {
-      setSize((sizesForColor.find((v) => v.stock > 0) ?? sizesForColor[0]).size);
-    }
-  }, [color, sizesForColor, size, data]);
-
-  const selected = (data?.variants ?? []).find(
-    (v) => v.colorName === color && (size === null ? v.size === null : v.size === size),
+  const selected = variants.find(
+    (v) => v.colorName === color && (hasSizes ? v.size === size : v.size === null),
   );
   const canAdd = Boolean(selected) && (selected?.stock ?? 0) > 0;
+  const coloursShown = !hasSizes || size !== null;
 
   function handleAdd() {
     if (!data || !selected || !canAdd) return;
@@ -190,57 +208,69 @@ export function VariantPicker({
 
         {data && !loading && !error && (
           <>
-            {/* colour — every colourway shown, sold-out ones dimmed */}
-            <div className="mt-6">
-              <p className="label-caps mb-3 text-secondary">
-                {t.product.colour} — <span className="text-on-surface">{color}</span>
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                {colors.map((c) => {
-                  const soldOut = !data.variants.some((v) => v.colorName === c.name && v.stock > 0);
-                  return (
-                    <button
-                      key={c.name}
-                      onClick={() => setColor(c.name)}
-                      title={c.name}
-                      aria-label={c.name}
-                      aria-pressed={color === c.name}
-                      className={cn('relative p-0.5', soldOut && 'opacity-40')}
-                    >
-                      <ColorDot hex={c.hex} size="lg" selected={color === c.name} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* size — only when this colourway has sizes */}
-            {sizesForColor.length > 0 && (
+            {/* size first — the colours depend on it */}
+            {hasSizes && (
               <div className="mt-6">
                 <p className="label-caps mb-3 text-secondary">
-                  {t.product.size} — <span className="text-on-surface">{size}</span>
+                  {t.product.size}
+                  {size && (
+                    <>
+                      {' '}
+                      — <span className="text-on-surface">{size}</span>
+                    </>
+                  )}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {sizesForColor.map((v) => (
+                  {sizes.map((s) => (
                     <button
-                      key={v.id}
-                      onClick={() => setSize(v.size)}
-                      disabled={v.stock === 0}
-                      aria-pressed={size === v.size}
+                      key={s}
+                      onClick={() => pickSize(s)}
+                      disabled={sizeSoldOut(s)}
+                      aria-pressed={size === s}
                       className={cn(
                         'label-caps min-w-[52px] border px-4 py-2.5 transition-colors',
-                        size === v.size
+                        size === s
                           ? 'border-navy bg-navy text-background'
                           : 'border-outline-variant text-secondary hover:border-navy hover:text-on-surface',
-                        v.stock === 0 &&
+                        sizeSoldOut(s) &&
                           'cursor-not-allowed line-through opacity-40 hover:border-outline-variant',
                       )}
                     >
-                      {v.size}
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* colour — every colourway available in the chosen size */}
+            {coloursShown ? (
+              <div className="mt-6">
+                <p className="label-caps mb-3 text-secondary">
+                  {t.product.colour} — <span className="text-on-surface">{color}</span>
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  {colors.map((c) => {
+                    const soldOut = !variants.some(
+                      (v) => v.colorName === c.name && (!hasSizes || v.size === size) && v.stock > 0,
+                    );
+                    return (
+                      <button
+                        key={c.name}
+                        onClick={() => setColor(c.name)}
+                        title={c.name}
+                        aria-label={c.name}
+                        aria-pressed={color === c.name}
+                        className={cn('relative p-0.5', soldOut && 'opacity-40')}
+                      >
+                        <ColorDot hex={c.hex} size="lg" selected={color === c.name} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-6 text-body-sm text-secondary">{t.product.pickSizeForColours}</p>
             )}
 
             {selected && selected.stock > 0 && selected.stock <= 5 && (
@@ -256,8 +286,10 @@ export function VariantPicker({
                   <Plus className="h-4 w-4" /> {t.product.addToBag} —{' '}
                   {formatPrice(selected?.unitPrice ?? 0, currencySymbol, locale)}
                 </>
-              ) : (
+              ) : coloursShown ? (
                 t.product.soldOut
+              ) : (
+                t.product.selectVariant
               )}
             </Button>
           </>
