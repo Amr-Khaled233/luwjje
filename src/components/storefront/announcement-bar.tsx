@@ -19,7 +19,7 @@ export function AnnouncementBar({ text }: { text: string }) {
             {Array.from({ length: 4 }).map((_, i) => (
               <span
                 key={i}
-                className="whitespace-nowrap px-8 py-2.5 text-[15px] font-medium tracking-wide"
+                className="whitespace-nowrap px-6 py-1.5 text-[12px] font-medium tracking-wide sm:px-8 sm:py-2.5 sm:text-[15px]"
               >
                 {message}
               </span>

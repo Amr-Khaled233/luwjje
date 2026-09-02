@@ -35,7 +35,7 @@ export default async function HomePage() {
         // The banner is as tall as the image is: it is shown whole, the same
         // as every other photo in the shop. The copy sits over it, which is
         // why the section is a positioning context and the image is in flow.
-        <section className="group relative w-full overflow-hidden bg-surface-low">
+        <section className="hero relative w-full overflow-hidden bg-surface-low">
           {hero.imageUrl && (
             <Image
               src={hero.imageUrl}
@@ -44,15 +44,16 @@ export default async function HomePage() {
               height={0}
               priority
               sizes="100vw"
-              // A slow drift in gives the still image some life. On hover it
-              // eases in a little more, so the photograph comes forward as the
-              // text card softens.
-              className="block h-auto w-full animate-fade-in transition-transform duration-700 ease-scandi hoverable:group-hover:scale-[1.03]"
+              // A slow drift in gives the still image some life. When the card
+              // itself is hovered it eases in a little more, so the photograph
+              // comes forward as the text card softens — hovering the bare
+              // image does nothing.
+              className="hero-img block h-auto w-full animate-fade-in transition-transform duration-700 ease-scandi"
             />
           )}
-          {/* The dim over the photo lifts on hover so the image reads clearer. */}
+          {/* The dim lifts when the card is hovered, so the image reads clearer. */}
           {hero.imageUrl && (
-            <div className="absolute inset-0 hidden bg-navy/15 transition-colors duration-500 hoverable:group-hover:bg-navy/5 md:block" />
+            <div className="hero-dim absolute inset-0 hidden bg-navy/15 transition-colors duration-500 md:block" />
           )}
 
           {/*
@@ -83,7 +84,7 @@ export default async function HomePage() {
               disappears — 10%, border and blur fading with it — so the banner
               becomes the image and only a faint trace of the card remains.
             */}
-            <div className="w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/50 p-6 backdrop-blur-[20px] transition-[background-color,backdrop-filter,border-color] duration-500 ease-scandi hoverable:group-hover:border-background/10 hoverable:group-hover:bg-background/10 hoverable:group-hover:backdrop-blur-0 sm:p-8 md:p-12">
+            <div className="hero-card w-full max-w-[560px] animate-fade-up border border-background/30 bg-background/50 p-6 backdrop-blur-[20px] transition-[background-color,backdrop-filter,border-color] duration-500 ease-scandi hoverable:hover:border-background/10 hoverable:hover:bg-background/10 hoverable:hover:backdrop-blur-0 sm:p-8 md:p-12">
               {hero.eyebrow && (
                 <p className="label-caps mb-4 text-secondary md:mb-5">{hero.eyebrow}</p>
               )}

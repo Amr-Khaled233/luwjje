@@ -334,3 +334,18 @@
     animation-play-state: paused;
   }
 }
+
+/*
+ * Hero reveal. The photo eases forward and its dim lifts only when the text
+ * card itself is hovered — hovering the bare image does nothing. Keyed off the
+ * card with :has so the card, not the whole banner, is the trigger. Pointer
+ * devices only, so a tap never leaves it stuck.
+ */
+@media (hover: hover) {
+  .hero:has(.hero-card:hover) .hero-img {
+    transform: scale(1.03);
+  }
+  .hero:has(.hero-card:hover) .hero-dim {
+    background-color: rgb(var(--c-navy) / 0.05);
+  }
+}
