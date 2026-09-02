@@ -13,6 +13,8 @@ export interface ProductCardData {
   primaryImage: string;
   colors: { name: string; hex: string }[];
   inStock: boolean;
+  /** More than one colourway, or any sizes — so Quick Add must ask first. */
+  needsChoice: boolean;
 }
 
 /**
@@ -60,6 +62,7 @@ function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
     primaryImage: primary?.url ?? '',
     colors,
     inStock: p.variants.some((v) => v.stock > 0),
+    needsChoice: colors.length > 1 || p.variants.some((v) => v.size !== null),
   };
 }
 

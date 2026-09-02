@@ -8,6 +8,7 @@ import { useCart } from '@/lib/cart-store';
 import { useToast } from '@/components/ui/toast';
 import { ColorDot } from '@/components/ui/primitives';
 import { Reveal } from '@/components/ui/motion';
+import { VariantPicker } from './variant-picker';
 import { formatPrice, cn } from '@/lib/utils';
 import type { ProductCardData } from '@/lib/queries';
 import type { Locale } from '@/i18n/config';
@@ -32,14 +33,21 @@ export function ProductCard({
   const openCart = useCart((s) => s.openCart);
   const { toast } = useToast();
   const [adding, setAdding] = React.useState(false);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   /**
-   * Quick Add resolves the default variant server-side so we never trust a
-   * stale price or a sold-out colourway from the rendered grid.
+   * Quick Add. When the piece comes in more than one colourway or any size,
+   * it opens the picker so the shopper chooses rather than being handed a
+   * default. A single-variant piece is added straight away — its variant is
+   * resolved server-side so we never trust a stale price from the grid.
    */
   async function quickAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (product.needsChoice) {
+      setPickerOpen(true);
+      return;
+    }
     setAdding(true);
     try {
       const res = await fetch(`/api/products/${product.slug}/default-variant`);
@@ -152,6 +160,17 @@ export function ProductCard({
           </div>
         </div>
       </Link>
+
+      {product.needsChoice && (
+        <VariantPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          slug={product.slug}
+          currencySymbol={currencySymbol}
+          locale={locale}
+          t={t}
+        />
+      )}
     </article>
   );
 }

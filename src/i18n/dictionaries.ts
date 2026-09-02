@@ -55,6 +55,7 @@ const en = {
   product: {
     quickAdd: 'Quick Add',
     adding: 'Adding…',
+    selectVariant: 'Choose your options',
     soldOut: 'Sold out',
     sale: 'Sale',
     colour: 'Colour',
@@ -241,6 +242,7 @@ const ar: Dictionary = {
   product: {
     quickAdd: 'إضافة سريعة',
     adding: 'جارٍ الإضافة…',
+    selectVariant: 'اختر خياراتك',
     soldOut: 'نفدت الكمية',
     sale: 'خصم',
     colour: 'اللون',
