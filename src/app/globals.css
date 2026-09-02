@@ -309,28 +309,3 @@
     @apply opacity-45 transition-opacity duration-200 ease-scandi;
   }
 }
-
-/*
- * Announcement marquee. Two identical tracks sit end to end inside a w-max
- * flex row; sliding the row by exactly one track width (-50% of the pair)
- * loops seamlessly. Reduced motion is honoured by the global rule above,
- * which drops the animation and leaves the line at rest.
- */
-@keyframes announce-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.announce-marquee {
-  animation: announce-scroll 32s linear infinite;
-}
-
-@media (hover: hover) {
-  .announce-marquee:hover {
-    animation-play-state: paused;
-  }
-}
