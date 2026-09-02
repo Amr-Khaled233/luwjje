@@ -309,3 +309,44 @@
     @apply opacity-45 transition-opacity duration-200 ease-scandi;
   }
 }
+
+/*
+ * Announcement line. Fades in, holds most of the cycle so there is time to
+ * read it, then fades out and repeats — the message shows once, never side by
+ * side. Hovering the bar pauses it and forces it fully visible. Reduced motion
+ * is honoured by the global rule above: the animation runs once and reverts to
+ * the element's resting state, which is fully visible.
+ */
+@keyframes announce-cycle {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  88% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.announce-line {
+  animation: announce-cycle 9s ease-in-out infinite;
+}
+
+@media (hover: hover) {
+  .announce-bar:hover .announce-line {
+    animation-play-state: paused;
+    opacity: 1;
+    transform: none;
+  }
+}
