@@ -4,9 +4,10 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Minus, Plus } from 'lucide-react';
-import { useCart } from '@/lib/cart-store';
+import { useCart, type CartItem } from '@/lib/cart-store';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { useScrollLock, useFocusTrap, useExitAnimation } from '@/components/ui/motion';
+import { VariantPicker } from './variant-picker';
 import { formatPrice, cn } from '@/lib/utils';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
@@ -20,8 +21,9 @@ export function CartDrawer({
   t: Dictionary;
   currencySymbol?: string;
 }) {
-  const { isOpen, closeCart, items, setQuantity, removeItem } = useCart();
+  const { isOpen, closeCart, items, setQuantity, removeItem, changeVariant } = useCart();
   const subtotal = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+  const [editing, setEditing] = React.useState<CartItem | null>(null);
 
   useScrollLock(isOpen);
   const panelRef = useFocusTrap(isOpen);
@@ -114,9 +116,17 @@ export function CartDrawer({
                       </button>
                     </div>
 
-                    <p className="mt-0.5 truncate text-body-sm text-secondary">
-                      {item.colorName}
-                      {item.size && ` · ${item.size}`}
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-body-sm text-secondary">
+                      <span className="truncate">
+                        {item.colorName}
+                        {item.size && ` · ${item.size}`}
+                      </span>
+                      <button
+                        onClick={() => setEditing(item)}
+                        className="shrink-0 text-body-sm text-navy underline-offset-4 transition-opacity hover:underline"
+                      >
+                        {t.cart.change}
+                      </button>
                     </p>
 
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
@@ -169,6 +179,19 @@ export function CartDrawer({
           </>
         )}
       </aside>
+
+      {editing && (
+        <VariantPicker
+          open={!!editing}
+          onClose={() => setEditing(null)}
+          slug={editing.slug}
+          currencySymbol={currencySymbol}
+          locale={locale}
+          t={t}
+          initialVariantId={editing.variantId}
+          onSelect={(next) => changeVariant(editing.variantId, next)}
+        />
+      )}
     </div>
   );
 }

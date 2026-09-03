@@ -23,6 +23,8 @@ interface CartState {
   isOpen: boolean;
   hydrated: boolean;
   addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  /** Swaps a line's colour/size, keeping its quantity; merges if the new one already exists. */
+  changeVariant: (oldVariantId: string, next: Omit<CartItem, 'quantity'>) => void;
   removeItem: (variantId: string) => void;
   setQuantity: (variantId: string, quantity: number) => void;
   /** Replaces the cart with server-verified rows (prices, stock, deletions). */
@@ -54,6 +56,34 @@ export const useCart = create<CartState>()(
             };
           }
           return { items: [...state.items, { ...item, quantity }] };
+        }),
+
+      changeVariant: (oldVariantId, next) =>
+        set((state) => {
+          const current = state.items.find((i) => i.variantId === oldVariantId);
+          if (!current) return {};
+          if (next.variantId === oldVariantId) return {};
+          const qty = current.quantity;
+          const rest = state.items.filter((i) => i.variantId !== oldVariantId);
+          const existing = rest.find((i) => i.variantId === next.variantId);
+          if (existing) {
+            // The chosen colour/size is already in the bag — fold the quantities.
+            return {
+              items: rest.map((i) =>
+                i.variantId === next.variantId
+                  ? { ...i, quantity: Math.min(i.quantity + qty, next.maxStock || 99) }
+                  : i,
+              ),
+            };
+          }
+          // Keep the line in place rather than moving it to the end.
+          return {
+            items: state.items.map((i) =>
+              i.variantId === oldVariantId
+                ? { ...next, quantity: Math.min(qty, next.maxStock || 99) }
+                : i,
+            ),
+          };
         }),
 
       removeItem: (variantId) =>

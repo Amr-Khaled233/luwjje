@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Loader2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ColorDot } from '@/components/ui/primitives';
-import { useCart } from '@/lib/cart-store';
+import { useCart, type CartItem } from '@/lib/cart-store';
 import { useToast } from '@/components/ui/toast';
 import { useScrollLock, useFocusTrap, useExitAnimation } from '@/components/ui/motion';
 import { formatPrice, cn } from '@/lib/utils';
@@ -44,6 +44,8 @@ export function VariantPicker({
   currencySymbol,
   locale,
   t,
+  initialVariantId,
+  onSelect,
 }: {
   open: boolean;
   onClose: () => void;
@@ -51,6 +53,10 @@ export function VariantPicker({
   currencySymbol: string;
   locale: Locale;
   t: Dictionary;
+  /** Change mode: the line being edited, so its colour/size start selected. */
+  initialVariantId?: string;
+  /** Change mode: receives the chosen variant instead of adding a new line. */
+  onSelect?: (item: Omit<CartItem, 'quantity'>) => void;
 }) {
   const addItem = useCart((s) => s.addItem);
   const openCart = useCart((s) => s.openCart);
@@ -85,8 +91,14 @@ export function VariantPicker({
       .then((d: Data) => {
         if (cancelled) return;
         setData(d);
-        const withSizes = d.variants.some((v) => v.size !== null);
-        if (withSizes) {
+        const current = initialVariantId
+          ? d.variants.find((v) => v.id === initialVariantId)
+          : undefined;
+        if (current) {
+          // Change mode: start on the line's own colour and size.
+          setSize(current.size);
+          setColor(current.colorName);
+        } else if (d.variants.some((v) => v.size !== null)) {
           // Size leads; colours wait until one is picked.
           setSize(null);
           setColor('');
@@ -101,7 +113,7 @@ export function VariantPicker({
     return () => {
       cancelled = true;
     };
-  }, [open, slug, locale]);
+  }, [open, slug, locale, initialVariantId]);
 
   // Escape closes it, like the other dialogs.
   React.useEffect(() => {
@@ -148,21 +160,25 @@ export function VariantPicker({
 
   function handleAdd() {
     if (!data || !selected || !canAdd) return;
-    addItem(
-      {
-        variantId: selected.id,
-        productId: data.productId,
-        slug: data.slug,
-        name: data.name,
-        colorName: selected.colorName,
-        colorHex: selected.colorHex,
-        size: selected.size,
-        unitPrice: selected.unitPrice,
-        imageUrl: data.imageUrl,
-        maxStock: selected.stock,
-      },
-      1,
-    );
+    const chosen: Omit<CartItem, 'quantity'> = {
+      variantId: selected.id,
+      productId: data.productId,
+      slug: data.slug,
+      name: data.name,
+      colorName: selected.colorName,
+      colorHex: selected.colorHex,
+      size: selected.size,
+      unitPrice: selected.unitPrice,
+      imageUrl: data.imageUrl,
+      maxStock: selected.stock,
+    };
+    if (onSelect) {
+      // Change mode: hand the choice back; the cart swaps the line.
+      onSelect(chosen);
+      onClose();
+      return;
+    }
+    addItem(chosen, 1);
     onClose();
     openCart();
     toast(fmt(t.product.addedToast, { name: data.name }));
@@ -172,7 +188,7 @@ export function VariantPicker({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label={t.product.selectVariant}
@@ -281,15 +297,19 @@ export function VariantPicker({
             )}
 
             <Button size="lg" onClick={handleAdd} disabled={!canAdd} className="mt-6 w-full">
-              {canAdd ? (
+              {!canAdd ? (
+                coloursShown ? (
+                  t.product.soldOut
+                ) : (
+                  t.product.selectVariant
+                )
+              ) : onSelect ? (
+                t.cart.update
+              ) : (
                 <>
                   <Plus className="h-4 w-4" /> {t.product.addToBag} —{' '}
                   {formatPrice(selected?.unitPrice ?? 0, currencySymbol, locale)}
                 </>
-              ) : coloursShown ? (
-                t.product.soldOut
-              ) : (
-                t.product.selectVariant
               )}
             </Button>
           </>

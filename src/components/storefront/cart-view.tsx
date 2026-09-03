@@ -10,7 +10,8 @@ import { Minus, Plus, Loader2 } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/field';
 import { EmptyState, Divider } from '@/components/ui/primitives';
-import { useCart } from '@/lib/cart-store';
+import { useCart, type CartItem } from '@/lib/cart-store';
+import { VariantPicker } from './variant-picker';
 import { shippingSchema, type ShippingInput } from '@/lib/validations';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCartPricing, CHECKOUT_STORAGE_KEY } from '@/lib/use-cart-pricing';
@@ -37,7 +38,8 @@ export function CartView({
   t: Dictionary;
 }) {
   const router = useRouter();
-  const { items, setQuantity, removeItem, hydrated } = useCart();
+  const { items, setQuantity, removeItem, changeVariant, hydrated } = useCart();
+  const [editing, setEditing] = React.useState<CartItem | null>(null);
 
   const form = useForm<ShippingInput>({
     resolver: zodResolver(shippingSchema),
@@ -141,9 +143,18 @@ export function CartView({
                           >
                             {item.name}
                           </Link>
-                          <p className="mt-1 text-body-sm text-secondary">
-                            {item.colorName}
-                            {item.size && ` · ${t.product.size} ${item.size}`}
+                          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-body-sm text-secondary">
+                            <span>
+                              {item.colorName}
+                              {item.size && ` · ${t.product.size} ${item.size}`}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEditing(item)}
+                              className="text-navy underline-offset-4 transition-opacity hover:underline"
+                            >
+                              {t.cart.change}
+                            </button>
                           </p>
                           <p className="mt-1 text-body-sm text-tertiary">
                             {formatPrice(unitPrice, currencySymbol, locale)} {t.cart.each}
@@ -371,6 +382,19 @@ export function CartView({
           </aside>
         </div>
       </form>
+
+      {editing && (
+        <VariantPicker
+          open={!!editing}
+          onClose={() => setEditing(null)}
+          slug={editing.slug}
+          currencySymbol={currencySymbol}
+          locale={locale}
+          t={t}
+          initialVariantId={editing.variantId}
+          onSelect={(next) => changeVariant(editing.variantId, next)}
+        />
+      )}
     </div>
   );
 }
