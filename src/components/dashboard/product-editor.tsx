@@ -356,15 +356,6 @@ export function ProductEditor({
           </Select>
 
           <Input
-            label={`${d.common.price} (${currencySymbol})`}
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            error={form.formState.errors.price?.message}
-            {...form.register('price')}
-          />
-          <Input
             label={`${d.products.compareAt} (${currencySymbol})`}
             type="number"
             step="0.01"
@@ -372,6 +363,15 @@ export function ProductEditor({
             hint={d.products.compareAtHint}
             error={form.formState.errors.compareAtPrice?.message}
             {...form.register('compareAtPrice')}
+          />
+          <Input
+            label={`${d.common.price} (${currencySymbol})`}
+            type="number"
+            step="0.01"
+            min="0"
+            required
+            error={form.formState.errors.price?.message}
+            {...form.register('price')}
           />
 
           <Controller
