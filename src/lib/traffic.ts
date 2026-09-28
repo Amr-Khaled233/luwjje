@@ -33,7 +33,11 @@ export async function getFunnel(period: Period = periodFromDays()) {
       select: { path: true, sessionId: true },
     }),
     prisma.order.findMany({
-      where: { createdAt: { gte: period.start, lte: period.end }, status: { not: 'CANCELLED' } },
+      where: {
+        confirmed: true,
+        createdAt: { gte: period.start, lte: period.end },
+        status: { not: 'CANCELLED' },
+      },
       select: { sessionId: true },
     }),
   ]);

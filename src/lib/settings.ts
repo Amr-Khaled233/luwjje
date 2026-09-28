@@ -31,7 +31,7 @@ function fallbackSettings(): Settings {
     tagline: '',
     taglineAr: '',
     logoUrl: '',
-    supportEmail: '',
+    supportEmail: 'luwjjesupport@gmail.com',
     supportPhone: '',
     defaultLocale: 'en',
     enableArabic: true,

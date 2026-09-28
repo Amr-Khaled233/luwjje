@@ -16,16 +16,29 @@ export interface CreateOrderInput {
 export interface CreateOrderResult {
   ok: boolean;
   orderNumber?: string;
+  confirmationToken?: string;
   error?: string;
 }
 
+/** A 64-char hex secret for the order's confirmation link. */
+function newConfirmationToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 /**
- * Writes an order. Deliberately free of request context so it can be exercised
- * directly in tests and scripts; `placeOrder` supplies the rest.
+ * Writes an order, but does not make it real yet. Deliberately free of request
+ * context so it can be exercised directly in tests and scripts; `placeOrder`
+ * supplies the rest.
  *
- * Every figure is recomputed here — the client's totals are never trusted —
- * and stock is re-checked and decremented inside one transaction so two
- * shoppers cannot both claim the last piece.
+ * Every figure is recomputed here — the client's totals are never trusted. The
+ * order is created unconfirmed with a confirmation token: nothing is taken from
+ * stock and it stays off the dashboard until the shopper clicks the link
+ * emailed to them, at which point `confirmOrder` reserves the stock. Stock is
+ * only softly checked here, so a piece can be offered to two shoppers until one
+ * of them confirms.
  */
 export async function createOrder({
   shipping,
@@ -69,88 +82,66 @@ export async function createOrder({
   const discount = promo?.ok ? promo.discount : 0;
   const total = Math.max(0, Math.round((subtotal + shippingCalc.cost - discount) * 100) / 100);
 
-  try {
-    const order = await prisma.$transaction(async (tx) => {
-      // Re-read stock inside the transaction and fail loudly if it moved.
-      for (const line of lines) {
-        const fresh = await tx.productVariant.findUnique({
-          where: { id: line.variantId },
-          select: { stock: true },
-        });
-        if (!fresh || fresh.stock < line.quantity) {
-          throw new Error(`OUT_OF_STOCK:${line.name}`);
-        }
-      }
-
-      const created = await tx.order.create({
-        data: {
-          orderNumber: generateOrderNumber(),
-          email: shipping.email,
-          fullName: shipping.fullName,
-          phone: shipping.phone,
-          street: shipping.street,
-          area: shipping.area || null,
-          governorate: shipping.governorate,
-          governorateId: shippingCalc.governorateId,
-          notes: shipping.notes || null,
-          // Cash on delivery: the order is waiting, the money is not in yet.
-          status: 'PENDING',
-          sessionId: sessionId || null,
-          subtotal,
-          shippingCost: shippingCalc.cost,
-          discount,
-          total,
-          promoCode: promo?.ok ? promo.code : null,
-          items: {
-            create: lines.map((l) => ({
-              productId: l.productId,
-              variantId: l.variantId,
-              name: l.name,
-              nameAr: l.nameAr,
-              colorName: l.colorName,
-              size: l.size,
-              imageUrl: l.imageUrl,
-              unitPrice: l.unitPrice,
-              quantity: l.quantity,
-            })),
-          },
-        },
-      });
-
-      for (const line of lines) {
-        await tx.productVariant.update({
-          where: { id: line.variantId },
-          data: { stock: { decrement: line.quantity } },
-        });
-        await tx.product.update({
-          where: { id: line.productId },
-          data: { soldCount: { increment: line.quantity } },
-        });
-      }
-
-      if (promo?.ok && promo.code) {
-        await tx.promoCode.update({
-          where: { code: promo.code },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-
-      return created;
+  // A soft check: refuse an order for something already off the shelf, but do
+  // not reserve anything — the reservation happens at confirmation.
+  for (const line of lines) {
+    const fresh = await prisma.productVariant.findUnique({
+      where: { id: line.variantId },
+      select: { stock: true },
     });
-
-    return { ok: true, orderNumber: order.orderNumber };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : '';
-    if (message.startsWith('OUT_OF_STOCK:')) {
-      const name = message.split(':')[1];
+    if (!fresh || fresh.stock < line.quantity) {
       return {
         ok: false,
         error: msg(
-          `${name} sold out while you were checking out. Please review your bag.`,
-          `نفدت كمية ${name} أثناء إتمام الطلب. راجع حقيبتك من فضلك.`,
+          `${line.name} sold out while you were checking out. Please review your bag.`,
+          `نفدت كمية ${line.name} أثناء إتمام الطلب. راجع حقيبتك من فضلك.`,
         ),
       };
     }
+  }
+
+  try {
+    const confirmationToken = newConfirmationToken();
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: generateOrderNumber(),
+        email: shipping.email,
+        fullName: shipping.fullName,
+        phone: shipping.phone,
+        street: shipping.street,
+        area: shipping.area || null,
+        governorate: shipping.governorate,
+        governorateId: shippingCalc.governorateId,
+        notes: shipping.notes || null,
+        // Cash on delivery, and not yet confirmed: nothing is reserved or
+        // collected until the shopper clicks the emailed link.
+        status: 'PENDING',
+        confirmed: false,
+        confirmationToken,
+        sessionId: sessionId || null,
+        subtotal,
+        shippingCost: shippingCalc.cost,
+        discount,
+        total,
+        promoCode: promo?.ok ? promo.code : null,
+        items: {
+          create: lines.map((l) => ({
+            productId: l.productId,
+            variantId: l.variantId,
+            name: l.name,
+            nameAr: l.nameAr,
+            colorName: l.colorName,
+            size: l.size,
+            imageUrl: l.imageUrl,
+            unitPrice: l.unitPrice,
+            quantity: l.quantity,
+          })),
+        },
+      },
+    });
+
+    return { ok: true, orderNumber: order.orderNumber, confirmationToken };
+  } catch (err) {
     console.error('createOrder failed', err);
     return {
       ok: false,
@@ -159,6 +150,82 @@ export async function createOrder({
         'تعذّر إتمام طلبك. حاول مرة أخرى من فضلك.',
       ),
     };
+  }
+}
+
+export type ConfirmOrderResult =
+  | { ok: true; orderNumber: string; alreadyConfirmed: boolean }
+  | { ok: false; reason: 'invalid' | 'out_of_stock'; orderNumber?: string };
+
+/**
+ * Turns a pending order into a real one when the shopper clicks the link that
+ * was emailed to them. This is where stock is actually taken and the sale is
+ * counted — inside one transaction, re-reading stock, so that if the last piece
+ * went to someone who confirmed first, this order is refused rather than
+ * overselling. Idempotent: clicking the link twice confirms once.
+ */
+export async function confirmOrder(token: string | null | undefined): Promise<ConfirmOrderResult> {
+  if (!token || !/^[0-9a-f]{64}$/.test(token)) return { ok: false, reason: 'invalid' };
+
+  const order = await prisma.order.findUnique({
+    where: { confirmationToken: token },
+    include: { items: true },
+  });
+  if (!order) return { ok: false, reason: 'invalid' };
+  if (order.confirmed) {
+    return { ok: true, orderNumber: order.orderNumber, alreadyConfirmed: true };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Re-read stock inside the transaction and fail loudly if it moved.
+      for (const item of order.items) {
+        if (!item.variantId) continue;
+        const fresh = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { stock: true },
+        });
+        if (!fresh || fresh.stock < item.quantity) {
+          throw new Error(`OUT_OF_STOCK:${item.name}`);
+        }
+      }
+
+      for (const item of order.items) {
+        if (item.variantId) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { soldCount: { increment: item.quantity } },
+          });
+        }
+      }
+
+      if (order.promoCode) {
+        await tx.promoCode.updateMany({
+          where: { code: order.promoCode },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
+      await tx.order.update({
+        where: { id: order.id },
+        data: { confirmed: true, confirmedAt: new Date() },
+      });
+    });
+
+    return { ok: true, orderNumber: order.orderNumber, alreadyConfirmed: false };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (message.startsWith('OUT_OF_STOCK:')) {
+      return { ok: false, reason: 'out_of_stock', orderNumber: order.orderNumber };
+    }
+    console.error('confirmOrder failed', err);
+    return { ok: false, reason: 'invalid', orderNumber: order.orderNumber };
   }
 }
 

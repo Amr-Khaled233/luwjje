@@ -415,6 +415,9 @@ async function main() {
           governorate: gov.name,
           governorateId: gov.id,
           status,
+          // Demo orders are historical, so they count immediately.
+          confirmed: true,
+          confirmedAt: createdAt,
           subtotal,
           shippingCost,
           discount,

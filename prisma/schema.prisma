@@ -133,6 +133,12 @@ model Order {
   total         Float
   promoCode     String?
   notes         String?
+  /// Double opt-in: an order is not real until the shopper clicks the link
+  /// emailed to them. Only then is stock taken and the order shown on the
+  /// dashboard. `confirmationToken` is the secret in that link.
+  confirmed         Boolean   @default(false)
+  confirmedAt       DateTime?
+  confirmationToken String?   @unique
   /// The browsing session that placed it, so a visit can be followed all the
   /// way to a sale. Null for orders placed before this was recorded, and for
   /// anyone whose browser blocked the tracking call.
@@ -146,6 +152,7 @@ model Order {
   @@index([createdAt])
   @@index([email])
   @@index([sessionId])
+  @@index([confirmed])
 }
 
 model OrderItem {
@@ -244,7 +251,7 @@ model SiteSettings {
   tagline      String @default("Considered essentials for a quiet life.")
   taglineAr    String @default("")
   logoUrl      String @default("")
-  supportEmail String @default("care@luwjje.com")
+  supportEmail String @default("luwjjesupport@gmail.com")
   supportPhone String @default("")
 
   /// Language shown to a first-time visitor: "en" or "ar".

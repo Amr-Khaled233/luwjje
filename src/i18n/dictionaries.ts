@@ -141,7 +141,6 @@ const en = {
     confirmed: 'Order Confirmed',
     thankYou: 'Thank you',
     order: 'Order',
-    sentTo: 'We have sent a confirmation to {email}.',
     placedOn: 'Placed {date}.',
     orderNumber: 'Order number',
     status: 'Status',
@@ -151,6 +150,17 @@ const en = {
     trackAnother: 'Track another order',
     payment: 'Payment',
     cashOnDelivery: 'Cash on delivery',
+    awaitingTitle: 'Almost there — confirm your order',
+    awaitingBody:
+      'We have emailed a confirmation link to {email}. Open it to confirm your order — nothing is reserved and nothing is prepared until you do.',
+    awaitingNote: 'Not in your inbox? Check your spam or promotions folder.',
+    confirmedBanner: 'Your order is confirmed — we have started preparing it.',
+    linkInvalidTitle: 'This link is not valid',
+    linkInvalidBody:
+      'This confirmation link is invalid or has already been used. If you placed an order, you can look it up with your email.',
+    soldOutTitle: 'Sold out before confirmation',
+    soldOutBody:
+      'Some pieces sold out before this order was confirmed, so it was not placed. Please try ordering again.',
     statuses: {
       PENDING: 'Being prepared',
       SHIPPED: 'Shipped',
@@ -331,7 +341,6 @@ const ar: Dictionary = {
     confirmed: 'تم تأكيد الطلب',
     thankYou: 'شكراً لك',
     order: 'الطلب',
-    sentTo: 'أرسلنا تأكيداً إلى {email}.',
     placedOn: 'تم الطلب في {date}.',
     orderNumber: 'رقم الطلب',
     status: 'الحالة',
@@ -341,6 +350,17 @@ const ar: Dictionary = {
     trackAnother: 'تتبّع طلب آخر',
     payment: 'طريقة الدفع',
     cashOnDelivery: 'الدفع عند الاستلام',
+    awaitingTitle: 'خطوة أخيرة — أكّد طلبك',
+    awaitingBody:
+      'أرسلنا رابط تأكيد إلى {email}. افتحه لتأكيد طلبك — لن نحجز أي قطعة ولن نبدأ التجهيز قبل ذلك.',
+    awaitingNote: 'لم تجد الرسالة؟ راجع مجلد الرسائل غير المرغوبة أو العروض.',
+    confirmedBanner: 'تم تأكيد طلبك — بدأنا في تجهيزه.',
+    linkInvalidTitle: 'هذا الرابط غير صالح',
+    linkInvalidBody:
+      'رابط التأكيد غير صالح أو تم استخدامه من قبل. إذا كنت قد أنشأت طلباً، يمكنك عرضه عبر بريدك الإلكتروني.',
+    soldOutTitle: 'نفدت الكمية قبل التأكيد',
+    soldOutBody:
+      'نفدت كمية بعض القطع قبل تأكيد هذا الطلب، لذلك لم يُسجّل. من فضلك حاول الطلب مرة أخرى.',
     statuses: {
       PENDING: 'قيد التجهيز',
       SHIPPED: 'تم الشحن',

@@ -17,6 +17,7 @@ export default async function AdminOrdersPage({
   const d = getDashboardDictionary(await getLocale());
   const [orders, settings, governorates] = await Promise.all([
     prisma.order.findMany({
+      where: { confirmed: true },
       include: { items: true },
       orderBy: { createdAt: 'desc' },
       take: 300,

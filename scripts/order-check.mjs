@@ -9,7 +9,7 @@
  */
 import './load-env.ts';
 import { prisma } from '../src/lib/prisma.ts';
-import { createOrder, applyOrderEdit } from '../src/lib/orders.ts';
+import { createOrder, confirmOrder, applyOrderEdit } from '../src/lib/orders.ts';
 import { findOrdersForEmail } from '../src/lib/order-lookup.ts';
 import { getFunnel, getSocialClicks } from '../src/lib/traffic.ts';
 import { buildOwnerNotification } from '../src/lib/order-email.ts';
@@ -30,6 +30,15 @@ const check = (label, ok, detail) => {
 const EMAIL = 'order-check@luwjje.test';
 const created = [];
 const promoCodes = [];
+
+/** Click the emailed link for an order: confirm it by its token. */
+async function confirmByNumber(orderNumber) {
+  const row = await prisma.order.findUnique({
+    where: { orderNumber },
+    select: { confirmationToken: true },
+  });
+  return confirmOrder(row?.confirmationToken);
+}
 
 const shipping = {
   fullName: 'Order Check',
@@ -111,6 +120,24 @@ check('the buyer name and address were kept', order?.fullName === shipping.fullN
 // Nothing is collected at checkout — the courier does that.
 check('a fresh order waits to be delivered', order?.status === 'PENDING', order?.status);
 check('and carries no payment state at all', !('paymentStatus' in (order ?? {})), Object.keys(order ?? {}).join());
+check('a new order starts unconfirmed', order?.confirmed === false, order?.confirmed);
+
+// ---------------------------------------------------------------- confirmation
+console.log('\n▸ Confirmation gates the sale');
+const beforeConfirm = await prisma.productVariant.findUnique({
+  where: { id: variant.id },
+  include: { product: true },
+});
+check('placing does not take stock yet', beforeConfirm.stock === startStock, `${startStock} → ${beforeConfirm.stock}`);
+check('and does not count as sold yet', beforeConfirm.product.soldCount === startSold, beforeConfirm.product.soldCount);
+
+const confirmed = await confirmByNumber(placed.orderNumber);
+check('the emailed link confirms the order', confirmed.ok, confirmed.reason);
+check(
+  'the order is now marked confirmed',
+  (await prisma.order.findUnique({ where: { orderNumber: placed.orderNumber } }))?.confirmed === true,
+);
+check('confirming twice is harmless', (await confirmByNumber(placed.orderNumber)).ok);
 
 // ---------------------------------------------------------------- stock
 console.log('\n▸ Stock and sales counters');
@@ -181,6 +208,8 @@ if (withPromo.orderNumber) created.push(withPromo.orderNumber);
 const promoOrder = await prisma.order.findUnique({ where: { orderNumber: withPromo.orderNumber } });
 check('the discount is stored on the order', promoOrder?.discount === applied.discount, promoOrder?.discount);
 check('the code is recorded on the order', promoOrder?.promoCode === pct, promoOrder?.promoCode);
+const promoConfirmed = await confirmByNumber(withPromo.orderNumber);
+check('confirming the order redeems the code', promoConfirmed.ok, promoConfirmed.reason);
 check(
   'the redemption count went up',
   (await prisma.promoCode.findUnique({ where: { code: pct } })).usedCount === 1,
@@ -409,13 +438,18 @@ const last = await prisma.productVariant.findFirst({
 });
 const lastOriginalStock = last.stock;
 await prisma.productVariant.update({ where: { id: last.id }, data: { stock: 1 } });
+// Both orders are accepted — stock is only reserved when they confirm, so the
+// last piece goes to whoever clicks their link first.
+const raceA = await createOrder({ shipping, items: [{ variantId: last.id, quantity: 1 }] });
+const raceB = await createOrder({ shipping, items: [{ variantId: last.id, quantity: 1 }] });
+for (const r of [raceA, raceB]) if (r.orderNumber) created.push(r.orderNumber);
+check('both orders are taken before confirmation', raceA.ok && raceB.ok, `${raceA.ok}/${raceB.ok}`);
 const race = await Promise.all([
-  createOrder({ shipping, items: [{ variantId: last.id, quantity: 1 }] }),
-  createOrder({ shipping, items: [{ variantId: last.id, quantity: 1 }] }),
+  confirmByNumber(raceA.orderNumber),
+  confirmByNumber(raceB.orderNumber),
 ]);
-for (const r of race) if (r.orderNumber) created.push(r.orderNumber);
 const won = race.filter((r) => r.ok).length;
-check('exactly one of them gets it', won === 1, `${won} succeeded`);
+check('only one confirmation gets the last piece', won === 1, `${won} confirmed`);
 const leftover = (await prisma.productVariant.findUnique({ where: { id: last.id } })).stock;
 check('stock never goes below zero', leftover >= 0, leftover);
 
@@ -437,7 +471,8 @@ check(
 // ---------------------------------------------------------------- editing
 console.log('\n▸ Editing a placed order');
 await cleanup();
-await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 3 }] });
+const edit0 = await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 3 }] });
+await confirmByNumber(edit0.orderNumber);
 
 let edited = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
 const editLine = edited.items[0];
@@ -550,7 +585,8 @@ check('and returns the whole order to stock', (await shelf()) === beforeCancel +
 
 // A line taken to zero leaves the order.
 await cleanup();
-await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 2 }] });
+const edit2 = await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 2 }] });
+await confirmByNumber(edit2.orderNumber);
 edited = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
 const beforeRemoval = await shelf();
 await applyOrderEdit({
@@ -567,7 +603,8 @@ check('and its stock comes back', (await shelf()) === beforeRemoval + 2, await s
 
 // An order cannot be edited using another order's line.
 await cleanup();
-await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 1 }] });
+const edit3 = await createOrder({ shipping, items: [{ variantId: variant.id, quantity: 1 }] });
+await confirmByNumber(edit3.orderNumber);
 const mine = await prisma.order.findFirst({ where: { email: EMAIL }, include: { items: true } });
 const foreign = await prisma.orderItem.findFirst({ where: { orderId: { not: mine.id } } });
 if (foreign) {
@@ -627,6 +664,8 @@ check('an order records the visit that placed it', bought.ok, bought.error);
 const boughtRow = await prisma.order.findUnique({ where: { orderNumber: bought.orderNumber } });
 check('the session id is stored', boughtRow?.sessionId === 'check-buyer', boughtRow?.sessionId);
 await backdate(bought.orderNumber);
+// Only a confirmed order counts as a sale in the funnel.
+await confirmByNumber(bought.orderNumber);
 
 const social = await getSocialClicks(period);
 check('arrivals from Instagram are counted', social.instagram === 2, JSON.stringify(social));

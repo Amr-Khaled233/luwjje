@@ -98,7 +98,7 @@ export function CheckoutView({
 
     clear();
     sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
-    router.push(`/order/${result.orderNumber}?new=1`);
+    router.push(`/order/${result.orderNumber}`);
   }
 
   if (!hydrated) {

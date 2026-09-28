@@ -16,7 +16,7 @@ import {
   calculateShipping,
   getFreeShipping,
 } from '../src/lib/commerce';
-import { createOrder } from '../src/lib/orders';
+import { createOrder, confirmOrder } from '../src/lib/orders';
 import {
   getOverviewStats,
   getRevenueSeries,
@@ -134,6 +134,12 @@ async function main() {
 
   check('order created', result.ok, result.error);
   if (!result.ok) throw new Error(result.error);
+
+  // Nothing moves until the shopper confirms by email.
+  const beforeConfirm = await prisma.productVariant.findUniqueOrThrow({ where: { id: variant.id } });
+  check('stock untouched before confirmation', beforeConfirm.stock === before.stock, beforeConfirm.stock);
+  const confirmed = await confirmOrder(result.confirmationToken);
+  check('order confirmed from its link', confirmed.ok, 'reason' in confirmed ? confirmed.reason : '');
 
   const order = await prisma.order.findUniqueOrThrow({
     where: { orderNumber: result.orderNumber! },

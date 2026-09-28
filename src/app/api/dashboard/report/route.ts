@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
   const [orders, settings] = await Promise.all([
     prisma.order.findMany({
-      where: { createdAt: { gte: start, lte: end } },
+      where: { confirmed: true, createdAt: { gte: start, lte: end } },
       include: { items: true },
       orderBy: { createdAt: 'desc' },
     }),

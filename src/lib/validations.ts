@@ -3,6 +3,36 @@ import { DESCRIPTION_WORD_LIMIT, countWords } from './utils';
 
 export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid email address.');
 
+/**
+ * Customers check out with a Gmail address — the order-confirmation link is
+ * emailed there, so it has to be a real, well-formed Gmail. The local part
+ * follows Gmail's own shape: letters, digits and single dots, 6–30 characters,
+ * never starting or ending with a dot.
+ */
+export const customerEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(
+    /^[a-z0-9](\.?[a-z0-9]){5,29}@gmail\.com$/,
+    'Enter a valid Gmail address, like name@gmail.com.',
+  );
+
+/**
+ * An Egyptian mobile number: eleven digits opening with one of the live
+ * network prefixes. Spaces, dashes and brackets a shopper might type are
+ * stripped before the check so the stored number is clean.
+ */
+export const egyptianPhoneSchema = z.preprocess(
+  (v) => (typeof v === 'string' ? v.replace(/[\s\-()]/g, '') : v),
+  z
+    .string()
+    .regex(
+      /^01[0125]\d{8}$/,
+      'Enter an Egyptian mobile number starting with 010, 011, 012 or 015.',
+    ),
+);
+
 // ---------------------------------------------------------------- dashboard access
 
 /**
@@ -28,13 +58,8 @@ export const orderLookupSchema = z.object({ email: emailSchema });
 
 export const shippingSchema = z.object({
   fullName: z.string().trim().min(2, 'Enter your full name.').max(80),
-  email: emailSchema,
-  phone: z
-    .string()
-    .trim()
-    .min(8, 'Enter a contact number.')
-    .max(24)
-    .regex(/^[0-9+\-\s()]+$/, 'Enter a valid phone number.'),
+  email: customerEmailSchema,
+  phone: egyptianPhoneSchema,
   street: z.string().trim().min(4, 'Enter your address.').max(200),
   area: z.string().trim().max(80).optional().or(z.literal('')),
   governorate: z.string().trim().min(1, 'Select your governorate.'),

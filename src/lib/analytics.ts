@@ -43,6 +43,7 @@ export async function getOverviewStats(period: Period = periodFromDays()) {
   const [orders, settings] = await Promise.all([
     prisma.order.findMany({
       where: {
+        confirmed: true,
         createdAt: { gte: periodStart, lte: periodEnd },
         status: { in: REVENUE_STATUSES },
       },
@@ -63,7 +64,7 @@ export async function getRevenueSeries(period: Period = periodFromDays()) {
   const { start, end } = period;
 
   const orders = await prisma.order.findMany({
-    where: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
+    where: { confirmed: true, createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
     select: { total: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
@@ -125,7 +126,7 @@ export async function getTopPerformers(period: Period = periodFromDays(), limit 
   const grouped = await prisma.orderItem.groupBy({
     by: ['productId'],
     where: {
-      order: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
+      order: { confirmed: true, createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
     },
     _sum: { quantity: true },
     orderBy: { _sum: { quantity: 'desc' } },
@@ -166,7 +167,7 @@ export async function getCategoryPerformance(period: Period = periodFromDays(90)
 
   const items = await prisma.orderItem.findMany({
     where: {
-      order: { createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
+      order: { confirmed: true, createdAt: { gte: start, lte: end }, status: { in: REVENUE_STATUSES } },
     },
     select: {
       quantity: true,
@@ -190,6 +191,10 @@ export async function getCategoryPerformance(period: Period = periodFromDays(90)
 }
 
 export async function getOrderStatusBreakdown() {
-  const grouped = await prisma.order.groupBy({ by: ['status'], _count: { _all: true } });
+  const grouped = await prisma.order.groupBy({
+    by: ['status'],
+    where: { confirmed: true },
+    _count: { _all: true },
+  });
   return grouped.map((g) => ({ status: g.status, count: g._count._all }));
 }

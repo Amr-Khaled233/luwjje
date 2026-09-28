@@ -281,6 +281,100 @@ export async function buildOrderEmail(
 }
 
 /**
+ * The double opt-in email. Sent the moment an order is placed, before anything
+ * is reserved: one big button that confirms the order. Nothing else the shop
+ * sends matters until the shopper clicks it, so the email is deliberately
+ * single-minded — a line of reassurance and the button.
+ */
+export async function buildConfirmRequestEmail(
+  orderNumber: string,
+  locale: Locale = 'en',
+): Promise<{ to: string; subject: string; text: string; html: string } | null> {
+  const [order, settings] = await Promise.all([
+    prisma.order.findUnique({ where: { orderNumber }, include: { items: true } }),
+    prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { storeName: true, logoUrl: true, supportEmail: true },
+    }),
+  ]);
+
+  if (!order || !order.confirmationToken || order.confirmed) return null;
+
+  const storeName = settings?.storeName ?? 'luwjje';
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  const align = locale === 'ar' ? 'right' : 'left';
+  const confirmUrl = `${baseUrl()}/api/orders/confirm?token=${order.confirmationToken}`;
+  const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
+
+  const c =
+    locale === 'ar'
+      ? {
+          subject: `${storeName} — أكّد طلبك ${order.orderNumber}`,
+          heading: 'خطوة أخيرة لتأكيد طلبك',
+          intro: `استلمنا طلبك (${order.orderNumber}) المكوّن من ${itemCount} قطعة. اضغط الزر بالأسفل لتأكيده — لن نحجز أي قطعة أو نبدأ التجهيز قبل التأكيد.`,
+          button: 'تأكيد الطلب',
+          fallback: 'إذا لم يعمل الزر، انسخ هذا الرابط وافتحه في المتصفح:',
+          ignore: 'لم تطلب هذا؟ تجاهل الرسالة ولن يحدث شيء.',
+        }
+      : {
+          subject: `${storeName} — confirm your order ${order.orderNumber}`,
+          heading: 'One last step to confirm your order',
+          intro: `We have your order (${order.orderNumber}) of ${itemCount} item${itemCount === 1 ? '' : 's'}. Tap the button below to confirm it — nothing is reserved or prepared until you do.`,
+          button: 'Confirm my order',
+          fallback: 'If the button does not work, copy this link into your browser:',
+          ignore: 'Did not place this? Ignore this email and nothing happens.',
+        };
+
+  const text = [c.heading, '', c.intro, '', `${c.button}: ${confirmUrl}`, '', c.ignore].join('\n');
+
+  const masthead = settings?.logoUrl
+    ? `<img src="${escapeHtml(settings.logoUrl)}" alt="${escapeHtml(storeName)}" width="132" style="display:block;margin:0 auto 10px;max-width:132px;height:auto;border:0">`
+    : '';
+
+  const html = `<!doctype html><html dir="${dir}" lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(c.subject)}</title></head>
+<body style="margin:0;padding:0;background:#f8f9ff;-webkit-font-smoothing:antialiased">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(c.intro)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff"><tr><td align="center" style="padding:40px 16px">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0b1c30">
+      <tr><td align="center" style="padding:0 0 28px">${masthead}<div style="font-size:26px;font-weight:500;letter-spacing:-0.01em">${escapeHtml(storeName)}</div></td></tr>
+      <tr><td style="background:#ffffff;border:1px solid #c4c7c9;padding:36px 28px;text-align:${align}">
+        <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;line-height:1.3">${escapeHtml(c.heading)}</h1>
+        <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#565e74">${escapeHtml(c.intro)}</p>
+        <div style="text-align:center">
+          <a href="${confirmUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:16px 40px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">${escapeHtml(c.button)}</a>
+        </div>
+        <p style="margin:26px 0 6px;font-size:12px;color:#747879">${escapeHtml(c.fallback)}</p>
+        <p style="margin:0;font-size:12px;word-break:break-all"><a href="${confirmUrl}" style="color:#565e74">${confirmUrl}</a></p>
+      </td></tr>
+      <tr><td style="padding:20px 4px 0;text-align:${align}"><p style="margin:0;font-size:12px;line-height:1.7;color:#747879">${escapeHtml(c.ignore)}</p></td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+
+  return { to: order.email, subject: c.subject, text, html };
+}
+
+/** Emails the shopper the confirmation link. Never throws. */
+export async function sendConfirmRequest(orderNumber: string, locale: Locale = 'en') {
+  try {
+    const message = await buildConfirmRequestEmail(orderNumber, locale);
+    if (!message) return false;
+    const result = await Promise.race([
+      sendMail(message),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), SEND_TIMEOUT_MS)),
+    ]);
+    if (result === null) {
+      console.warn(`order ${orderNumber}: confirmation request timed out`);
+      return false;
+    }
+    return result.ok;
+  } catch (error) {
+    console.error(`order ${orderNumber}: confirmation request failed`, error);
+    return false;
+  }
+}
+
+/**
  * The "you have a new order" alert the owner receives — separate from the
  * shopper's confirmation, and written for whoever runs the shop: the customer's
  * details, what they ordered, what to collect, and a link straight to the order
