@@ -20,18 +20,18 @@ export const customerEmailSchema = z
 
 /**
  * An Egyptian mobile number: eleven digits opening with one of the live
- * network prefixes. Spaces, dashes and brackets a shopper might type are
- * stripped before the check so the stored number is clean.
+ * network prefixes. Before the check, spaces/dashes/brackets are stripped and
+ * the international forms are folded to the local one — so `+20 111…`,
+ * `0020111…` and `20111…` are all accepted and stored as `0111…`, not rejected.
  */
-export const egyptianPhoneSchema = z.preprocess(
-  (v) => (typeof v === 'string' ? v.replace(/[\s\-()]/g, '') : v),
-  z
-    .string()
-    .regex(
-      /^01[0125]\d{8}$/,
-      'Enter an Egyptian mobile number starting with 010, 011, 012 or 015.',
-    ),
-);
+export const egyptianPhoneSchema = z.preprocess((v) => {
+  if (typeof v !== 'string') return v;
+  let s = v.replace(/[\s\-()]/g, '');
+  if (s.startsWith('+20')) s = '0' + s.slice(3);
+  else if (s.startsWith('0020')) s = '0' + s.slice(4);
+  else if (s.startsWith('20') && s.length === 12) s = '0' + s.slice(2);
+  return s;
+}, z.string().regex(/^01[0125]\d{8}$/, 'Enter an Egyptian mobile number starting with 010, 011, 012 or 015.'));
 
 // ---------------------------------------------------------------- dashboard access
 

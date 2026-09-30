@@ -119,6 +119,8 @@ const en = {
     paymentTitle: 'Payment',
     cod: 'Cash on delivery',
     codHint: 'Pay the courier in cash when your order arrives.',
+    confirmNotice:
+      'After you place the order, we email a confirmation link to your inbox — your order is only placed once you open it and confirm.',
     pay: 'Place order · {amount}',
     placing: 'Placing order…',
     nothingToCheckout: 'There is nothing to check out.',
@@ -136,6 +138,13 @@ const en = {
     governorate: 'Governorate',
     notes: 'Delivery notes',
     notesPlaceholder: 'Building number, floor, landmark — anything useful.',
+    errors: {
+      fullName: 'Enter your full name.',
+      email: 'Enter a valid Gmail address, like name@gmail.com.',
+      phone: 'Enter an Egyptian mobile number of 11 digits starting with 010, 011, 012 or 015.',
+      governorate: 'Choose your governorate.',
+      street: 'Enter your delivery address.',
+    },
   },
   order: {
     confirmed: 'Order Confirmed',
@@ -319,6 +328,8 @@ const ar: Dictionary = {
     paymentTitle: 'الدفع',
     cod: 'الدفع عند الاستلام',
     codHint: 'تدفع للمندوب نقداً عند وصول طلبك.',
+    confirmNotice:
+      'بعد ما تعمل الأوردر، هنبعتلك رابط تأكيد على بريدك — الأوردر مش هيتسجّل غير لما تفتحه وتأكّده.',
     pay: 'تأكيد الطلب · {amount}',
     placing: 'جارٍ تأكيد الطلب…',
     nothingToCheckout: 'لا يوجد ما يمكن إتمامه.',
@@ -336,6 +347,13 @@ const ar: Dictionary = {
     governorate: 'المحافظة',
     notes: 'ملاحظات التوصيل',
     notesPlaceholder: 'رقم العمارة، الدور، علامة مميزة — أي شيء يساعد المندوب.',
+    errors: {
+      fullName: 'اكتب اسمك بالكامل.',
+      email: 'اكتب بريد Gmail صحيح، مثل name@gmail.com.',
+      phone: 'اكتب رقم موبايل مصري من 11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015.',
+      governorate: 'اختر محافظتك.',
+      street: 'اكتب عنوان التوصيل.',
+    },
   },
   order: {
     confirmed: 'تم تأكيد الطلب',

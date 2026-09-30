@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Loader2, Package } from 'lucide-react';
+import { Check, Loader2, Package, MailCheck } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, Select, Textarea } from '@/components/ui/field';
 import { Divider, EmptyState } from '@/components/ui/primitives';
@@ -230,7 +230,7 @@ export function CheckoutView({
                   label={t.fields.fullName}
                   required
                   autoComplete="name"
-                  error={form.formState.errors.fullName?.message}
+                  error={form.formState.errors.fullName ? t.fields.errors.fullName : undefined}
                   {...form.register('fullName')}
                 />
                 <Input
@@ -239,7 +239,7 @@ export function CheckoutView({
                   required
                   autoComplete="email"
                   dir="ltr"
-                  error={form.formState.errors.email?.message}
+                  error={form.formState.errors.email ? t.fields.errors.email : undefined}
                   {...form.register('email')}
                 />
                 <Input
@@ -248,13 +248,13 @@ export function CheckoutView({
                   required
                   autoComplete="tel"
                   dir="ltr"
-                  error={form.formState.errors.phone?.message}
+                  error={form.formState.errors.phone ? t.fields.errors.phone : undefined}
                   {...form.register('phone')}
                 />
                 <Select
                   label={t.fields.governorate}
                   required
-                  error={form.formState.errors.governorate?.message}
+                  error={form.formState.errors.governorate ? t.fields.errors.governorate : undefined}
                   {...form.register('governorate')}
                 >
                   <option value="">{t.cart.selectGovernorate}</option>
@@ -274,7 +274,7 @@ export function CheckoutView({
                   label={t.fields.street}
                   required
                   autoComplete="street-address"
-                  error={form.formState.errors.street?.message}
+                  error={form.formState.errors.street ? t.fields.errors.street : undefined}
                   {...form.register('street')}
                 />
                 <Textarea
@@ -322,6 +322,15 @@ export function CheckoutView({
                 <span className="min-w-0 flex-1">
                   <span className="block text-label-md">{t.checkout.cod}</span>
                   <span className="block text-body-sm text-secondary">{t.checkout.codHint}</span>
+                </span>
+              </div>
+
+              {/* Sets the expectation before they submit: the order needs an
+                  email confirmation click before it is really placed. */}
+              <div className="mt-4 flex items-start gap-3 border border-outline-variant bg-surface-low p-4 sm:gap-4 sm:p-5">
+                <MailCheck className="h-5 w-5 shrink-0 text-navy" />
+                <span className="min-w-0 flex-1 text-body-sm leading-relaxed text-secondary">
+                  {t.checkout.confirmNotice}
                 </span>
               </div>
 

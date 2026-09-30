@@ -215,7 +215,7 @@ export function CartView({
                   label={t.fields.fullName}
                   required
                   autoComplete="name"
-                  error={form.formState.errors.fullName?.message}
+                  error={form.formState.errors.fullName ? t.fields.errors.fullName : undefined}
                   {...form.register('fullName')}
                 />
                 <Input
@@ -224,7 +224,7 @@ export function CartView({
                   required
                   autoComplete="email"
                   dir="ltr"
-                  error={form.formState.errors.email?.message}
+                  error={form.formState.errors.email ? t.fields.errors.email : undefined}
                   {...form.register('email')}
                 />
                 <Input
@@ -233,13 +233,13 @@ export function CartView({
                   required
                   autoComplete="tel"
                   dir="ltr"
-                  error={form.formState.errors.phone?.message}
+                  error={form.formState.errors.phone ? t.fields.errors.phone : undefined}
                   {...form.register('phone')}
                 />
                 <Select
                   label={t.fields.governorate}
                   required
-                  error={form.formState.errors.governorate?.message}
+                  error={form.formState.errors.governorate ? t.fields.errors.governorate : undefined}
                   {...form.register('governorate')}
                 >
                   <option value="">{t.cart.selectGovernorate}</option>
@@ -259,7 +259,7 @@ export function CartView({
                   label={t.fields.street}
                   required
                   autoComplete="street-address"
-                  error={form.formState.errors.street?.message}
+                  error={form.formState.errors.street ? t.fields.errors.street : undefined}
                   {...form.register('street')}
                 />
               </div>
