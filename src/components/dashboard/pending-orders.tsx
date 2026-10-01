@@ -2,15 +2,20 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Send, Loader2 } from 'lucide-react';
+import { Check, Send, Trash2, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/primitives';
 import { TableWrap, Th, Td } from '@/components/dashboard/admin-ui';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/dashboard/modal';
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
 import { fmt } from '@/i18n/dictionaries';
-import { confirmOrderFromDashboard, resendOrderConfirmation } from '@/app/actions/dashboard';
-import { formatPrice, formatDate } from '@/lib/utils';
+import {
+  confirmOrderFromDashboard,
+  resendOrderConfirmation,
+  deletePendingOrder,
+} from '@/app/actions/dashboard';
+import { formatPrice, formatDate, cn } from '@/lib/utils';
 
 interface PendingOrder {
   id: string;
@@ -21,6 +26,11 @@ interface PendingOrder {
   total: number;
   createdAt: string;
   itemCount: number;
+}
+
+/** Whole days since the order was placed. */
+function daysWaiting(iso: string) {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 }
 
 export function PendingOrders({
@@ -35,7 +45,10 @@ export function PendingOrders({
   const { d } = useDash();
 
   // Which row is busy, and with which action, so only its button spins.
-  const [busy, setBusy] = React.useState<{ id: string; action: 'confirm' | 'resend' } | null>(null);
+  const [busy, setBusy] = React.useState<{ id: string; action: 'confirm' | 'resend' | 'delete' } | null>(
+    null,
+  );
+  const [toDelete, setToDelete] = React.useState<PendingOrder | null>(null);
 
   async function confirm(order: PendingOrder) {
     setBusy({ id: order.id, action: 'confirm' });
@@ -58,6 +71,20 @@ export function PendingOrders({
       return;
     }
     toast(d.pending.emailSent);
+  }
+
+  async function remove() {
+    if (!toDelete) return;
+    setBusy({ id: toDelete.id, action: 'delete' });
+    const result = await deletePendingOrder(toDelete.id);
+    setBusy(null);
+    if (!result.ok) {
+      toast(result.error ?? d.pending.couldNotDelete, 'error');
+      return;
+    }
+    setToDelete(null);
+    toast(d.pending.deleted);
+    router.refresh();
   }
 
   return (
@@ -86,7 +113,10 @@ export function PendingOrders({
               {orders.map((o) => {
                 const confirming = busy?.id === o.id && busy.action === 'confirm';
                 const resending = busy?.id === o.id && busy.action === 'resend';
+                const deleting = busy?.id === o.id && busy.action === 'delete';
                 const rowBusy = busy?.id === o.id;
+                const days = daysWaiting(o.createdAt);
+                const stale = days >= 2;
                 return (
                   <tr key={o.id} className="transition-colors hover:bg-surface-low">
                     <Td>
@@ -101,11 +131,31 @@ export function PendingOrders({
                         </p>
                       )}
                     </Td>
-                    <Td className="text-secondary">{formatDate(o.createdAt)}</Td>
+                    <Td className="text-secondary">
+                      {formatDate(o.createdAt)}
+                      {days >= 1 && (
+                        <span
+                          className={cn(
+                            'mt-1 block text-body-sm',
+                            stale ? 'font-medium text-warning-ink' : 'text-tertiary',
+                          )}
+                        >
+                          {fmt(d.pending.waiting, { n: days })}
+                        </span>
+                      )}
+                    </Td>
                     <Td className="tabular-nums text-secondary">{o.itemCount}</Td>
                     <Td className="tabular-nums">{formatPrice(o.total, currencySymbol)}</Td>
                     <Td>
                       <div className="flex flex-wrap items-center justify-end gap-2">
+                        <button
+                          onClick={() => setToDelete(o)}
+                          disabled={rowBusy}
+                          aria-label={`${d.pending.delete} ${o.orderNumber}`}
+                          className="flex h-9 w-9 items-center justify-center border border-outline-variant text-secondary transition-colors hover:border-error hover:text-error disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                         <Button
                           variant="secondary"
                           onClick={() => resend(o)}
@@ -140,6 +190,16 @@ export function PendingOrders({
           </TableWrap>
         )}
       </section>
+
+      <ConfirmDialog
+        open={Boolean(toDelete)}
+        onClose={() => setToDelete(null)}
+        onConfirm={remove}
+        title={d.pending.confirmDeleteTitle}
+        body={d.pending.confirmDeleteBody}
+        confirmLabel={d.pending.delete}
+        pending={busy?.action === 'delete'}
+      />
     </>
   );
 }

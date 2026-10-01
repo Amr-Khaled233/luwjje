@@ -507,6 +507,27 @@ export async function resendOrderConfirmation(orderId: string): Promise<ActionRe
   }) as Promise<ActionResult>;
 }
 
+/** Discard an abandoned, still-unconfirmed order. Confirmed orders are left alone. */
+export async function deletePendingOrder(orderId: string): Promise<ActionResult> {
+  return guard(async () => {
+    const d = getDashboardDictionary(await getLocale());
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { confirmed: true },
+    });
+    if (!order) return { ok: false, error: d.pending.couldNotDelete };
+    // Never delete a real order from here — those are managed on Orders.
+    if (order.confirmed) return { ok: false, error: d.pending.alreadyConfirmed };
+
+    // Nothing was reserved for an unconfirmed order, so there is no stock to
+    // return; items cascade with the order.
+    await prisma.order.delete({ where: { id: orderId } });
+    revalidatePath('/dashboard/pending');
+    revalidatePath('/dashboard');
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
 // ================================================================ promo codes
 
 // ================================================================ free shipping

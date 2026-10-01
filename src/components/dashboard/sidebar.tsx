@@ -45,7 +45,15 @@ const LINKS: { href: string; key: keyof DashboardDictionary['nav']; icon: typeof
   { href: '/dashboard/settings', key: 'settings', icon: Settings },
 ];
 
-export function DashboardSidebar({ storeName, locale }: { storeName: string; locale: Locale }) {
+export function DashboardSidebar({
+  storeName,
+  locale,
+  pendingCount = 0,
+}: {
+  storeName: string;
+  locale: Locale;
+  pendingCount?: number;
+}) {
   const pathname = usePathname();
   const { d } = useDash();
   const [open, setOpen] = React.useState(false);
@@ -86,7 +94,13 @@ export function DashboardSidebar({ storeName, locale }: { storeName: string; loc
             {/* 2px navy rule marks the active route, on the reading-side edge */}
             {active && <span className="absolute inset-y-0 start-0 w-0.5 animate-fade-in bg-navy" />}
             <link.icon className="h-4 w-4 shrink-0" />
-            {d.nav[link.key]}
+            <span className="min-w-0 flex-1 truncate">{d.nav[link.key]}</span>
+            {/* How many orders are waiting to be confirmed. */}
+            {link.key === 'pending' && pendingCount > 0 && (
+              <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-navy px-1.5 text-[11px] font-semibold leading-none text-background">
+                {pendingCount > 99 ? '99+' : pendingCount}
+              </span>
+            )}
           </Link>
         );
       })}
