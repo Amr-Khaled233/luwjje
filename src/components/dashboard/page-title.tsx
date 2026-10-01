@@ -16,6 +16,7 @@ export function PageTitle({
   section: Extract<
     keyof DashboardDictionary,
     | 'orders'
+    | 'pending'
     | 'products'
     | 'categories'
     | 'stock'

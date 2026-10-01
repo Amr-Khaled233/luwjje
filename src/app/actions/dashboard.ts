@@ -2,8 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { applyOrderEdit } from '@/lib/orders';
+import { applyOrderEdit, confirmOrder } from '@/lib/orders';
+import { sendConfirmRequest, sendOrderConfirmation, sendOrderNotification } from '@/lib/order-email';
 import { requireDashboard } from '@/lib/dashboard-auth';
+import { getLocale } from '@/i18n/server';
+import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 import { slugify } from '@/lib/utils';
 import {
   editOrderSchema,
@@ -432,6 +435,74 @@ export async function updateOrderStatus(input: unknown): Promise<ActionResult> {
     revalidatePath('/dashboard/orders');
     revalidatePath('/dashboard');
     revalidateStorefront();
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+/**
+ * Confirm an order from the dashboard on the shopper's behalf — the same path
+ * their email link takes: reserve the stock, count the sale, then send the
+ * receipt and the owner alert. Refuses if a piece sold out in the meantime.
+ */
+export async function confirmOrderFromDashboard(orderId: string): Promise<ActionResult> {
+  return guard(async () => {
+    const d = getDashboardDictionary(await getLocale());
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { orderNumber: true, confirmationToken: true, confirmed: true },
+    });
+    if (!order) return { ok: false, error: d.pending.couldNotConfirm };
+
+    if (!order.confirmed) {
+      const result = await confirmOrder(order.confirmationToken);
+      if (!result.ok) {
+        return {
+          ok: false,
+          error: result.reason === 'out_of_stock' ? d.pending.soldOut : d.pending.couldNotConfirm,
+        };
+      }
+      // Emails go in the store's own language, not the admin's.
+      const settings = await prisma.siteSettings.findUnique({
+        where: { id: 'singleton' },
+        select: { defaultLocale: true },
+      });
+      const locale = settings?.defaultLocale === 'ar' ? 'ar' : 'en';
+      try {
+        await Promise.all([
+          sendOrderConfirmation(result.orderNumber, locale),
+          sendOrderNotification(result.orderNumber),
+        ]);
+      } catch {
+        /* sends guard themselves */
+      }
+    }
+
+    revalidatePath('/dashboard/pending');
+    revalidatePath('/dashboard/orders');
+    revalidatePath('/dashboard');
+    revalidateStorefront();
+    return { ok: true };
+  }) as Promise<ActionResult>;
+}
+
+/** Send the confirmation link to the shopper again. */
+export async function resendOrderConfirmation(orderId: string): Promise<ActionResult> {
+  return guard(async () => {
+    const d = getDashboardDictionary(await getLocale());
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { orderNumber: true, confirmed: true },
+    });
+    if (!order) return { ok: false, error: d.pending.couldNotSend };
+    if (order.confirmed) return { ok: false, error: d.pending.alreadyConfirmed };
+
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { defaultLocale: true },
+    });
+    const locale = settings?.defaultLocale === 'ar' ? 'ar' : 'en';
+    const sent = await sendConfirmRequest(order.orderNumber, locale);
+    if (!sent) return { ok: false, error: d.pending.couldNotSend };
     return { ok: true };
   }) as Promise<ActionResult>;
 }

@@ -11,6 +11,7 @@ import {
   FolderTree,
   SlidersHorizontal,
   ShoppingCart,
+  MailWarning,
   Megaphone,
   Truck,
   Ticket,
@@ -30,6 +31,7 @@ import type { DashboardDictionary } from '@/i18n/dashboard-dictionary';
 
 const LINKS: { href: string; key: keyof DashboardDictionary['nav']; icon: typeof Package }[] = [
   { href: '/dashboard/orders', key: 'orders', icon: ShoppingCart },
+  { href: '/dashboard/pending', key: 'pending', icon: MailWarning },
   { href: '/dashboard/products', key: 'products', icon: Package },
   { href: '/dashboard/categories', key: 'categories', icon: FolderTree },
   { href: '/dashboard/stock', key: 'stock', icon: Boxes },
