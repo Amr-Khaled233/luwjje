@@ -24,12 +24,30 @@ export type MailResult =
   | { ok: false; transport: 'console' | 'none'; reason: string };
 
 function sender() {
+  // An explicit MAIL_FROM always wins.
+  const explicit = process.env.MAIL_FROM?.trim();
+  if (explicit) return explicit;
+  // Over Gmail/SMTP the message is sent as the authenticated mailbox, so give
+  // it a friendly name — recipients then see "luwjje <you@gmail.com>".
+  const smtpUser = process.env.SMTP_USER?.trim();
+  if (process.env.SMTP_HOST && smtpUser) return `luwjje <${smtpUser}>`;
   // Resend rejects a bare address on an unverified domain; onboarding@resend.dev
   // always works and is the right default until a domain is added.
-  return process.env.MAIL_FROM || 'luwjje <onboarding@resend.dev>';
+  return 'luwjje <onboarding@resend.dev>';
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+/** Split a comma-separated address list into clean, valid, de-duplicated ones. */
+export function parseAddressList(value?: string | null): string[] {
+  if (!value) return [];
+  const seen = new Set<string>();
+  for (const part of value.split(',')) {
+    const addr = part.trim().toLowerCase();
+    if (EMAIL_RE.test(addr)) seen.add(addr);
+  }
+  return [...seen];
+}
 
 /** Where reset links go. One fixed address, never taken from a form. */
 export function recoveryAddress(): string | null {
@@ -38,14 +56,15 @@ export function recoveryAddress(): string | null {
 }
 
 /**
- * Where a "new order" alert goes. `ORDER_NOTIFICATION_EMAIL` if set, otherwise
- * the recovery address the owner already configured — so a store that set up
- * password resets gets order alerts with no extra config.
+ * Every inbox that should get a "new order" alert, from the environment.
+ * `ORDER_NOTIFICATION_EMAIL` may be a comma-separated list, so the alert can go
+ * to several people; with none set it falls back to the password-reset address.
  */
-export function notificationAddress(): string | null {
-  const value = process.env.ORDER_NOTIFICATION_EMAIL?.trim();
-  if (value && EMAIL_RE.test(value)) return value;
-  return recoveryAddress();
+export function notificationAddresses(): string[] {
+  const list = parseAddressList(process.env.ORDER_NOTIFICATION_EMAIL);
+  if (list.length) return list;
+  const recovery = recoveryAddress();
+  return recovery ? [recovery] : [];
 }
 
 /**
@@ -68,7 +87,8 @@ async function sendViaResend(message: MailMessage, apiKey: string): Promise<Mail
     },
     body: JSON.stringify({
       from: sender(),
-      to: [message.to],
+      // `to` may be a comma-separated list; Resend wants an array.
+      to: message.to.split(',').map((a) => a.trim()).filter(Boolean),
       subject: message.subject,
       text: message.text,
       html: message.html,

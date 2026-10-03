@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { sendMail, notificationAddress } from './mailer';
+import { sendMail, notificationAddresses } from './mailer';
 import { formatPrice } from './utils';
 import { pick, type Locale } from '@/i18n/config';
 
@@ -399,8 +399,15 @@ export async function buildOwnerNotification(
 
   if (!order) return null;
 
-  const to = notificationAddress() || settings?.supportEmail || '';
-  if (!to) return null; // nowhere to send it — the shop has set no owner address
+  // Everyone who should hear about a new order: the addresses in
+  // ORDER_NOTIFICATION_EMAIL plus the store's own support inbox, de-duplicated,
+  // so the alert can land in more than one mailbox at once.
+  const support = settings?.supportEmail?.trim().toLowerCase();
+  const recipients = Array.from(
+    new Set([...notificationAddresses(), ...(support && support.includes('@') ? [support] : [])]),
+  );
+  if (recipients.length === 0) return null; // nowhere to send it
+  const to = recipients.join(', ');
 
   const locale: Locale = settings?.defaultLocale === 'ar' ? 'ar' : 'en';
   const storeName = settings?.storeName ?? 'luwjje';
