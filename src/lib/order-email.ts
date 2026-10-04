@@ -304,28 +304,57 @@ export async function buildConfirmRequestEmail(
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const align = locale === 'ar' ? 'right' : 'left';
   const confirmUrl = `${baseUrl()}/api/orders/confirm?token=${order.confirmationToken}`;
-  const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
 
   const c =
     locale === 'ar'
       ? {
           subject: `${storeName} — أكّد طلبك ${order.orderNumber}`,
-          heading: 'خطوة أخيرة لتأكيد طلبك',
-          intro: `استلمنا طلبك (${order.orderNumber}) المكوّن من ${itemCount} قطعة. اضغط الزر بالأسفل لتأكيده — لن نحجز أي قطعة أو نبدأ التجهيز قبل التأكيد.`,
+          greeting: `عزيزنا ${order.fullName}،`,
+          thanks: `شكراً لاختيارك ${storeName}.`,
+          received: `استلمنا طلبك رقم #${order.orderNumber} وإحنا تقريباً جاهزين نبدأ في تجهيزه.`,
+          lastStep: 'باقي خطوة أخيرة.',
+          instruction: 'اضغط الزر بالأسفل لتأكيد طلبك عشان نكمّل التجهيز والشحن.',
           button: 'تأكيد الطلب',
-          fallback: 'إذا لم يعمل الزر، انسخ هذا الرابط وافتحه في المتصفح:',
-          ignore: 'لم تطلب هذا؟ تجاهل الرسالة ولن يحدث شيء.',
+          importantLabel: 'مهم',
+          important: 'طلبك مش هيتجهّز أو يتشحن إلا بعد ما تكمّل خطوة التأكيد دي.',
+          disregard: 'لو إنت ماعملتش الطلب ده، من فضلك تجاهل الرسالة.',
+          closing: `شكراً لاختيارك ${storeName}.`,
+          fallback: 'لو الزر مش شغّال، انسخ الرابط ده وافتحه في المتصفح:',
         }
       : {
           subject: `${storeName} — confirm your order ${order.orderNumber}`,
-          heading: 'One last step to confirm your order',
-          intro: `We have your order (${order.orderNumber}) of ${itemCount} item${itemCount === 1 ? '' : 's'}. Tap the button below to confirm it — nothing is reserved or prepared until you do.`,
+          greeting: `Dear ${order.fullName},`,
+          thanks: `Thank you for choosing ${storeName}.`,
+          received: `We have received your order #${order.orderNumber} and we are almost ready to prepare it.`,
+          lastStep: 'One last step is required.',
+          instruction:
+            'Please click the button below to confirm your order and allow us to proceed with processing and shipment.',
           button: 'Confirm my order',
+          importantLabel: 'Important',
+          important: 'Your order will not be processed or shipped until you complete this confirmation.',
+          disregard: 'If you did not place this order, please disregard this email.',
+          closing: `Thank you for choosing ${storeName}.`,
           fallback: 'If the button does not work, copy this link into your browser:',
-          ignore: 'Did not place this? Ignore this email and nothing happens.',
         };
 
-  const text = [c.heading, '', c.intro, '', `${c.button}: ${confirmUrl}`, '', c.ignore].join('\n');
+  const text = [
+    c.greeting,
+    '',
+    c.thanks,
+    '',
+    c.received,
+    '',
+    c.lastStep,
+    c.instruction,
+    '',
+    `${c.button}: ${confirmUrl}`,
+    '',
+    `${c.importantLabel}: ${c.important}`,
+    '',
+    c.disregard,
+    '',
+    c.closing,
+  ].join('\n');
 
   const masthead = settings?.logoUrl
     ? `<img src="${escapeHtml(settings.logoUrl)}" alt="${escapeHtml(storeName)}" width="132" style="display:block;margin:0 auto 10px;max-width:132px;height:auto;border:0">`
@@ -333,20 +362,31 @@ export async function buildConfirmRequestEmail(
 
   const html = `<!doctype html><html dir="${dir}" lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(c.subject)}</title></head>
 <body style="margin:0;padding:0;background:#f8f9ff;-webkit-font-smoothing:antialiased">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(c.intro)}</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(c.received)}</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff"><tr><td align="center" style="padding:40px 16px">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0b1c30">
-      <tr><td align="center" style="padding:0 0 28px">${masthead}<div style="font-size:26px;font-weight:500;letter-spacing:-0.01em">${escapeHtml(storeName)}</div></td></tr>
-      <tr><td style="background:#ffffff;border:1px solid #c4c7c9;padding:36px 28px;text-align:${align}">
-        <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;line-height:1.3">${escapeHtml(c.heading)}</h1>
-        <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#565e74">${escapeHtml(c.intro)}</p>
-        <div style="text-align:center">
-          <a href="${confirmUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:16px 40px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">${escapeHtml(c.button)}</a>
+      <tr><td align="center" style="padding:0 0 28px">${masthead}<div style="font-size:26px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">${escapeHtml(storeName)}</div></td></tr>
+      <tr><td style="background:#ffffff;border:1px solid #c4c7c9;padding:36px 30px;text-align:${align}">
+        <p style="margin:0 0 18px;font-size:16px;font-weight:600;color:#0b1c30">${escapeHtml(c.greeting)}</p>
+        <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#565e74">${escapeHtml(c.thanks)}</p>
+        <p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#565e74">${escapeHtml(c.received)}</p>
+        <p style="margin:0 0 4px;font-size:16px;font-weight:600;color:#0b1c30">${escapeHtml(c.lastStep)}</p>
+        <p style="margin:0 0 26px;font-size:15px;line-height:1.7;color:#565e74">${escapeHtml(c.instruction)}</p>
+        <div style="text-align:center;margin:0 0 26px">
+          <a href="${confirmUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:16px 44px;font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase">${escapeHtml(c.button)}</a>
         </div>
-        <p style="margin:26px 0 6px;font-size:12px;color:#747879">${escapeHtml(c.fallback)}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px"><tr>
+          <td style="border-${locale === 'ar' ? 'right' : 'left'}:3px solid #0b1c30;background:#f4f6fb;padding:12px 16px;text-align:${align};font-size:14px;line-height:1.6;color:#0b1c30">
+            <strong>${escapeHtml(c.importantLabel)}:</strong> ${escapeHtml(c.important)}
+          </td>
+        </tr></table>
+        <p style="margin:0 0 6px;font-size:12px;color:#747879">${escapeHtml(c.fallback)}</p>
         <p style="margin:0;font-size:12px;word-break:break-all"><a href="${confirmUrl}" style="color:#565e74">${confirmUrl}</a></p>
       </td></tr>
-      <tr><td style="padding:20px 4px 0;text-align:${align}"><p style="margin:0;font-size:12px;line-height:1.7;color:#747879">${escapeHtml(c.ignore)}</p></td></tr>
+      <tr><td style="padding:22px 6px 0;text-align:${align}">
+        <p style="margin:0 0 6px;font-size:12px;line-height:1.7;color:#747879">${escapeHtml(c.disregard)}</p>
+        <p style="margin:0;font-size:13px;line-height:1.7;color:#565e74">${escapeHtml(c.closing)}</p>
+      </td></tr>
     </table>
   </td></tr></table>
 </body></html>`;

@@ -97,16 +97,30 @@ export const getFooterPages = cache(async () => {
 });
 
 export const getPaletteSwatches = cache(async () => {
-  return prisma.paletteSwatch.findMany({ orderBy: { position: 'asc' } });
+  // Degrade to no swatches rather than crashing the whole page if the database
+  // is briefly unreachable (a serverless cold start waking an idle Postgres).
+  try {
+    return await prisma.paletteSwatch.findMany({ orderBy: { position: 'asc' } });
+  } catch (error) {
+    console.error('getPaletteSwatches: falling back to none —', error);
+    return [];
+  }
 });
 
 /** Banners currently in their scheduled window, in the visitor's language. */
 export async function getActiveBanners(slot: 'HERO' | 'OFFER', locale: Locale) {
   const now = new Date();
-  const banners = await prisma.banner.findMany({
-    where: { slot, active: true },
-    orderBy: { position: 'asc' },
-  });
+  let banners: Awaited<ReturnType<typeof prisma.banner.findMany>>;
+  try {
+    banners = await prisma.banner.findMany({
+      where: { slot, active: true },
+      orderBy: { position: 'asc' },
+    });
+  } catch (error) {
+    // A momentary database blip should not take the home page down with it.
+    console.error('getActiveBanners: falling back to none —', error);
+    return [];
+  }
 
   return banners
     .filter((b) => (!b.startsAt || b.startsAt <= now) && (!b.endsAt || b.endsAt >= now))

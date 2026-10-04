@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrencySymbol } from '@/lib/settings';
 import { canViewOrder } from '@/lib/order-access';
 import { isDashboardUser } from '@/lib/dashboard-auth';
-import { formatPrice, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { getI18n } from '@/i18n/server';
 import { pick } from '@/i18n/config';
 import { fmt } from '@/i18n/dictionaries';
@@ -49,34 +49,27 @@ export default async function OrderConfirmationPage({
   // link. Show what is waiting for them rather than a full receipt — nothing
   // is reserved or on its way until they confirm.
   if (!order.confirmed) {
-    const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
     return (
       <div className="container-luwjje py-10 md:py-stack-lg">
-        <div className="mx-auto max-w-[620px] text-center">
+        <div className="mx-auto max-w-[560px] text-center">
           <span className="mx-auto mb-6 flex h-14 w-14 animate-scale-in items-center justify-center border border-navy md:mb-8">
             <MailCheck className="h-6 w-6" />
           </span>
           <h1 className="font-display text-headline-md sm:text-display-sm">{t.order.awaitingTitle}</h1>
-          <p className="mx-auto mt-4 max-w-[46ch] text-body-md text-secondary sm:text-body-lg">
-            {fmt(t.order.awaitingBody, { email: order.email })}
+
+          <p className="mt-6 text-body-md text-secondary sm:text-body-lg">{t.order.awaitingSentTo}</p>
+          <p className="mt-1 break-all text-body-lg font-medium text-on-surface" dir="ltr">
+            {order.email}
           </p>
 
-          <div className="mx-auto mt-8 max-w-[420px] border border-outline-variant bg-surface-lowest p-5 text-start md:mt-stack-md md:p-6">
-            <div className="flex items-center justify-between gap-4">
-              <span className="label-caps text-secondary">{t.order.orderNumber}</span>
-              <span className="font-display text-title-md" dir="ltr">
-                {order.orderNumber}
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-4 border-t border-outline-variant pt-3">
-              <span className="label-caps text-secondary">{t.cart.total}</span>
-              <span className="tabular-nums">
-                {formatPrice(order.total, symbol, locale)} · {itemCount}
-              </span>
-            </div>
-          </div>
+          <p className="mx-auto mt-6 max-w-[46ch] text-body-md leading-relaxed text-secondary">
+            {t.order.awaitingCheck}
+          </p>
+          <p className="mx-auto mt-3 max-w-[46ch] text-body-md leading-relaxed text-secondary">
+            {t.order.awaitingNotShipped}
+          </p>
 
-          <p className="mt-6 text-body-sm text-tertiary">{t.order.awaitingNote}</p>
+          <p className="mt-8 text-body-sm text-tertiary">{t.order.awaitingNote}</p>
 
           <div className="mt-stack-md flex flex-wrap justify-center gap-3">
             <ButtonLink href="/shop" size="lg">

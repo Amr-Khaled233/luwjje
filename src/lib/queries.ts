@@ -67,25 +67,31 @@ function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
 }
 
 export async function getBestSellers(locale: Locale, limit = 4): Promise<ProductCardData[]> {
-  const flagged = await prisma.product.findMany({
-    where: { status: 'PUBLISHED', isBestSeller: true },
-    include: cardInclude,
-    orderBy: [{ bestSellerOrder: 'asc' }, { createdAt: 'desc' }],
-    take: limit,
-  });
+  try {
+    const flagged = await prisma.product.findMany({
+      where: { status: 'PUBLISHED', isBestSeller: true },
+      include: cardInclude,
+      orderBy: [{ bestSellerOrder: 'asc' }, { createdAt: 'desc' }],
+      take: limit,
+    });
 
-  // Fall back to actual sales only when nothing has been curated at all —
-  // a deliberate selection of two should show two, not two plus filler.
-  if (flagged.length > 0) return flagged.map((p) => toCard(p, locale));
+    // Fall back to actual sales only when nothing has been curated at all —
+    // a deliberate selection of two should show two, not two plus filler.
+    if (flagged.length > 0) return flagged.map((p) => toCard(p, locale));
 
-  const filler = await prisma.product.findMany({
-    where: { status: 'PUBLISHED' },
-    include: cardInclude,
-    orderBy: [{ soldCount: 'desc' }, { createdAt: 'desc' }],
-    take: limit,
-  });
+    const filler = await prisma.product.findMany({
+      where: { status: 'PUBLISHED' },
+      include: cardInclude,
+      orderBy: [{ soldCount: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
+    });
 
-  return filler.map((p) => toCard(p, locale));
+    return filler.map((p) => toCard(p, locale));
+  } catch (error) {
+    // A transient database blip shows an empty row, never a 500 home page.
+    console.error('getBestSellers: falling back to none —', error);
+    return [];
+  }
 }
 
 export interface ShopFilters {

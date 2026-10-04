@@ -159,10 +159,11 @@ const en = {
     trackAnother: 'Track another order',
     payment: 'Payment',
     cashOnDelivery: 'Cash on delivery',
-    awaitingTitle: 'Almost there — confirm your order',
-    awaitingBody:
-      'We have emailed a confirmation link to {email}. Open it to confirm your order — nothing is reserved and nothing is prepared until you do.',
-    awaitingNote: 'Not in your inbox? Check your spam or promotions folder.',
+    awaitingTitle: 'One more step — confirm your order',
+    awaitingSentTo: "We've sent a confirmation email to",
+    awaitingCheck: 'Please check your inbox and click “Confirm My Order” to complete your order.',
+    awaitingNotShipped: 'Your order will not be prepared or shipped until it has been confirmed.',
+    awaitingNote: "Didn't receive the email? Please check your Spam or Junk folder.",
     confirmedBanner: 'Your order is confirmed — we have started preparing it.',
     linkInvalidTitle: 'This link is not valid',
     linkInvalidBody:
@@ -369,9 +370,10 @@ const ar: Dictionary = {
     payment: 'طريقة الدفع',
     cashOnDelivery: 'الدفع عند الاستلام',
     awaitingTitle: 'خطوة أخيرة — أكّد طلبك',
-    awaitingBody:
-      'أرسلنا رابط تأكيد إلى {email}. افتحه لتأكيد طلبك — لن نحجز أي قطعة ولن نبدأ التجهيز قبل ذلك.',
-    awaitingNote: 'لم تجد الرسالة؟ راجع مجلد الرسائل غير المرغوبة أو العروض.',
+    awaitingSentTo: 'بعتنا إيميل تأكيد إلى',
+    awaitingCheck: 'افتح بريدك واضغط على «Confirm My Order» عشان تكمّل طلبك.',
+    awaitingNotShipped: 'طلبك مش هيتجهّز أو يتشحن إلا بعد ما يتأكّد.',
+    awaitingNote: 'مالقتش الإيميل؟ راجع مجلد الرسائل غير المرغوبة (Spam / Junk).',
     confirmedBanner: 'تم تأكيد طلبك — بدأنا في تجهيزه.',
     linkInvalidTitle: 'هذا الرابط غير صالح',
     linkInvalidBody:
