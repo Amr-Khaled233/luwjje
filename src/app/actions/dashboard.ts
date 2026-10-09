@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { applyOrderEdit, confirmOrder } from '@/lib/orders';
-import { sendConfirmRequest, sendOrderConfirmation } from '@/lib/order-email';
+import { sendConfirmRequest, sendOrderConfirmation, sendOrderNotification } from '@/lib/order-email';
 import { requireDashboard } from '@/lib/dashboard-auth';
 import { getLocale } from '@/i18n/server';
 import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
@@ -461,17 +461,20 @@ export async function confirmOrderFromDashboard(orderId: string): Promise<Action
           error: result.reason === 'out_of_stock' ? d.pending.soldOut : d.pending.couldNotConfirm,
         };
       }
-      // The shopper gets their receipt in the store's own language. The owner
-      // was already alerted when the order was placed, so nothing is sent here.
+      // The shopper gets their receipt, and the owner inboxes get the heads-up
+      // alert — in the store's own language, not the admin's.
       const settings = await prisma.siteSettings.findUnique({
         where: { id: 'singleton' },
         select: { defaultLocale: true },
       });
       const locale = settings?.defaultLocale === 'ar' ? 'ar' : 'en';
       try {
-        await sendOrderConfirmation(result.orderNumber, locale);
+        await Promise.all([
+          sendOrderConfirmation(result.orderNumber, locale),
+          sendOrderNotification(result.orderNumber),
+        ]);
       } catch {
-        /* the send guards itself */
+        /* sends guard themselves */
       }
     }
 

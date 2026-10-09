@@ -708,7 +708,7 @@ check('a notification is built for a placed order', Boolean(notif), notif);
 check('it is addressed to the configured owner', (notif?.to ?? '').includes('owner@luwjje.test'), notif?.to);
 check('the subject carries the order number', notif?.subject.includes(notifOrder.orderNumber), notif?.subject);
 check('the body names the customer', notif?.text.includes(shipping.fullName), 'no name');
-check('the body links to the pending-orders tab', notif?.html.includes('/dashboard/pending'));
+check('the body links to the dashboard order', notif?.html.includes('/dashboard/orders'));
 check('it states cash on delivery', /cash on delivery|عند الاستلام/i.test(notif?.text ?? ''));
 check(
   'the owner alert carries no confirm button',

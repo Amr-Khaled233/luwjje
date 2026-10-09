@@ -3,7 +3,7 @@
 import { placeOrderSchema } from '@/lib/validations';
 import { createOrder } from '@/lib/orders';
 import { grantOrderAccess } from '@/lib/order-access';
-import { sendConfirmRequest, sendOrderNotification } from '@/lib/order-email';
+import { sendConfirmRequest } from '@/lib/order-email';
 import { getLocale } from '@/i18n/server';
 
 export interface PlaceOrderResult {
@@ -42,16 +42,11 @@ export async function placeOrder(input: unknown): Promise<PlaceOrderResult> {
     // Lets this browser read the pending order without an account.
     await grantOrderAccess(result.orderNumber);
 
-    // Two emails, in parallel, each with its own timeout and swallowing its
-    // own errors (awaited, not floated, because a serverless function can be
-    // frozen the moment it responds):
-    //   • the shopper gets the confirm-your-order link (the button);
-    //   • the owner inboxes get a heads-up alert — no button, just who ordered
-    //     what and for how much — so the shop knows the moment an order lands.
-    await Promise.all([
-      sendConfirmRequest(result.orderNumber, locale),
-      sendOrderNotification(result.orderNumber),
-    ]);
+    // Only the shopper is emailed now — the confirm-your-order link. The owner
+    // is alerted only once the shopper confirms, not at placement. Awaited
+    // rather than floated, because a serverless function can be frozen the
+    // moment it responds; the send has its own timeout and swallows its errors.
+    await sendConfirmRequest(result.orderNumber, locale);
   }
 
   return result;
