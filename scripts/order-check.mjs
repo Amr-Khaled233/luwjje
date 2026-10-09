@@ -708,8 +708,13 @@ check('a notification is built for a placed order', Boolean(notif), notif);
 check('it is addressed to the configured owner', (notif?.to ?? '').includes('owner@luwjje.test'), notif?.to);
 check('the subject carries the order number', notif?.subject.includes(notifOrder.orderNumber), notif?.subject);
 check('the body names the customer', notif?.text.includes(shipping.fullName), 'no name');
-check('the body links to the dashboard order', notif?.html.includes('/dashboard/orders'));
+check('the body links to the pending-orders tab', notif?.html.includes('/dashboard/pending'));
 check('it states cash on delivery', /cash on delivery|عند الاستلام/i.test(notif?.text ?? ''));
+check(
+  'the owner alert carries no confirm button',
+  !/\/api\/orders\/confirm/.test(notif?.html ?? '') && !/confirm (my|your) order/i.test(notif?.html ?? ''),
+  'confirm control leaked into the alert',
+);
 
 // Several inboxes can be alerted at once.
 process.env.ORDER_NOTIFICATION_EMAIL = 'owner-a@luwjje.test, owner-b@luwjje.test';

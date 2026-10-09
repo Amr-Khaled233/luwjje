@@ -455,14 +455,14 @@ export async function buildOwnerNotification(
   const money = (v: number) => formatPrice(v, symbol, locale);
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const align = locale === 'ar' ? 'right' : 'left';
-  const dashUrl = `${baseUrl()}/dashboard/orders`;
+  const dashUrl = `${baseUrl()}/dashboard/pending`;
 
   const c =
     locale === 'ar'
       ? {
           subject: `طلب جديد ${order.orderNumber} · ${money(order.total)}`,
           heading: 'طلب جديد',
-          intro: `وصل طلب جديد على ${storeName}.`,
+          intro: `وصل طلب جديد على ${storeName}. ده تنبيه بس — مش محتاج تعمل حاجة من الإيميل.`,
           orderNumber: 'رقم الطلب',
           customer: 'العميل',
           phone: 'الموبايل',
@@ -471,12 +471,13 @@ export async function buildOwnerNotification(
           items: 'الطلب',
           total: 'الإجمالي',
           payment: 'الدفع: عند الاستلام',
+          pending: 'العميل لسه محتاج يأكّد الطلب من الإيميل، فهو مستني في تاب «غير مؤكدة».',
           open: 'افتح الطلب في اللوحة',
         }
       : {
           subject: `New order ${order.orderNumber} · ${money(order.total)}`,
           heading: 'New order',
-          intro: `A new order came in on ${storeName}.`,
+          intro: `A new order came in on ${storeName}. This is just a heads-up — nothing to do from this email.`,
           orderNumber: 'Order number',
           customer: 'Customer',
           phone: 'Phone',
@@ -485,6 +486,7 @@ export async function buildOwnerNotification(
           items: 'Items',
           total: 'Total',
           payment: 'Payment: cash on delivery',
+          pending: 'The customer still has to confirm this order by email, so it is waiting under “Unconfirmed”.',
           open: 'Open the order in the dashboard',
         };
 
@@ -510,6 +512,8 @@ export async function buildOwnerNotification(
     '',
     `${c.total}: ${money(order.total)}`,
     c.payment,
+    '',
+    c.pending,
     '',
     c.open,
     dashUrl,
@@ -552,7 +556,10 @@ export async function buildOwnerNotification(
           ${rows}
           <tr><td colspan="2" style="padding:12px 0 0;text-align:${align};font-size:15px;font-weight:600;border-top:1px solid #c4c7c9">${escapeHtml(c.total)}</td><td style="padding:12px 0 0;text-align:${locale === 'ar' ? 'left' : 'right'};font-size:15px;font-weight:600;border-top:1px solid #c4c7c9;white-space:nowrap">${escapeHtml(money(order.total))}</td></tr>
         </table>
-        <p style="margin:16px 0 24px;font-size:13px;color:#565e74;text-align:${align}">${escapeHtml(c.payment)}</p>
+        <p style="margin:16px 0 14px;font-size:13px;color:#565e74;text-align:${align}">${escapeHtml(c.payment)}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px"><tr>
+          <td style="border-${locale === 'ar' ? 'right' : 'left'}:3px solid #b8860b;background:#fbf6ea;padding:11px 15px;text-align:${align};font-size:13px;line-height:1.6;color:#5c4a12">${escapeHtml(c.pending)}</td>
+        </tr></table>
         <a href="${dashUrl}" style="display:inline-block;background:#0b1c30;color:#f8f9ff;text-decoration:none;padding:13px 26px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">${escapeHtml(c.open)}</a>
       </td></tr>
     </table>
