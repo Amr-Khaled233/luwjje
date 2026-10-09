@@ -251,8 +251,8 @@ model SiteSettings {
   tagline      String @default("Considered essentials for a quiet life.")
   taglineAr    String @default("")
   logoUrl      String @default("")
-  supportEmail String @default("luwjjesupport@gmail.com")
-  supportPhone String @default("")
+  supportEmail String @default("lluwjje@gmail.com")
+  supportPhone String @default("01044235823")
 
   /// Language shown to a first-time visitor: "en" or "ar".
   defaultLocale String  @default("en")
