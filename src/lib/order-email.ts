@@ -2,6 +2,7 @@ import { prisma } from './prisma';
 import { sendMail, notificationAddresses } from './mailer';
 import { formatPrice } from './utils';
 import { pick, type Locale } from '@/i18n/config';
+import { siteUrl } from './site-url';
 
 /**
  * The order confirmation a shopper receives.
@@ -18,9 +19,8 @@ import { pick, type Locale } from '@/i18n/config';
 /** Longer than this and the shopper is staring at a spinner for no reason. */
 const SEND_TIMEOUT_MS = 6000;
 
-function baseUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '')) || 'http://localhost:3000';
-}
+/** Every link in these emails points at the store's real domain. */
+const baseUrl = siteUrl;
 
 function copy(locale: Locale, storeName: string, orderNumber: string) {
   if (locale === 'ar') {

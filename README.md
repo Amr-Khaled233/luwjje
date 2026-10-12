@@ -331,6 +331,18 @@ the storefront handles an empty catalogue.
 - `https://<your-app>.vercel.app` — the storefront
 - `https://<your-app>.vercel.app/dashboard` — the password screen
 
+### 6. Your own domain (luwjje.com)
+
+1. Vercel → Project → **Settings → Domains** → add `luwjje.com` and `www.luwjje.com`.
+2. At the registrar (Hostinger → Domains → DNS), add the records Vercel shows — typically
+   an **A** record `@ → 76.76.21.21` and a **CNAME** `www → cname.vercel-dns.com` — and remove
+   the registrar's default parking records. Or point the nameservers at Vercel instead.
+3. In Vercel → Domains, set `luwjje.vercel.app` (and `www`) to **redirect** to `luwjje.com`.
+4. Set `NEXT_PUBLIC_SITE_URL=https://luwjje.com` and redeploy, so every email link and the
+   sitemap use the new address.
+5. To start clean, use **Settings → Start fresh** in the dashboard to erase test orders,
+   visitor stats or the catalogue.
+
 Then change the password from **Settings → Password**, which stores a hash in the database and
 retires the env value.
 

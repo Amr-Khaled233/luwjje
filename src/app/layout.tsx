@@ -3,6 +3,7 @@ import { Inter, Playfair_Display, IBM_Plex_Sans_Arabic, Amiri } from 'next/font/
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { getSettings } from '@/lib/settings';
+import { siteUrl } from '@/lib/site-url';
 import { getI18n, getLocale } from '@/i18n/server';
 import { DIRECTION, pick } from '@/i18n/config';
 
@@ -41,7 +42,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f8f9ff',
+  // The storefront is dark, so the phone's browser bar is too.
+  themeColor: '#020a1d',
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = pick(locale, s.metaDescription, s.metaDescriptionAr);
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+    metadataBase: new URL(siteUrl()),
     title: { default: title, template: `%s — ${s.storeName}` },
     description,
     openGraph: {

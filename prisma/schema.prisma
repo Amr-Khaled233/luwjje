@@ -248,7 +248,7 @@ model SiteSettings {
   sessionEpoch Int @default(0)
 
   storeName    String @default("luwjje")
-  tagline      String @default("Considered essentials for a quiet life.")
+  tagline      String @default("")
   taglineAr    String @default("")
   logoUrl      String @default("")
   supportEmail String @default("lluwjje@gmail.com")

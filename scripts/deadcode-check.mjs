@@ -69,7 +69,7 @@ const FRAMEWORK_EXPORTS = new Set([
 const orphans = [];
 for (const { path, source } of src) {
   // A page or route file's exports are the framework's business.
-  const isRoute = /\/(page|layout|route|middleware|not-found|error|loading)\.tsx?$/.test(path);
+  const isRoute = /\/(page|layout|route|middleware|not-found|error|loading|robots|sitemap)\.tsx?$/.test(path);
 
   const names = [];
   for (const m of source.matchAll(/^export\s+(?:async\s+)?(?:function|const|class)\s+(\w+)/gm)) {
@@ -173,7 +173,7 @@ check('every dependency is imported', unusedDeps.length === 0, unusedDeps.join('
 console.log('\n▸ Files');
 const unreferenced = [];
 for (const { path } of src) {
-  if (/\/(page|layout|route|middleware|not-found|error|loading)\.tsx?$/.test(path)) continue;
+  if (/\/(page|layout|route|middleware|not-found|error|loading|robots|sitemap)\.tsx?$/.test(path)) continue;
   if (path === 'src/middleware.ts') continue;
 
   // Imports are written against the @/ alias or a relative path, so match on

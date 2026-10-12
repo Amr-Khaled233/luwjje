@@ -46,11 +46,11 @@ async function main() {
       // Hashing the env password here means the store is usable immediately;
       // change it from Settings → Password and this value stops mattering.
       dashboardPasswordHash: await bcrypt.hash(dashboardPassword, 10),
-      storeName: 'luwjje',
-      tagline: 'Considered essentials for a quiet life.',
-      taglineAr: 'أساسيات مدروسة لحياة هادئة.',
-      supportEmail: 'care@luwjje.com',
-      supportPhone: '',
+      storeName: 'LUWJJE',
+      tagline: '',
+      taglineAr: '',
+      supportEmail: 'lluwjje@gmail.com',
+      supportPhone: '01044235823',
       defaultLocale: 'en',
       enableArabic: true,
       currencyCode: 'EGP',
@@ -64,11 +64,12 @@ async function main() {
       // The store's real channels. Editable from Settings → Social.
       instagramUrl: 'https://www.instagram.com/luwjje',
       facebookUrl: 'https://www.facebook.com/share/1BY898bngC/',
-      metaTitle: 'luwjje — Considered essentials',
-      metaTitleAr: 'luwjje — أساسيات مدروسة',
-      metaDescription: 'Quiet, well-made pieces in wool, cotton and leather. Delivered across Egypt.',
-      metaDescriptionAr: 'قطع هادئة مصنوعة بعناية من الصوف والقطن والجلد. توصيل لكل محافظات مصر.',
-      ogImageUrl: heroImage,
+      // Blank title falls back to the store name in the browser tab.
+      metaTitle: '',
+      metaTitleAr: '',
+      metaDescription: 'LUWJJE — shop online with delivery across Egypt and cash on delivery.',
+      metaDescriptionAr: 'LUWJJE — تسوّق أونلاين مع توصيل لكل محافظات مصر والدفع عند الاستلام.',
+      ogImageUrl: '',
     },
   });
 

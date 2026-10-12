@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { sendMail, recoveryAddress, maskAddress } from './mailer';
+import { siteUrl } from './site-url';
 import type { Locale } from './../i18n/config';
 
 /**
@@ -30,10 +31,8 @@ function newToken() {
     .join('');
 }
 
-function baseUrl() {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '');
-  return configured || 'http://localhost:3000';
-}
+/** Reset links point at the store's real domain. */
+const baseUrl = siteUrl;
 
 export type RequestResult =
   | { ok: true; maskedEmail: string; delivered: boolean }
