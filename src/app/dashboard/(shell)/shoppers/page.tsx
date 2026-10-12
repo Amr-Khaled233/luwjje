@@ -4,6 +4,7 @@ import { getDashboardDictionary } from '@/i18n/dashboard-dictionary';
 import { ShoppersHeader } from '@/components/dashboard/shoppers-header';
 import { FunnelPanel, SocialPanel } from '@/components/dashboard/shoppers-panels';
 import { RefLinks } from '@/components/dashboard/ref-links';
+import { siteUrl } from '@/lib/site-url';
 import { getFunnel, getSocialClicks } from '@/lib/traffic';
 import { periodFromDays, type Period } from '@/lib/analytics';
 import { startOfDay, endOfDay, format } from 'date-fns';
@@ -77,7 +78,7 @@ export default async function AdminShoppersPage({
       </Panel>
 
       <Panel bodyClassName="p-4 md:p-6">
-        <RefLinks />
+        <RefLinks baseUrl={siteUrl()} />
       </Panel>
     </div>
   );

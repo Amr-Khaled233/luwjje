@@ -7,8 +7,9 @@ import { useDash } from './dashboard-i18n';
 /**
  * The tagged links to hand out. Instagram's in-app browser strips the
  * referrer, so a plain link is miscounted — these carry `?ref=` so an arrival
- * from each is credited to it. Built from the live origin so they are correct
- * wherever the dashboard is opened, and copied with one tap.
+ * from each is credited to it. Built from the store's real domain (handed in
+ * by the page), never from whichever address the dashboard happens to be open
+ * on — so they always read luwjje.com — and copied with one tap.
  */
 function RefRow({ label, url }: { label: string; url: string }) {
   const { d } = useDash();
@@ -45,11 +46,8 @@ function RefRow({ label, url }: { label: string; url: string }) {
   );
 }
 
-export function RefLinks() {
+export function RefLinks({ baseUrl }: { baseUrl: string }) {
   const { d } = useDash();
-  const [origin, setOrigin] = React.useState('');
-
-  React.useEffect(() => setOrigin(window.location.origin), []);
 
   return (
     <div>
@@ -59,8 +57,8 @@ export function RefLinks() {
       </header>
 
       <div className="flex flex-col gap-3">
-        <RefRow label={d.shoppers.instagram} url={`${origin}/?ref=instagram`} />
-        <RefRow label={d.shoppers.facebook} url={`${origin}/?ref=facebook`} />
+        <RefRow label={d.shoppers.instagram} url={`${baseUrl}/?ref=instagram`} />
+        <RefRow label={d.shoppers.facebook} url={`${baseUrl}/?ref=facebook`} />
       </div>
     </div>
   );
