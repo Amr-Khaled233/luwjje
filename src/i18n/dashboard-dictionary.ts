@@ -216,26 +216,6 @@ const en = {
     confirmDeleteBody:
       'This removes the unconfirmed order for good. Nothing was reserved, so nothing is returned to stock.',
   },
-  fresh: {
-    title: 'Start fresh',
-    intro:
-      'Clear out test data so the store starts like new — for example before launching on your own domain. Choose what to erase. This cannot be undone.',
-    orders: 'Orders and sales history',
-    ordersHint:
-      'Every order, confirmed or not. Sold counts and promo-code use go back to zero, and the pieces those orders took go back into stock.',
-    traffic: 'Visitor statistics',
-    trafficHint: 'The visit history behind the Shoppers funnel and the Instagram / Facebook counts.',
-    catalog: 'Products and categories',
-    catalogHint:
-      'Every product with its photos, colours and sizes, and all categories. Settings, shipping, banners and pages are kept.',
-    confirmLabel: 'Type RESET to confirm',
-    erase: 'Erase selected',
-    erasing: 'Erasing…',
-    done: 'Done — the selected data was erased.',
-    pickSomething: 'Choose at least one thing to erase.',
-    typeToConfirm: 'Type RESET exactly to confirm.',
-    failed: 'Could not erase the data.',
-  },
   products: {
     title: 'Products',
     addNew: 'Add New Product',
@@ -786,26 +766,6 @@ const ar: DashboardDictionary = {
     confirmDeleteTitle: 'حذف الطلب ده؟',
     confirmDeleteBody:
       'ده هيمسح الطلب غير المؤكد نهائيًا. مفيش حاجة كانت محجوزة، فمفيش حاجة هترجع للمخزون.',
-  },
-  fresh: {
-    title: 'ابدأ من جديد',
-    intro:
-      'امسح بيانات التجربة عشان المتجر يبدأ كأنه جديد — مثلاً قبل ما تطلق على الدومين بتاعك. اختار إيه اللي يتمسح. الخطوة دي مالهاش رجوع.',
-    orders: 'الطلبات وسجل المبيعات',
-    ordersHint:
-      'كل الطلبات، المؤكدة وغير المؤكدة. عدّاد المبيعات واستخدام أكواد الخصم يرجعوا صفر، والقطع اللي الطلبات دي أخدتها ترجع للمخزون.',
-    traffic: 'إحصائيات الزوار',
-    trafficHint: 'سجل الزيارات اللي وراء تاب المتسوّقين وأرقام إنستجرام / فيسبوك.',
-    catalog: 'المنتجات والفئات',
-    catalogHint:
-      'كل المنتجات بصورها وألوانها ومقاساتها، وكل الفئات. الإعدادات والشحن والبانرات والصفحات بتفضل زي ما هي.',
-    confirmLabel: 'اكتب RESET للتأكيد',
-    erase: 'امسح المختار',
-    erasing: 'جارٍ المسح…',
-    done: 'تم — البيانات المختارة اتمسحت.',
-    pickSomething: 'اختار حاجة واحدة على الأقل تتمسح.',
-    typeToConfirm: 'اكتب RESET بالظبط للتأكيد.',
-    failed: 'تعذّر مسح البيانات.',
   },
   products: {
     title: 'المنتجات',

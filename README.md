@@ -340,8 +340,6 @@ the storefront handles an empty catalogue.
 3. In Vercel → Domains, set `luwjje.vercel.app` (and `www`) to **redirect** to `luwjje.com`.
 4. Set `NEXT_PUBLIC_SITE_URL=https://luwjje.com` and redeploy, so every email link and the
    sitemap use the new address.
-5. To start clean, use **Settings → Start fresh** in the dashboard to erase test orders,
-   visitor stats or the catalogue.
 
 Then change the password from **Settings → Password**, which stores a hash in the database and
 retires the env value.

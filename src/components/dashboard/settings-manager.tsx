@@ -16,7 +16,6 @@ import { ImageUploader } from '@/components/dashboard/image-uploader';
 import { BilingualField } from '@/components/dashboard/bilingual-field';
 import { useToast } from '@/components/ui/toast';
 import { useDash } from './dashboard-i18n';
-import { StartFresh } from './start-fresh';
 import { fmt } from '@/i18n/dictionaries';
 import { settingsSchema, pageSchema } from '@/lib/validations';
 import { saveSettings, savePage, deletePage } from '@/app/actions/dashboard';
@@ -435,9 +434,6 @@ export function SettingsManager({ settings, pages }: { settings: SettingsInput; 
           </div>
         </form>
       )}
-
-      {/* Below the form, not inside it — erasing data is never a side effect of Save. */}
-      {tab === 'store' && <StartFresh />}
 
       {/* ------------------------------------------------------------ pages */}
       {tab === 'pages' && (

@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { applyOrderEdit, confirmOrder } from '@/lib/orders';
-import { resetStore } from '@/lib/store-reset';
 import { sendConfirmRequest, sendOrderConfirmation, sendOrderNotification } from '@/lib/order-email';
 import { requireDashboard } from '@/lib/dashboard-auth';
 import { getLocale } from '@/i18n/server';
@@ -526,43 +525,6 @@ export async function deletePendingOrder(orderId: string): Promise<ActionResult>
     await prisma.order.delete({ where: { id: orderId } });
     revalidatePath('/dashboard/pending');
     revalidatePath('/dashboard');
-    return { ok: true };
-  }) as Promise<ActionResult>;
-}
-
-// ================================================================ start fresh
-
-const resetSchema = z.object({
-  orders: z.boolean(),
-  traffic: z.boolean(),
-  catalog: z.boolean(),
-  confirm: z.string(),
-});
-
-/**
- * "Start fresh": erase test data on the owner's say-so, e.g. before launching
- * on a new domain. Each part is optional and the typed word guards against a
- * slip; the erasing itself lives in `resetStore`.
- */
-export async function resetStoreData(input: unknown): Promise<ActionResult> {
-  return guard(async () => {
-    const d = getDashboardDictionary(await getLocale());
-    const parsed = resetSchema.safeParse(input);
-    if (!parsed.success) return { ok: false, error: d.fresh.failed };
-
-    const { orders, traffic, catalog, confirm } = parsed.data;
-    if (confirm.trim() !== 'RESET') return { ok: false, error: d.fresh.typeToConfirm };
-    if (!orders && !traffic && !catalog) return { ok: false, error: d.fresh.pickSomething };
-
-    try {
-      await resetStore({ orders, traffic, catalog });
-    } catch (error) {
-      console.error('resetStoreData failed', error);
-      return { ok: false, error: d.fresh.failed };
-    }
-
-    revalidateStorefront();
-    revalidatePath('/dashboard', 'layout');
     return { ok: true };
   }) as Promise<ActionResult>;
 }
