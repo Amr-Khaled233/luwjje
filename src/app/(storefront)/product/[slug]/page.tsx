@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   if (!product) notFound();
 
   const [related, symbol] = await Promise.all([
-    getRelatedProducts(product.id, product.categoryId, locale, 4),
+    getRelatedProducts(product.id, product.categoryIds, locale, 4),
     getCurrencySymbol(locale),
   ]);
 
@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           price: product.effectivePrice,
           listPrice: product.listPrice,
           discounted: product.discounted,
-          categoryName: product.categoryName,
+          categoryName: product.categoriesLabel,
           images: product.images,
           variants: product.variants,
         }}

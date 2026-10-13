@@ -34,7 +34,7 @@ export interface EditableProduct {
   price: number;
   compareAtPrice: number | null;
   sku: string | null;
-  categoryId: string | null;
+  categoryIds: string[];
   categoryName?: string | null;
   status: string;
   isBestSeller: boolean;
@@ -62,7 +62,7 @@ const EMPTY: ProductFormInput = {
   price: 0,
   compareAtPrice: null,
   sku: '',
-  categoryId: '',
+  categoryIds: [],
   status: 'PUBLISHED',
   isBestSeller: false,
   bestSellerOrder: 0,
@@ -125,7 +125,7 @@ export function ProductEditor({
         price: product.price,
         compareAtPrice: product.compareAtPrice,
         sku: product.sku ?? '',
-        categoryId: product.categoryId ?? '',
+        categoryIds: product.categoryIds,
         status: product.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
         isBestSeller: product.isBestSeller,
         bestSellerOrder: product.bestSellerOrder,
@@ -215,7 +215,7 @@ export function ProductEditor({
       price: d.common.price,
       compareAtPrice: d.products.compareAt,
       description: d.common.description,
-      categoryId: d.products.category,
+      categoryIds: d.nav.categories,
     };
 
     const fromForm = Object.entries(form.formState.errors).map(([field, error]) => ({
@@ -342,18 +342,46 @@ export function ProductEditor({
             )}
           />
           {/* The URL is generated from the name — one less thing to invent. */}
-          <Select
-            label={d.products.category}
-            error={form.formState.errors.categoryId?.message}
-            {...form.register('categoryId')}
-          >
-            <option value="">{d.products.uncategorised}</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          {/* Several categories at once — tap each one the product belongs to. */}
+          <Controller
+            control={form.control}
+            name="categoryIds"
+            render={({ field }) => {
+              const chosen = field.value ?? [];
+              const toggle = (id: string) =>
+                field.onChange(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id]);
+              return (
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="label-caps mb-2 text-secondary">{d.nav.categories}</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((c) => {
+                      const on = chosen.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => toggle(c.id)}
+                          aria-pressed={on}
+                          className={
+                            'label-caps border px-3.5 py-2 transition-colors ' +
+                            (on
+                              ? 'border-navy bg-navy text-background'
+                              : 'border-outline-variant text-secondary hover:border-navy hover:text-on-surface')
+                          }
+                        >
+                          {c.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-body-sm text-tertiary">{d.products.categoriesHint}</p>
+                  {chosen.length === 0 && (
+                    <p className="text-body-sm text-secondary">{d.products.uncategorised}</p>
+                  )}
+                </fieldset>
+              );
+            }}
+          />
 
           <Input
             label={`${d.products.compareAt} (${currencySymbol})`}

@@ -46,7 +46,6 @@ model Product {
   price           Float
   compareAtPrice  Float?
   sku             String?  @unique
-  categoryId      String?
   status          String   @default("PUBLISHED") // DRAFT | PUBLISHED
   isBestSeller    Boolean  @default(false)
   bestSellerOrder Int      @default(0)
@@ -56,14 +55,14 @@ model Product {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  category   Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// A product can sit in several categories at once (e.g. Men and Winter).
+  categories Category[]
   images     ProductImage[]
   variants   ProductVariant[]
   orderItems OrderItem[]
 
   @@index([status])
   @@index([isBestSeller])
-  @@index([categoryId])
 }
 
 model ProductImage {

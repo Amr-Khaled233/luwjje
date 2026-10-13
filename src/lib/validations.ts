@@ -153,7 +153,8 @@ export const productSchema = z.object({
   price: z.coerce.number().min(0.01, 'Price must be greater than zero.').max(10000000),
   compareAtPrice: z.coerce.number().min(0).max(10000000).optional().nullable(),
   sku: z.string().trim().max(60).optional().or(z.literal('')),
-  categoryId: z.string().optional().or(z.literal('')),
+  /** Every category the product belongs to — none, one, or several. */
+  categoryIds: z.array(z.string().min(1)).max(30).default([]),
   status: z.enum(['DRAFT', 'PUBLISHED']).default('PUBLISHED'),
   isBestSeller: z.boolean().default(false),
   bestSellerOrder: z.coerce.number().int().min(0).max(999).default(0),

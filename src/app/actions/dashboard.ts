@@ -147,16 +147,27 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       price: data.price,
       compareAtPrice: data.compareAtPrice || null,
       sku: data.sku || null,
-      categoryId: data.categoryId || null,
       status: data.status,
       isBestSeller: data.isBestSeller,
       bestSellerOrder: data.bestSellerOrder,
       hasSizes: data.variants.some((v) => v.size),
     };
 
+    // Only categories that still exist — a stale id from an open editor is skipped.
+    const categoryLinks = (
+      await prisma.category.findMany({
+        where: { id: { in: [...new Set(data.categoryIds)] } },
+        select: { id: true },
+      })
+    ).map((c) => ({ id: c.id }));
+
     const product = await prisma.$transaction(async (tx) => {
       if (data.id) {
-        const updated = await tx.product.update({ where: { id: data.id }, data: base });
+        // `set` replaces the whole list, so unticked categories are dropped.
+        const updated = await tx.product.update({
+          where: { id: data.id },
+          data: { ...base, categories: { set: categoryLinks } },
+        });
 
         // Images are fully replaced; they carry no history worth preserving.
         await tx.productImage.deleteMany({ where: { productId: data.id } });
@@ -195,6 +206,7 @@ export async function saveProduct(input: unknown): Promise<ActionResult> {
       return tx.product.create({
         data: {
           ...base,
+          categories: { connect: categoryLinks },
           images: { create: images },
           variants: {
             create: data.variants.map((v, i) => ({

@@ -257,7 +257,7 @@ async function main() {
         descriptionAr: p.descriptionAr,
         price: p.price,
         sku: `LW-${slug.toUpperCase().replace(/-/g, '').slice(0, 10)}`,
-        categoryId: categoryMap.get(p.category),
+        categories: categoryMap.has(p.category) ? { connect: [{ id: categoryMap.get(p.category)! }] } : undefined,
         status: 'PUBLISHED',
         isBestSeller: Boolean(p.bestSeller),
         bestSellerOrder: p.bestSeller ?? 0,

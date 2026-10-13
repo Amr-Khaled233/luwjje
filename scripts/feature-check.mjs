@@ -164,6 +164,38 @@ if (knit) {
   await prisma.category.update({ where: { id: knit.id }, data: { visible: true } });
 }
 
+// A product can sit in several categories, and picking several narrows the
+// shop to pieces in ALL of them — Men + Winter is not "all Men and all Winter".
+console.log('\n▸ Several categories at once');
+{
+  const [a, b, c] = await prisma.product.findMany({
+    where: { status: 'PUBLISHED' },
+    orderBy: { slug: 'asc' },
+    take: 3,
+  });
+  const men = await prisma.category.create({ data: { name: 'Check Men', slug: 'check-men', position: 98 } });
+  const win = await prisma.category.create({ data: { name: 'Check Winter', slug: 'check-winter', position: 99 } });
+  try {
+    await prisma.product.update({ where: { id: a.id }, data: { categories: { connect: [{ id: men.id }, { id: win.id }] } } });
+    await prisma.product.update({ where: { id: b.id }, data: { categories: { connect: [{ id: men.id }] } } });
+    await prisma.product.update({ where: { id: c.id }, data: { categories: { connect: [{ id: win.id }] } } });
+    const has = (page, slug) => page.includes(`/product/${slug}`);
+
+    const both = await html('/shop?category=check-men,check-winter', EN);
+    check('two categories show the piece that is in both', has(both, a.slug));
+    check('…and not one that is only in Men', !has(both, b.slug));
+    check('…nor one that is only in Winter', !has(both, c.slug));
+
+    const menOnly = await html('/shop?category=check-men', EN);
+    check('one category shows everything in it', has(menOnly, a.slug) && has(menOnly, b.slug) && !has(menOnly, c.slug));
+
+    const shopNow = await html('/shop', EN);
+    check('both categories are offered as choices', shopNow.includes('>Check Men<') && shopNow.includes('>Check Winter<'));
+  } finally {
+    await prisma.category.deleteMany({ where: { id: { in: [men.id, win.id] } } });
+  }
+}
+
 console.log('\n▸ Per-governorate delivery price');
 const cairo = await prisma.governorate.findFirstOrThrow({ where: { name: 'Cairo' } });
 

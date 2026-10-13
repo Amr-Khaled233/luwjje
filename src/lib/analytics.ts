@@ -172,17 +172,21 @@ export async function getCategoryPerformance(period: Period = periodFromDays(90)
     select: {
       quantity: true,
       unitPrice: true,
-      product: { select: { category: { select: { name: true } } } },
+      product: { select: { categories: { select: { name: true } } } },
     },
   });
 
   const byCategory = new Map<string, { revenue: number; units: number }>();
+  // A piece in several categories counts toward each of them — this answers
+  // "how does each category sell", so rows can add up to more than the total.
   for (const item of items) {
-    const name = item.product?.category?.name ?? 'Uncategorised';
-    const entry = byCategory.get(name) ?? { revenue: 0, units: 0 };
-    entry.revenue += item.unitPrice * item.quantity;
-    entry.units += item.quantity;
-    byCategory.set(name, entry);
+    const names = item.product?.categories.map((c) => c.name) ?? [];
+    for (const name of names.length ? names : ['Uncategorised']) {
+      const entry = byCategory.get(name) ?? { revenue: 0, units: 0 };
+      entry.revenue += item.unitPrice * item.quantity;
+      entry.units += item.quantity;
+      byCategory.set(name, entry);
+    }
   }
 
   return Array.from(byCategory.entries())

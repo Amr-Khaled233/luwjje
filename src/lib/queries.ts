@@ -34,7 +34,7 @@ function strikeThrough(price: number, compareAt: number | null, selling: number)
 const cardInclude = {
   images: { orderBy: { position: 'asc' } },
   variants: { orderBy: { position: 'asc' } },
-  category: { select: { name: true, nameAr: true } },
+  categories: { select: { name: true, nameAr: true }, orderBy: { position: 'asc' } },
 } satisfies Prisma.ProductInclude;
 
 type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
@@ -58,7 +58,7 @@ function toCard(p: ProductWithRelations, locale: Locale): ProductCardData {
     price,
     listPrice,
     discounted: listPrice > price,
-    categoryName: p.category ? pick(locale, p.category.name, p.category.nameAr) : null,
+    categoryName: p.categories[0] ? pick(locale, p.categories[0].name, p.categories[0].nameAr) : null,
     primaryImage: primary?.url ?? '',
     colors,
     inStock: p.variants.some((v) => v.stock > 0),
@@ -94,8 +94,18 @@ export async function getBestSellers(locale: Locale, limit = 4): Promise<Product
   }
 }
 
+/**
+ * The category filter arrives as a comma-separated list of slugs
+ * (`?category=men,winter`). Cleaned, de-duplicated and capped.
+ */
+export function parseCategorySlugs(value?: string | null): string[] {
+  if (!value) return [];
+  return [...new Set(value.split(',').map((s) => s.trim()).filter(Boolean))].slice(0, 12);
+}
+
 export interface ShopFilters {
   q?: string;
+  /** One or more category slugs, comma-separated. */
   category?: string;
   price?: string; // "<min>-<max>" | "<min>-" for open-ended
   sort?: string; // best | price-asc | price-desc | newest
@@ -115,11 +125,16 @@ export async function getShopProducts(filters: ShopFilters, locale: Locale) {
       { nameAr: { contains: filters.q } },
       { description: { contains: filters.q, mode: 'insensitive' } },
       { descriptionAr: { contains: filters.q } },
-      { category: { name: { contains: filters.q, mode: 'insensitive' } } },
+      { categories: { some: { name: { contains: filters.q, mode: 'insensitive' } } } },
     ];
   }
-  if (filters.category) {
-    where.category = { slug: filters.category, visible: true };
+  // Several categories narrow the result: Men + Winter means products that are
+  // in BOTH, not everything in either. One condition per chosen category.
+  const categorySlugs = parseCategorySlugs(filters.category);
+  if (categorySlugs.length) {
+    where.AND = categorySlugs.map((slug) => ({
+      categories: { some: { slug, visible: true } },
+    }));
   }
   if (filters.price) {
     const [minRaw, maxRaw] = filters.price.split('-');
@@ -190,21 +205,27 @@ export async function getProductBySlug(slug: string, locale: Locale) {
     include: {
       images: { orderBy: { position: 'asc' } },
       variants: { orderBy: { position: 'asc' } },
-      category: true,
+      categories: { orderBy: { position: 'asc' } },
     },
   });
   if (!product || product.status !== 'PUBLISHED') return null;
+
+  const first = product.categories[0];
 
   const price = product.price;
 
   return {
     id: product.id,
     slug: product.slug,
-    categoryId: product.categoryId,
+    categoryIds: product.categories.map((c) => c.id),
     name: pick(locale, product.name, product.nameAr),
     description: pick(locale, product.description, product.descriptionAr),
-    categoryName: product.category ? pick(locale, product.category.name, product.category.nameAr) : null,
-    categorySlug: product.category?.slug ?? null,
+    // The breadcrumb links to the first category; the label lists them all.
+    categoryName: first ? pick(locale, first.name, first.nameAr) : null,
+    categorySlug: first?.slug ?? null,
+    categoriesLabel: product.categories.length
+      ? product.categories.map((c) => pick(locale, c.name, c.nameAr)).join(' · ')
+      : null,
     sku: product.sku,
     effectivePrice: price,
     listPrice: strikeThrough(product.price, product.compareAtPrice, price),
@@ -222,12 +243,17 @@ export async function getProductBySlug(slug: string, locale: Locale) {
 
 export async function getRelatedProducts(
   productId: string,
-  categoryId: string | null,
+  categoryIds: string[],
   locale: Locale,
   limit = 4,
 ) {
   const rows = await prisma.product.findMany({
-    where: { status: 'PUBLISHED', id: { not: productId }, ...(categoryId ? { categoryId } : {}) },
+    where: {
+      status: 'PUBLISHED',
+      id: { not: productId },
+      // Anything sharing at least one category with this piece.
+      ...(categoryIds.length ? { categories: { some: { id: { in: categoryIds } } } } : {}),
+    },
     include: cardInclude,
     orderBy: { soldCount: 'desc' },
     take: limit,

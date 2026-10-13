@@ -63,7 +63,7 @@ export function ProductsManager({
   const filtered = products.filter((p) => {
     if (query && !p.name.toLowerCase().includes(query.toLowerCase())) return false;
     if (statusFilter && p.status !== statusFilter) return false;
-    if (categoryFilter && p.categoryId !== categoryFilter) return false;
+    if (categoryFilter && !p.categoryIds.includes(categoryFilter)) return false;
     return true;
   });
 

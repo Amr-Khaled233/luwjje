@@ -60,6 +60,105 @@ function FilterSelect({
   );
 }
 
+/**
+ * Pick several categories at once. They narrow the grid together — Men and
+ * Winter shows only pieces in both. On the bar it is a dropdown of checkboxes;
+ * in the phone sheet the same list sits open. The list is always in the page
+ * (merely hidden while closed) so the options exist without JavaScript.
+ */
+function CategoryMulti({
+  label,
+  note,
+  options,
+  selected,
+  onToggle,
+  stacked,
+}: {
+  label: string;
+  note: string;
+  options: FilterOption[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  stacked: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const list = (
+    <div className="flex flex-col">
+      {options.map((o) => (
+        <label
+          key={o.value}
+          className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-label-md text-on-surface transition-colors hover:bg-surface-low"
+        >
+          <input
+            type="checkbox"
+            checked={selected.includes(o.value)}
+            onChange={() => onToggle(o.value)}
+            className="h-4 w-4 shrink-0 cursor-pointer accent-navy"
+          />
+          <span>{o.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+
+  if (stacked) {
+    return (
+      <fieldset className="border border-outline-variant pb-1">
+        <legend className="label-caps px-2 text-secondary ltr:ml-2 rtl:mr-2">{label}</legend>
+        {list}
+        <p className="px-4 pb-2 pt-1 text-body-sm text-tertiary">{note}</p>
+      </fieldset>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex h-11 items-center gap-2 border border-outline-variant bg-background text-label-md text-on-surface transition-colors hover:border-navy ltr:pl-4 ltr:pr-3 rtl:pl-3 rtl:pr-4"
+      >
+        {label}
+        {selected.length > 0 && (
+          <span className="flex h-5 min-w-5 items-center justify-center bg-navy px-1 text-[10px] leading-none text-background">
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown
+          aria-hidden
+          className={cn('h-4 w-4 text-secondary transition-transform duration-200', open && 'rotate-180')}
+        />
+      </button>
+      <div
+        className={cn(
+          'absolute top-full z-30 mt-1 w-64 border border-outline-variant bg-background py-1 shadow-lg ltr:left-0 rtl:right-0',
+          open ? 'block' : 'hidden',
+        )}
+      >
+        {list}
+        <p className="border-t border-outline-variant px-4 py-2.5 text-body-sm text-tertiary">{note}</p>
+      </div>
+    </div>
+  );
+}
+
 export function ShopFilterBar({
   t,
   categories,
@@ -109,18 +208,28 @@ export function ShopFilterBar({
   ];
 
   const active = {
-    category: searchParams.get('category') ?? '',
+    categories: (searchParams.get('category') ?? '').split(',').map((v) => v.trim()).filter(Boolean),
     price: searchParams.get('price') ?? '',
     sort: searchParams.get('sort') ?? 'price-asc',
     q: searchParams.get('q') ?? '',
   };
 
+  /** Adds or removes one category; the URL keeps them in the bar's own order. */
+  const toggleCategory = (slug: string) => {
+    const set = new Set(active.categories);
+    if (set.has(slug)) set.delete(slug);
+    else set.add(slug);
+    const order = categories.map((c) => c.value);
+    const next = [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    setParam('category', next.join(','));
+  };
+
   const chips = [
     active.q && { key: 'q', label: `${t.shop.searchLabel}: ${active.q}` },
-    active.category && {
-      key: 'category',
-      label: categories.find((c) => c.value === active.category)?.label ?? active.category,
-    },
+    ...active.categories.map((slug) => ({
+      key: `category:${slug}`,
+      label: categories.find((c) => c.value === slug)?.label ?? slug,
+    })),
     active.price && {
       key: 'price',
       label: priceRanges.find((p) => p.value === active.price)?.label ?? active.price,
@@ -133,12 +242,13 @@ export function ShopFilterBar({
   const selects = (stacked: boolean) => (
     <>
       {categories.length > 0 && (
-        <FilterSelect
-          placeholder={t.shop.category}
-          value={active.category}
+        <CategoryMulti
+          label={t.shop.category}
+          note={t.shop.matchAll}
           options={categories}
-          onChange={(v) => setParam('category', v)}
-          className={stacked ? 'w-full' : 'w-auto'}
+          selected={active.categories}
+          onToggle={toggleCategory}
+          stacked={stacked}
         />
       )}
       {priceRanges.length > 0 && (
@@ -154,7 +264,7 @@ export function ShopFilterBar({
   );
 
   // Only the filter selects count towards the badge — sort is not a filter.
-  const activeCount = [active.category, active.price].filter(Boolean).length;
+  const activeCount = active.categories.length + (active.price ? 1 : 0);
 
   return (
     <div className={cn('border-y border-outline-variant', className)}>
@@ -221,7 +331,11 @@ export function ShopFilterBar({
           {chips.map((c) => (
             <button
               key={c.key}
-              onClick={() => setParam(c.key, '')}
+              onClick={() =>
+                c.key.startsWith('category:')
+                  ? toggleCategory(c.key.slice('category:'.length))
+                  : setParam(c.key, '')
+              }
               className="label-caps inline-flex max-w-full items-center gap-2 border border-outline-variant px-3 py-1.5 text-secondary transition-colors hover:border-navy hover:text-on-surface"
             >
               <span className="truncate">{c.label}</span>
